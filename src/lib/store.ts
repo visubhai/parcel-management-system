@@ -97,26 +97,42 @@ export const useBranchStore = create<BranchState>((set, get) => ({
         }
 
         // Map DB Parcel to Booking Type
-        const mappedBookings: Booking[] = data.map((p: any) => ({
-            id: p.id,
-            lrNumber: p.lr_number,
-            date: p.booking_date,
-            fromBranch: p.from_branch?.name || "Unknown",
-            toBranch: p.to_branch?.name || "Unknown",
-            sender: { name: p.sender_name, mobile: p.sender_mobile, email: p.sender_email },
-            receiver: { name: p.receiver_name, mobile: p.receiver_mobile, email: p.receiver_email },
-            // Items need to be fetched separately or via join? 
-            // For now assuming items are fetched or we change the query.
-            parcels: [], // Placeholder until Join
-            costs: {
-                freight: p.freight_charge,
-                handling: p.handling_charge,
-                hamali: p.hamali_charge,
-                total: p.total_amount
-            },
-            paymentType: p.payment_type,
-            status: p.status
-        }));
+        const mappedBookings: Booking[] = data.map((p: any) => {
+            // Helper to map Payment
+            const mapPayment = (pt: string): any => {
+                if (pt === 'PAID') return 'Paid';
+                if (pt === 'TO_PAY') return 'To Pay';
+                return 'To Pay'; // Default
+            };
+
+            // Helper to map Status
+            const mapStatus = (st: string): any => {
+                if (st === 'IN_TRANSIT') return 'In Transit';
+                if (st === 'ARRIVED') return 'Arrived';
+                if (st === 'DELIVERED') return 'Delivered';
+                if (st === 'CANCELLED') return 'Cancelled';
+                return 'In Transit'; // Default
+            };
+
+            return {
+                id: p.id,
+                lrNumber: p.lr_number,
+                date: p.booking_date,
+                fromBranch: p.from_branch?.name || "Unknown",
+                toBranch: p.to_branch?.name || "Unknown",
+                sender: { name: p.sender_name, mobile: p.sender_mobile, email: p.sender_email },
+                receiver: { name: p.receiver_name, mobile: p.receiver_mobile, email: p.receiver_email },
+                parcels: [],
+                costs: {
+                    freight: p.freight_charge,
+                    handling: p.handling_charge,
+                    hamali: p.hamali_charge,
+                    total: p.total_amount
+                },
+                paymentType: mapPayment(p.payment_type),
+                status: mapStatus(p.status)
+            };
+        });
 
         set({ bookings: mappedBookings, isLoading: false });
     },
