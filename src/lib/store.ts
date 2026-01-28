@@ -76,9 +76,18 @@ export const useBranchStore = create<BranchState>((set, get) => ({
 
     fetchBookings: async () => {
         set({ isLoading: true });
+        // Join with branches table to get names
         const { data, error } = await supabase
             .from('parcels')
-            .select('*')
+            .select(`
+                *,
+                from_branch:from_branch_id (
+                    name
+                ),
+                to_branch:to_branch_id (
+                    name
+                )
+            `)
             .order('booking_date', { ascending: false });
 
         if (error) {
@@ -92,8 +101,8 @@ export const useBranchStore = create<BranchState>((set, get) => ({
             id: p.id,
             lrNumber: p.lr_number,
             date: p.booking_date,
-            fromBranch: p.from_branch_id, // TODO: needing join for names? Or handle UUIDs?
-            toBranch: p.to_branch_id,
+            fromBranch: p.from_branch?.name || "Unknown",
+            toBranch: p.to_branch?.name || "Unknown",
             sender: { name: p.sender_name, mobile: p.sender_mobile, email: p.sender_email },
             receiver: { name: p.receiver_name, mobile: p.receiver_mobile, email: p.receiver_email },
             // Items need to be fetched separately or via join? 
