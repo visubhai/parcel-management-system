@@ -105,7 +105,7 @@ export function EditBookingModal({ booking, isOpen, onClose, onSave, availableBr
                             onAdd={() => setParcels([...parcels, { id: Math.random().toString(), quantity: 1, itemType: "White Sack", weight: 0, rate: 0 }])}
                             onRemove={(id) => setParcels(parcels.filter(p => p.id !== id))}
                             onChange={(id, field, val) => setParcels(parcels.map(p => p.id === id ? { ...p, [field]: val } : p))}
-                            onChange={(id, field, val) => setParcels(parcels.map(p => p.id === id ? { ...p, [field]: val } : p))}
+
                             disabled={!isSuperAdmin} // Strictly enforced: Only Super Admin can change Parcel/Qty/Rate
                         />
                     </div>

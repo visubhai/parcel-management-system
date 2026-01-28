@@ -8,17 +8,22 @@ import { Lock, User } from "lucide-react";
 export default function LoginPage() {
     const router = useRouter();
     const { login } = useBranchStore();
-    const [username, setUsername] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        const success = login(username, password);
+        setError("");
+        setIsLoading(true);
+
+        const success = await login(email, password);
         if (success) {
             router.push("/"); // Go to Dashboard
         } else {
-            setError("Invalid credentials. Try 'admin'/'password' or 'manager_a'/'password'");
+            setError("Invalid credentials. Please check your email and password.");
+            setIsLoading(false);
         }
     };
 
@@ -32,15 +37,16 @@ export default function LoginPage() {
 
                 <form onSubmit={handleLogin} className="space-y-6">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase ml-1">Username</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase ml-1">Username or Email</label>
                         <div className="relative">
                             <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                             <input
                                 type="text"
-                                value={username}
-                                onChange={e => setUsername(e.target.value)}
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
                                 className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium outline-none focus:ring-2 focus:ring-blue-500/20"
-                                placeholder="Enter username"
+                                placeholder="Enter username (e.g. hirabagh)"
+                                required
                             />
                         </div>
                     </div>
@@ -55,6 +61,7 @@ export default function LoginPage() {
                                 onChange={e => setPassword(e.target.value)}
                                 className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium outline-none focus:ring-2 focus:ring-blue-500/20"
                                 placeholder="Enter password"
+                                required
                             />
                         </div>
                     </div>
@@ -67,15 +74,14 @@ export default function LoginPage() {
 
                     <button
                         type="submit"
-                        className="w-full py-3.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-black transition-all shadow-lg shadow-slate-900/20"
+                        disabled={isLoading}
+                        className="w-full py-3.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-black transition-all shadow-lg shadow-slate-900/20 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center"
                     >
-                        Sign In
+                        {isLoading ? "Signing In..." : "Sign In"}
                     </button>
 
                     <div className="text-center text-xs text-slate-400 mt-4">
-                        <p>Demo Credentials:</p>
-                        <p>Super Admin: admin / password</p>
-                        <p>Manager A: manager_a / password</p>
+                        <p>Note: Use your Supabase Auth credentials.</p>
                     </div>
                 </form>
             </div>

@@ -19,7 +19,7 @@ interface ReportsTableProps {
 }
 
 export function ReportsTable({ fromBranch = "All", toBranch = "All", startDate, endDate }: ReportsTableProps) {
-    const { bookings, currentUser, branches, updateBooking, cancelBooking } = useBranchStore();
+    const { bookings, currentUser, branches, cancelBooking } = useBranchStore();
     const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
     // Combine Mock Data (mapped to fit Booking type roughly) and Real Bookings
@@ -69,7 +69,8 @@ export function ReportsTable({ fromBranch = "All", toBranch = "All", startDate, 
     };
 
     const handleSaveEdit = (updated: Booking) => {
-        updateBooking(updated);
+        // Update feature temporarily disabled during refactor
+        console.log("Update Disabled", updated);
         setEditingBooking(null);
     };
 

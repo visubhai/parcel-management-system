@@ -1,221 +1,314 @@
 import { create } from 'zustand';
-import { Booking, Branch, IncomingParcel, User, Role } from './types';
+import { Booking, Branch, IncomingParcel, User } from './types';
+import { supabase } from './supabase';
 
 interface BranchState {
     currentBranch: Branch;
-    branches: Branch[]; // List of available branches
+    branches: Branch[];
     bookings: Booking[];
     incomingParcels: IncomingParcel[];
     searchQuery: string;
 
-    // Auth State
     currentUser: User | null;
-    users: User[];
+    users: User[]; // Managed via Supabase now, perhaps explicit fetch needed for Super Admin
+
+    isLoading: boolean;
+    error: string | null;
 
     // Actions
     setBranch: (branch: Branch) => void;
-    addBranch: (branch: Branch) => void;
-    removeBranch: (branch: Branch) => void;
-    addBooking: (booking: Booking) => void;
+
+    // Async Data Fetching
+    fetchBranches: () => Promise<void>;
+    fetchBookings: () => Promise<void>;
+    fetchIncomingParcels: () => Promise<void>;
+    fetchUsers: () => Promise<void>;
+
+    // Auth
+    login: (email: string, password: string) => Promise<boolean>;
+    logout: () => Promise<void>;
+    checkSession: () => Promise<void>;
+
+    // Mutations
+    addBooking: (booking: Partial<Booking>) => Promise<void>;
+    cancelBooking: (id: string) => Promise<void>;
+    markParcelReceived: (id: string) => Promise<void>;
+    deleteUser: (id: string) => Promise<void>;
+
+    // UI
     setSearchQuery: (query: string) => void;
-    markParcelReceived: (id: string) => void;
-    login: (username: string, password: string) => boolean;
-    logout: () => void;
-    addUser: (user: User) => void;
-    updateUser: (user: User) => void;
-    deleteUser: (id: string) => void;
-    resetPassword: (id: string) => void;
-    updateBooking: (booking: Booking) => void;
-    cancelBooking: (id: string) => void;
 }
 
-const MOCK_USERS: User[] = [
-    { id: "1", name: "Super Admin", username: "admin", role: "SUPER_ADMIN", password: "password", allowedBranches: [], allowedReports: [], isActive: true },
-    // Surat
-    { id: "2", name: "Hirabagh Manager", username: "hirabagh", role: "ADMIN", branch: "Hirabagh (HO)", password: "password", allowedBranches: ["Hirabagh (HO)"], allowedReports: ["Daily", "Revenue", "Branch-wise", "Payment", "Sender/Receiver"], isActive: true },
-    { id: "3", name: "Katargam Manager", username: "katargam", role: "ADMIN", branch: "Katargam (KA)", password: "password", allowedBranches: ["Katargam (KA)"], allowedReports: ["Daily", "Revenue", "Branch-wise", "Payment", "Sender/Receiver"], isActive: true },
-    { id: "4", name: "Sahara Manager", username: "sahara", role: "ADMIN", branch: "Sahara Darvaja (SA)", password: "password", allowedBranches: ["Sahara Darvaja (SA)"], allowedReports: ["Daily", "Revenue", "Branch-wise", "Payment", "Sender/Receiver"], isActive: true },
-    // Ahmedabad
-    { id: "5", name: "Amdavad Manager", username: "amdavad-ctm", role: "ADMIN", branch: "Amdavad (CTM)", password: "password", allowedBranches: ["Amdavad (CTM)"], allowedReports: ["Daily", "Revenue", "Branch-wise", "Payment", "Sender/Receiver"], isActive: true },
-    { id: "6", name: "Bapunagar Manager", username: "bapunagar", role: "ADMIN", branch: "Bapunagar (BA)", password: "password", allowedBranches: ["Bapunagar (BA)"], allowedReports: ["Daily", "Revenue", "Branch-wise", "Payment", "Sender/Receiver"], isActive: true },
-    { id: "7", name: "Paldi Manager", username: "paldi", role: "ADMIN", branch: "Paldi (PA)", password: "password", allowedBranches: ["Paldi (PA)"], allowedReports: ["Daily", "Revenue", "Branch-wise", "Payment", "Sender/Receiver"], isActive: true },
-    { id: "8", name: "Setelite Manager", username: "setelite", role: "ADMIN", branch: "Setelite (SET)", password: "password", allowedBranches: ["Setelite (SET)"], allowedReports: ["Daily", "Revenue", "Branch-wise", "Payment", "Sender/Receiver"], isActive: true },
-    // Mumbai
-    { id: "9", name: "Borivali Manager", username: "mumbai-borivali", role: "ADMIN", branch: "Mumbai Borivali (BO)", password: "password", allowedBranches: ["Mumbai Borivali (BO)"], allowedReports: ["Daily", "Revenue", "Branch-wise", "Payment", "Sender/Receiver"], isActive: true },
-    { id: "10", name: "Vasai Manager", username: "mumbai-vasai", role: "ADMIN", branch: "Mumbai Vasai (VA)", password: "password", allowedBranches: ["Mumbai Vasai (VA)"], allowedReports: ["Daily", "Revenue", "Branch-wise", "Payment", "Sender/Receiver"], isActive: true },
-    { id: "11", name: "Andheri Manager", username: "mumbai-andheri", role: "ADMIN", branch: "Mumbai Andheri (AN)", password: "password", allowedBranches: ["Mumbai Andheri (AN)"], allowedReports: ["Daily", "Revenue", "Branch-wise", "Payment", "Sender/Receiver"], isActive: true },
-    // Rajkot
-    { id: "12", name: "Punitnagar Manager", username: "rajkot-punitnagar", role: "ADMIN", branch: "Rajkot Punitnagar (PU)", password: "password", allowedBranches: ["Rajkot Punitnagar (PU)"], allowedReports: ["Daily", "Revenue", "Branch-wise", "Payment", "Sender/Receiver"], isActive: true },
-    { id: "13", name: "Limdachok Manager", username: "rajkot-limdachok", role: "ADMIN", branch: "Rajkot Limdachok (LI)", password: "password", allowedBranches: ["Rajkot Limdachok (LI)"], allowedReports: ["Daily", "Revenue", "Branch-wise", "Payment", "Sender/Receiver"], isActive: true },
-];
-
-// Helper to generate distributed mock data
-const generateMockBookings = (): Booking[] => {
-    const branches = [
-        "Hirabagh (HO)", "Katargam (KA)", "Sahara Darvaja (SA)",
-        "Amdavad (CTM)", "Bapunagar (BA)", "Paldi (PA)", "Setelite (SET)",
-        "Mumbai Borivali (BO)", "Mumbai Vasai (VA)", "Mumbai Andheri (AN)",
-        "Rajkot Punitnagar (PU)", "Rajkot Limdachok (LI)"
-    ];
-
-    const bookings: Booking[] = [];
-    // Weighted statuses: More 'Delivered' and 'Booked' than 'Cancelled'
-    const statusWeights = [
-        { value: "Booked", weight: 30 },
-        { value: "In Transit", weight: 25 },
-        { value: "Arrived", weight: 20 },
-        { value: "Delivered", weight: 20 },
-        { value: "Cancelled", weight: 5 }
-    ];
-
-    const getWeightedStatus = () => {
-        const rand = Math.random() * 100;
-        let sum = 0;
-        for (const s of statusWeights) {
-            sum += s.weight;
-            if (rand < sum) return s.value;
-        }
-        return "Booked";
-    };
-
-    const paymentStatuses: any[] = ["Paid", "To Pay"];
-
-    // Generate ~500 bookings for better data density
-    for (let i = 1; i <= 500; i++) {
-        const fromBranch = branches[Math.floor(Math.random() * branches.length)];
-        let toBranch = branches[Math.floor(Math.random() * branches.length)];
-        while (toBranch === fromBranch) toBranch = branches[Math.floor(Math.random() * branches.length)];
-
-        const date = new Date();
-        // Spread over last 60 days
-        date.setDate(date.getDate() - Math.floor(Math.random() * 60));
-
-        // Create varying costs
-        const rate = 100 + Math.floor(Math.random() * 50); // 100-150
-        const weight = Math.floor(Math.random() * 50) + 5; // 5-55
-        const quantity = Math.floor(Math.random() * 5) + 1; // 1-6
-
-        const freight = Math.round(weight * rate * (Math.random() * 0.2 + 0.9)); // Random variance
-        const handling = 50;
-        const hamali = 20 * quantity;
-        const total = freight + handling + hamali;
-
-        bookings.push({
-            id: i.toString(),
-            lrNumber: `LR${20240000 + i}`,
-            date: date.toISOString().split('T')[0],
-            fromBranch: fromBranch as any,
-            toBranch: toBranch as any,
-            sender: { name: `Sender ${i}`, mobile: `9${Math.floor(Math.random() * 1000000000)}`, email: `sender${i}@example.com` },
-            receiver: { name: `Receiver ${i}`, mobile: `8${Math.floor(Math.random() * 1000000000)}`, email: `receiver${i}@example.com` },
-            parcels: [{ id: `p${i}`, quantity, itemType: "Carton", weight, rate }],
-            costs: { freight, handling, hamali, total },
-            paymentType: paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)],
-            status: getWeightedStatus() as any,
-        });
-    }
-    // Sort by date descending
-    return bookings.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-};
-
-const generateMockIncoming = (): IncomingParcel[] => {
-    // Generate some incoming parcels
-    return Array.from({ length: 15 }).map((_, i) => ({
-        id: `INC${i}`,
-        lrNumber: `LR9${900 + i}`,
-        senderName: `Incoming Sender ${i}`,
-        receiverName: `Incoming Receiver ${i}`,
-        fromBranch: "Mumbai Borivali (BO)",
-        toBranch: "Hirabagh (HO)",
-        status: "In Transit",
-        paymentStatus: "To Pay",
-        totalAmount: 1200 + i * 100
-    }));
-};
-
 export const useBranchStore = create<BranchState>((set, get) => ({
-    currentBranch: "Hirabagh (HO)", // Default to HO
-    bookings: generateMockBookings(),
-    incomingParcels: generateMockIncoming(),
+    currentBranch: "",
+    branches: [],
+    bookings: [],
+    incomingParcels: [],
     searchQuery: "",
-
-    // Auth Init
     currentUser: null,
-    users: MOCK_USERS,
-
-    branches: [
-        "Hirabagh (HO)", "Katargam (KA)", "Sahara Darvaja (SA)",
-        "Amdavad (CTM)", "Bapunagar (BA)", "Paldi (PA)", "Setelite (SET)",
-        "Mumbai Borivali (BO)", "Mumbai Vasai (VA)", "Mumbai Andheri (AN)",
-        "Rajkot Punitnagar (PU)", "Rajkot Limdachok (LI)"
-    ],
+    users: [],
+    isLoading: false,
+    error: null,
 
     setBranch: (branch) => set({ currentBranch: branch }),
-
-    addBranch: (branch) => set((state) => ({ branches: [...state.branches, branch] })),
-
-    removeBranch: (branch) => set((state) => ({
-        branches: state.branches.filter(b => b !== branch),
-        // If current branch is deleted, switch to first available or empty
-        currentBranch: state.currentBranch === branch ? (state.branches.filter(b => b !== branch)[0] || "") : state.currentBranch
-    })),
-
-    addBooking: (booking) => set((state) => ({
-        bookings: [booking, ...state.bookings]
-    })),
-
     setSearchQuery: (query) => set({ searchQuery: query }),
 
-    markParcelReceived: (id) => set((state) => ({
-        incomingParcels: state.incomingParcels.map(p =>
-            p.id === id ? { ...p, status: "Arrived" } : p
-        )
-    })),
+    markParcelReceived: async (id) => {
+        const { error } = await supabase.from('parcels').update({ status: 'ARRIVED' }).eq('id', id);
+        if (error) {
+            console.error("Failed to receive", error);
+            return;
+        }
+        // Refresh Inbound List
+        get().fetchIncomingParcels();
+    },
 
-    login: (username, password) => {
-        const state = get();
-        const user = state.users.find(u => u.username === username && u.password === password);
-        if (user) {
-            set({ currentUser: user });
+    fetchBranches: async () => {
+        const { data, error } = await supabase.from('branches').select('name');
+        if (data) {
+            set({ branches: data.map(b => b.name) });
+            // Set default branch if none selected
+            if (!get().currentBranch && data.length > 0) {
+                set({ currentBranch: data[0].name });
+            }
+        }
+    },
+
+    fetchBookings: async () => {
+        set({ isLoading: true });
+        const { data, error } = await supabase
+            .from('parcels')
+            .select('*')
+            .order('booking_date', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching bookings:', error);
+            set({ error: error.message, isLoading: false });
+            return;
+        }
+
+        // Map DB Parcel to Booking Type
+        const mappedBookings: Booking[] = data.map((p: any) => ({
+            id: p.id,
+            lrNumber: p.lr_number,
+            date: p.booking_date,
+            fromBranch: p.from_branch_id, // TODO: needing join for names? Or handle UUIDs?
+            toBranch: p.to_branch_id,
+            sender: { name: p.sender_name, mobile: p.sender_mobile, email: p.sender_email },
+            receiver: { name: p.receiver_name, mobile: p.receiver_mobile, email: p.receiver_email },
+            // Items need to be fetched separately or via join? 
+            // For now assuming items are fetched or we change the query.
+            parcels: [], // Placeholder until Join
+            costs: {
+                freight: p.freight_charge,
+                handling: p.handling_charge,
+                hamali: p.hamali_charge,
+                total: p.total_amount
+            },
+            paymentType: p.payment_type,
+            status: p.status
+        }));
+
+        set({ bookings: mappedBookings, isLoading: false });
+    },
+
+    fetchIncomingParcels: async () => {
+        const { data, error } = await supabase.from('view_incoming_parcels').select('*');
+        if (error) {
+            console.error("Error fetching incoming:", error);
+            return;
+        }
+        if (data) {
+            const mapped: IncomingParcel[] = data.map((p: any) => ({
+                id: p.id,
+                lrNumber: p.lr_number,
+                senderName: p.sender_name,
+                receiverName: p.receiver_name,
+                fromBranch: p.from_branch,
+                toBranch: p.to_branch,
+                status: p.status,
+                paymentStatus: p.payment_status,
+                totalAmount: p.total_amount
+            }));
+            set({ incomingParcels: mapped });
+        }
+    },
+
+    fetchUsers: async () => {
+        // Only for admins
+        const { data, error } = await supabase.from('app_users').select('*, branches(name)');
+        if (data) {
+            const mappedUsers: User[] = data.map((u: any) => ({
+                id: u.id,
+                name: u.full_name,
+                username: u.username || u.email, // Fallback
+                role: u.role,
+                branch: u.branches?.name,
+                allowedBranches: u.allowed_branches || [],
+                allowedReports: [], // Need separate fetch or join on admin_report_access
+                isActive: u.is_active,
+                password: '' // Security: don't load hashes
+            }));
+            set({ users: mappedUsers });
+        }
+    },
+
+    login: async (emailOrUsername, password) => {
+        // Auto-append domain if username is provided
+        const email = emailOrUsername.includes('@') ? emailOrUsername : `${emailOrUsername}@abcd.com`;
+
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error || !data.user) {
+            console.error("Login failed:", error);
+            return false;
+        }
+
+        // Fetch User Profile
+        const { data: profile } = await supabase
+            .from('app_users')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
+
+        if (profile) {
+            set({
+                currentUser: {
+                    id: profile.id,
+                    name: profile.full_name,
+                    username: profile.username || email,
+                    role: profile.role,
+                    // Map branch_id to name? Or keep ID?
+                    // allowedBranches: profile.allowed_branches
+                    isActive: profile.is_active,
+                    allowedBranches: [], // Needs mapping
+                    allowedReports: [] // Needs Permissions Table Fetch
+                }
+            });
             return true;
         }
         return false;
     },
 
-    logout: () => set({ currentUser: null }),
+    logout: async () => {
+        await supabase.auth.signOut();
+        set({ currentUser: null, bookings: [], incomingParcels: [] });
+    },
 
-
-    addUser: (user) => set((state) => ({
-        users: [...state.users,
-        {
-            ...user,
-            allowedBranches: user.allowedBranches || [],
-            allowedReports: user.allowedReports || [],
-            isActive: user.isActive ?? true
+    checkSession: async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+            // Re-fetch profile logic (similar to login)
+            // simplified for now
         }
-        ]
-    })),
+    },
 
-    updateUser: (updatedUser) => set((state) => {
-        const newUsers = state.users.map(u => u.id === updatedUser.id ? { ...u, ...updatedUser } : u);
-        const currentUser = state.currentUser?.id === updatedUser.id ? { ...state.currentUser, ...updatedUser } : state.currentUser;
-        return { users: newUsers, currentUser };
-    }),
+    addBooking: async (booking) => {
+        set({ isLoading: true });
+        const state = get();
 
-    deleteUser: (id) => set((state) => ({
-        users: state.users.filter(u => u.id !== id)
-    })),
+        // 1. Get Branch ID (Assuming currentBranch is Name, we need ID... 
+        // We probably need to store Branch Objects or fetch ID. 
+        // For now, let's fetch branch ID by name if needed, or rely on currentUser branch_id if better.
+        // Actually, schema expects UUID. Frontend has Name strings in `currentBranch`.
+        // This is a disconnect. I need to map Name -> ID.
+        // I'll assume we can query it or store locally.
 
+        let fromBranchId: string | undefined;
+        let toBranchId: string | undefined;
 
-    resetPassword: (id) => set((state) => ({
-        users: state.users.map(u => u.id === id ? { ...u, password: "newpassword123" } : u)
-    })),
+        // Fetch Branch IDs
+        const { data: branches } = await supabase.from('branches').select('id, name');
+        if (branches) {
+            fromBranchId = branches.find(b => b.name === booking.fromBranch)?.id || branches.find(b => b.name === state.currentBranch)?.id;
+            toBranchId = branches.find(b => b.name === booking.toBranch)?.id;
+        }
 
-    updateBooking: (updatedBooking) => set((state) => ({
-        bookings: state.bookings.map(b => b.id === updatedBooking.id ? updatedBooking : b)
-    })),
+        if (!fromBranchId || !toBranchId) {
+            console.error("Branch ID lookup failed");
+            set({ isLoading: false, error: "Invalid Branch Selection" });
+            return;
+        }
 
-    cancelBooking: (id) => set((state) => ({
-        bookings: state.bookings.map(b => b.id === id ? { ...b, status: "Cancelled" } : b)
-    }))
+        // 2. Generate LR (RPC)
+        const { data: lrNumber, error: lrError } = await supabase.rpc('generate_lr_number', { p_branch_id: fromBranchId });
+
+        if (lrError || !lrNumber) {
+            console.error("LR Generation Failed", lrError);
+            set({ isLoading: false, error: "Failed to generate LR Number" });
+            return;
+        }
+
+        // 3. Insert Parcel
+        const { data: parcel, error: parcelError } = await supabase.from('parcels').insert({
+            lr_number: lrNumber,
+            from_branch_id: fromBranchId,
+            to_branch_id: toBranchId,
+            current_branch_id: fromBranchId,
+            sender_name: booking.sender?.name,
+            sender_mobile: booking.sender?.mobile,
+            sender_email: booking.sender?.email,
+            receiver_name: booking.receiver?.name,
+            receiver_mobile: booking.receiver?.mobile,
+            receiver_email: booking.receiver?.email,
+            payment_type: booking.paymentType || 'TO_PAY',
+            status: 'BOOKED',
+            weight_total: booking.parcels?.reduce((sum: number, p: any) => sum + (Number(p.weight) || 0), 0) || 0,
+            freight_charge: booking.costs?.freight || 0,
+            handling_charge: booking.costs?.handling || 0,
+            hamali_charge: booking.costs?.hamali || 0,
+            total_amount: booking.costs?.total || 0,
+            amount_paid: booking.paymentType === 'Paid' ? (booking.costs?.total || 0) : 0,
+            booked_by: state.currentUser?.id
+        }).select().single();
+
+        if (parcelError || !parcel) {
+            console.error("Parcel Insert Failed", parcelError);
+            set({ isLoading: false, error: parcelError?.message || "Parcel insertion failed" });
+            return;
+        }
+
+        // 4. Insert Items
+        if (booking.parcels && booking.parcels.length > 0) {
+            const items = booking.parcels.map((p: any) => ({
+                parcel_id: parcel.id,
+                item_type: 'CARTON', // Default or map from p.itemType
+                quantity: p.quantity,
+                weight: p.weight,
+                rate: p.rate,
+                description: p.itemType
+            }));
+
+            await supabase.from('parcel_items').insert(items);
+        }
+
+        // 5. Success
+        set({ isLoading: false });
+        get().fetchBookings(); // Refresh
+    },
+
+    cancelBooking: async (id) => {
+        await supabase.from('parcels').update({ status: 'CANCELLED' }).eq('id', id);
+        get().fetchBookings(); // Refresh
+    },
+
+    deleteUser: async (id) => {
+        // Soft delete or real delete. 
+        // For now, hard delete if constraints allow, or soft delete `is_active=false`.
+        // Let's toggle is_active to false.
+        const { error } = await supabase.from('app_users').update({ is_active: false }).eq('id', id);
+
+        if (!error) {
+            set(state => ({ users: state.users.map(u => u.id === id ? { ...u, isActive: false } : u) }));
+        } else {
+            console.error("Delete user failed:", error);
+        }
+    },
+
+    // Stubs for other actions to prevent compile errors during migration
+    addBranch: () => { },
+    removeBranch: () => { },
+    addUser: () => { },
+    updateUser: () => { },
+    resetPassword: () => { },
+    updateBooking: () => { }
 }));

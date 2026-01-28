@@ -124,4 +124,3 @@ export function FilterBar({ fromBranch, toBranch, startDate, endDate, onFromBran
         </div>
     );
 }
-```

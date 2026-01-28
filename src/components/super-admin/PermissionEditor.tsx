@@ -12,7 +12,7 @@ interface PermissionEditorProps {
 const REPORT_TYPES: ReportType[] = ["Daily", "Revenue", "Branch-wise", "Payment", "Sender/Receiver"];
 
 export function PermissionEditor({ user, isOpen, onClose }: PermissionEditorProps) {
-    const { branches, addUser, updateUser } = useBranchStore();
+    const { branches } = useBranchStore();
 
     const [formData, setFormData] = useState({
         name: "",
@@ -49,19 +49,7 @@ export function PermissionEditor({ user, isOpen, onClose }: PermissionEditorProp
     }, [user, isOpen]);
 
     const handleSubmit = () => {
-        if (!formData.name || !formData.username) return alert("Name/Username required");
-
-        const payload = {
-            ...formData,
-            id: user?.id || Date.now().toString(),
-        };
-
-        if (user?.id) {
-            updateUser(payload as User);
-        } else {
-            if (!formData.password) return alert("Password required for new user");
-            addUser(payload as User);
-        }
+        alert("Permission updates are currently managed via the Database/Admin API.");
         onClose();
     };
 

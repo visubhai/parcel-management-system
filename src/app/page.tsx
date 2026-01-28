@@ -13,7 +13,12 @@ import { Printer } from "lucide-react";
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 export default function BookingDashboard() {
-  const { currentBranch, addBooking, branches } = useBranchStore();
+  const { currentBranch, addBooking, branches, fetchBranches } = useBranchStore();
+
+  // Load branches on mount
+  useEffect(() => {
+    fetchBranches();
+  }, [fetchBranches]);
 
   // Local State
   const [lrNumber, setLrNumber] = useState("");
@@ -85,11 +90,15 @@ export default function BookingDashboard() {
     setParcels(parcels.map(p => p.id === id ? { ...p, [field]: value } : p));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (costs.total <= 0) return;
 
     const newBooking: Booking = {
-      id: generateId(),
+      id: generateId(), // ID will be ignored/replaced by DB? or should we omit?
+      // Store expects partial, but types says Booking. 
+      // DB generates ID. Store maps to DB. 
+      // We keep generateId() for local until refresh?
+      // Actually store.createBooking ignores the ID passed in and generates new one from DB.
       lrNumber,
       fromBranch,
       toBranch,
@@ -102,7 +111,7 @@ export default function BookingDashboard() {
       status: "In Transit"
     };
 
-    addBooking(newBooking);
+    await addBooking(newBooking);
     setIsLocked(true);
 
     // Simulate Print

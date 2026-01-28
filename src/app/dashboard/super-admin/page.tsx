@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminList } from "@/components/super-admin/AdminList";
 import { PermissionEditor } from "@/components/super-admin/PermissionEditor";
 import { User } from "@/lib/types";
@@ -8,9 +8,15 @@ import { Plus, ShieldAlert } from "lucide-react";
 import { useBranchStore } from "@/lib/store";
 
 export default function SuperAdminDashboard() {
-    const { currentUser } = useBranchStore();
+    const { currentUser, fetchUsers } = useBranchStore();
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<Partial<User> | null>(null);
+
+    useEffect(() => {
+        if (currentUser?.role === 'SUPER_ADMIN') {
+            fetchUsers();
+        }
+    }, [currentUser, fetchUsers]);
 
     // Access Control
     if (currentUser?.role !== 'SUPER_ADMIN') {

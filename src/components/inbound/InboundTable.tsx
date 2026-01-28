@@ -3,13 +3,17 @@
 import { useBranchStore } from "@/lib/store";
 import { Package, Truck, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ReceiveModal } from "./ReceiveModal";
 import { IncomingParcel } from "@/lib/types";
 
 export function InboundTable() {
-    const { incomingParcels, markParcelReceived } = useBranchStore();
+    const { incomingParcels, markParcelReceived, fetchIncomingParcels } = useBranchStore();
     const [selectedParcel, setSelectedParcel] = useState<IncomingParcel | null>(null);
+
+    useEffect(() => {
+        fetchIncomingParcels();
+    }, [fetchIncomingParcels]);
 
     const handleReceiveClick = (parcel: IncomingParcel) => {
         if (parcel.status === "Arrived") return;

@@ -4,39 +4,16 @@ import { User, Lock, Save, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ProfileSettings() {
-    const { currentUser, updateUser } = useBranchStore();
+    const { currentUser } = useBranchStore();
     const [name, setName] = useState(currentUser?.name || "");
-    const [currentPassword, setCurrentPassword] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     const handleUpdateProfile = () => {
-        if (!currentUser) return;
-        updateUser({ ...currentUser, name });
-        setMessage({ type: 'success', text: 'Profile updated successfully!' });
+        setMessage({ type: 'error', text: 'Profile updates are disabled in this version.' });
     };
 
     const handleChangePassword = () => {
-        if (!currentUser) return;
-        if (currentPassword !== currentUser.password) {
-            setMessage({ type: 'error', text: 'Current password is incorrect' });
-            return;
-        }
-        if (newPassword !== confirmPassword) {
-            setMessage({ type: 'error', text: 'New passwords do not match' });
-            return;
-        }
-        if (newPassword.length < 6) {
-            setMessage({ type: 'error', text: 'Password must be at least 6 characters' });
-            return;
-        }
-
-        updateUser({ ...currentUser, password: newPassword });
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-        setMessage({ type: 'success', text: 'Password changed successfully!' });
+        setMessage({ type: 'error', text: 'Please contact Super Admin to reset password.' });
     };
 
     if (!currentUser) return null;
@@ -88,14 +65,16 @@ export function ProfileSettings() {
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
+                                disabled
+                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 font-medium cursor-not-allowed"
                             />
                         </div>
 
                         <div className="pt-2">
                             <button
                                 onClick={handleUpdateProfile}
-                                className="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2"
+                                disabled
+                                className="w-full py-2.5 bg-slate-100 text-slate-400 rounded-xl font-bold flex items-center justify-center gap-2 cursor-not-allowed"
                             >
                                 <Save className="w-4 h-4" />
                                 Save Changes
@@ -111,50 +90,8 @@ export function ProfileSettings() {
                             <Lock className="w-5 h-5 text-indigo-500" />
                             Security
                         </h3>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-600 mb-1.5">Current Password</label>
-                                <input
-                                    type="password"
-                                    value={currentPassword}
-                                    onChange={(e) => setCurrentPassword(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                    placeholder="••••••••"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-600 mb-1.5">New Password</label>
-                                <input
-                                    type="password"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                    placeholder="••••••••"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-600 mb-1.5">Confirm New Password</label>
-                                <input
-                                    type="password"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                    placeholder="••••••••"
-                                />
-                            </div>
-
-                            <div className="pt-2">
-                                <button
-                                    onClick={handleChangePassword}
-                                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2"
-                                >
-                                    <Lock className="w-4 h-4" />
-                                    Change Password
-                                </button>
-                            </div>
+                        <div className="p-4 bg-yellow-50 text-yellow-800 rounded-lg text-sm">
+                            Password changes are currently managed via Supabase Admin Console.
                         </div>
                     </div>
                 )}

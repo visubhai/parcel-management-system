@@ -35,7 +35,12 @@ const ReportSummary = ({ stats }: { stats: any }) => (
 );
 
 export default function ReportsPage() {
-    const { currentUser, branches: allBranches } = useBranchStore();
+    const { currentUser, branches: allBranches, fetchBookings } = useBranchStore();
+
+    // Load bookings on mount
+    useEffect(() => {
+        fetchBookings();
+    }, [fetchBookings]);
 
     // Restore useReports hook
     const {
@@ -86,7 +91,7 @@ export default function ReportsPage() {
                         <h1 className="text-2xl font-black text-slate-800 tracking-tight">Enterprise Reports</h1>
                         <p className="text-slate-500 font-medium">Advanced analytics and data management</p>
                     </div>
-                    <ExportButtons />
+                    <ExportButtons data={allFilteredData} />
                 </div>
             </div>
 
