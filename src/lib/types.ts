@@ -1,0 +1,71 @@
+// export type Branch = "Branch A" | "Branch B";
+export type Branch = string; // Allow dynamic branches
+
+export type PaymentStatus = "Paid" | "To Pay";
+export type ParcelStatus = "In Transit" | "Arrived" | "Delivered" | "Cancelled";
+export type ItemType = "White Sack" | "Carton" | "Manual";
+
+export interface Parcel {
+    id: string;
+    quantity: number;
+    itemType: ItemType;
+    weight: number;
+    rate: number; // Rate per unit
+}
+
+export interface Booking {
+    id: string;
+    lrNumber: string;
+    fromBranch: Branch;
+    toBranch: Branch;
+    date: string;
+    sender: {
+        name: string;
+        mobile: string;
+        email?: string;
+    };
+    receiver: {
+        name: string;
+        mobile: string;
+        email?: string;
+    };
+    parcels: Parcel[];
+    costs: {
+        freight: number;
+        handling: number;
+        hamali: number;
+        total: number;
+    };
+    paymentType: PaymentStatus;
+    status: ParcelStatus;
+}
+
+export type Role = "SUPER_ADMIN" | "ADMIN";
+
+export type ReportType = "Daily" | "Revenue" | "Branch-wise" | "Payment" | "Sender/Receiver";
+
+export interface User {
+    id: string;
+    name: string;
+    username: string; // Used for login
+    password?: string; // Mock password
+    role: Role;
+    branch?: Branch; // Primary branch (deprecated? or maybe "Home Branch") - keeping for backward compat if needed, but strictly controlled via allowedBranches now.
+
+    // Permission System
+    allowedBranches: Branch[];
+    allowedReports: ReportType[];
+    isActive: boolean;
+}
+
+export interface IncomingParcel {
+    id: string;
+    lrNumber: string;
+    senderName: string;
+    receiverName: string;
+    fromBranch: Branch;
+    toBranch: Branch;
+    status: ParcelStatus;
+    paymentStatus: PaymentStatus;
+    totalAmount: number;
+}
