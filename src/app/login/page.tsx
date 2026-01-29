@@ -20,7 +20,12 @@ export default function LoginPage() {
         setError("");
         setIsLoading(true);
 
-        const { data, error } = await authService.login(email, password);
+        let loginEmail = email;
+        if (!email.includes('@')) {
+            loginEmail = `${email}@abcd.com`;
+        }
+
+        const { data, error } = await authService.login(loginEmail, password);
 
         if (error) {
             setError("Invalid credentials. Please check your email and password.");
