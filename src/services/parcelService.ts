@@ -89,17 +89,31 @@ export const parcelService = {
         // We assume booking.fromBranch and booking.toBranch are populated with Names for now
         // But we need IDs. 
 
-        // HELPER: Fetch ID for branch name (This is a temporary bridge)
+        // HELPER: Fetch ID for branch name
         const getBranchId = async (name: string) => {
-            const { data } = await supabase.from('branches').select('id').eq('name', name).single();
+            const cleanName = name?.trim();
+            if (!cleanName) return null;
+
+            const { data } = await supabase
+                .from('branches')
+                .select('id')
+                .eq('name', cleanName)
+                .maybeSingle(); // Use maybeSingle to avoid 406 errors on duplicates (though unique is expected)
+
             return data?.id;
         };
 
         const fromId = await getBranchId(booking.fromBranch || '');
         const toId = await getBranchId(booking.toBranch || '');
 
-        if (!fromId || !toId) {
-            return { data: null, error: new Error("Invalid Branch Name") };
+        if (!fromId) {
+            console.error(`Branch not found: "${booking.fromBranch}"`);
+            return { data: null, error: new Error(`Invalid Dispatch Branch: '${booking.fromBranch}' not found or inactive.`) };
+        }
+
+        if (!toId) {
+            console.error(`Branch not found: "${booking.toBranch}"`);
+            return { data: null, error: new Error(`Invalid Destination Branch: '${booking.toBranch}' not found.`) };
         }
 
         // 2. Generate LR
