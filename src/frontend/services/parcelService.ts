@@ -110,7 +110,13 @@ export const parcelService = {
     },
 
     async getBookingsForReports(startDate: string, endDate: string): Promise<ServiceResponse<any[]>> {
-        // Implement report fetching
-        return { data: [], error: null };
+        try {
+            const res = await fetch(`/api/bookings?startDate=${startDate}&endDate=${endDate}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            return { data, error: null };
+        } catch (error: any) {
+            return { data: [], error: new Error(error.message) };
+        }
     }
 };

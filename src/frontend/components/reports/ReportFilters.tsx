@@ -41,6 +41,9 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
             searchQuery: '',
             paymentType: 'All',
             status: 'All',
+            itemType: 'All',
+            minAmount: '',
+            maxAmount: '',
             // Don't reset branch if restricted
             fromBranch: isBranchRestricted ? prev.fromBranch : 'All',
             toBranch: 'All'
@@ -141,6 +144,41 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
                     <option value="Delivered">Delivered</option>
                     <option value="Cancelled">Cancelled</option>
                 </select>
+
+                {/* Advanced: Item Type */}
+                <select
+                    value={filters.itemType}
+                    onChange={(e) => handleChange('itemType', e.target.value)}
+                    className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 hover:border-slate-300"
+                >
+                    <option value="All">All Item Types</option>
+                    <option value="White Sack">White Sack</option>
+                    <option value="Box">Box</option>
+                    <option value="Packet">Packet</option>
+                    <option value="Industrial Part">Industrial Part</option>
+                    <option value="Electronics">Electronics</option>
+                </select>
+
+                {/* Advanced: Amount Range */}
+                <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-slate-200">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Min ₹</span>
+                    <input
+                        type="number"
+                        value={filters.minAmount}
+                        onChange={(e) => handleChange('minAmount', e.target.value)}
+                        placeholder="0"
+                        className="w-16 text-sm font-bold text-slate-700 outline-none"
+                    />
+                    <span className="text-slate-300 px-1">-</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Max ₹</span>
+                    <input
+                        type="number"
+                        value={filters.maxAmount}
+                        onChange={(e) => handleChange('maxAmount', e.target.value)}
+                        placeholder="10000"
+                        className="w-20 text-sm font-bold text-slate-700 outline-none"
+                    />
+                </div>
 
                 {/* Reset Button */}
                 <button

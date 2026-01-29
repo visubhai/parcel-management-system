@@ -15,6 +15,7 @@ interface ReportTableProps {
     onSort: (field: SortField) => void;
     onPageChange: (page: number) => void;
     onRowsPerPageChange: (rows: number) => void;
+    mutate: () => void;
 }
 
 import { parcelService } from "@/frontend/services/parcelService";
@@ -23,7 +24,7 @@ import { useRouter } from "next/navigation";
 
 export function ReportTable({
     data, currentPage, totalPages, rowsPerPage, totalItems,
-    sortConfig, onSort, onPageChange, onRowsPerPageChange
+    sortConfig, onSort, onPageChange, onRowsPerPageChange, mutate
 }: ReportTableProps) {
     // const { cancelBooking } = useBranchStore(); // Removed
     const router = useRouter();
@@ -47,8 +48,8 @@ export function ReportTable({
             }
 
             // Success
-            // Use Next.js soft refresh to keep client state intact
-            router.refresh();
+            // Force SWR revalidation
+            mutate();
             setBookingToCancel(null);
             setCancelModalOpen(false);
         }

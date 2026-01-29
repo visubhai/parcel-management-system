@@ -15,6 +15,9 @@ export interface FilterState {
     paymentType: PaymentStatus | 'All';
     status: ParcelStatus | 'All';
     searchQuery: string;
+    itemType: string | 'All';
+    minAmount: string;
+    maxAmount: string;
 }
 
 export function useReports() {
@@ -28,13 +31,16 @@ export function useReports() {
         toBranch: 'All',
         paymentType: 'All',
         status: 'All',
-        searchQuery: ''
+        searchQuery: '',
+        itemType: 'All',
+        minAmount: '',
+        maxAmount: ''
     });
 
     // -- Fetch Data --
     // Fetch based on date range to minimize load
     // We use a custom key to trigger re-fetch when dates change
-    const { data: serverData, error, isLoading } = useSWR(
+    const { data: serverData, error, isLoading, mutate } = useSWR(
         ['reports', filters.startDate, filters.endDate],
         async ([key, start, end]) => {
             const { data } = await parcelService.getBookingsForReports(start, end);
@@ -42,41 +48,32 @@ export function useReports() {
 
             // Map DB Parcel to App Booking Type for UI consumption (Sharing logic from store legacy)
             const mappedBookings: Booking[] = data.map((p: any) => {
-                // Helper to map Payment
-                const mapPayment = (pt: string): any => {
-                    if (pt === 'PAID') return 'Paid';
-                    return 'To Pay';
-                };
-
-                // Helper to map Status - DB has BOOKED, UI needs casing? 
-                // DB: BOOKED, IN_TRANSIT, ARRIVED, DELIVERED, CANCELLED
-                // UI Type: Booked, In Transit, Arrived, Delivered, Cancelled
-                const mapStatus = (st: string): any => {
-                    if (st === 'IN_TRANSIT') return 'In Transit';
-                    if (st === 'ARRIVED') return 'Arrived';
-                    if (st === 'DELIVERED') return 'Delivered';
-                    if (st === 'CANCELLED') return 'Cancelled';
-                    if (st === 'BOOKED') return 'Booked';
-                    return 'Booked';
-                };
 
                 return {
-                    id: p.id,
-                    lrNumber: p.lr_number,
-                    date: p.created_at, // Mapping created_at to date
-                    fromBranch: p.from_branch?.name || "Unknown",
-                    toBranch: p.to_branch?.name || "Unknown",
-                    sender: { name: p.sender_name, mobile: p.sender_mobile, email: p.sender_email },
-                    receiver: { name: p.receiver_name, mobile: p.receiver_mobile, email: p.receiver_email },
-                    parcels: [], // Items need fetch? For report summary, usually not needed. 
-                    costs: {
-                        freight: p.freight_charge,
-                        handling: p.handling_charge,
-                        hamali: p.hamali_charge,
-                        total: p.total_amount
+                    id: p._id,
+                    lrNumber: p.lrNumber,
+                    date: p.createdAt,
+                    fromBranch: p.fromBranch?.name || "Unknown",
+                    toBranch: p.toBranch?.name || "Unknown",
+                    sender: {
+                        name: p.sender?.name || "",
+                        mobile: p.sender?.mobile || "",
+                        email: p.sender?.email
                     },
-                    paymentType: mapPayment(p.payment_type),
-                    status: mapStatus(p.status)
+                    receiver: {
+                        name: p.receiver?.name || "",
+                        mobile: p.receiver?.mobile || "",
+                        email: p.receiver?.email
+                    },
+                    parcels: p.parcels || [],
+                    costs: {
+                        freight: p.costs?.freight || 0,
+                        handling: p.costs?.handling || 0,
+                        hamali: p.costs?.hamali || 0,
+                        total: p.costs?.total || 0
+                    },
+                    paymentType: p.paymentType,
+                    status: p.status
                 };
             });
             return mappedBookings;
@@ -118,6 +115,15 @@ export function useReports() {
 
             // Status
             if (filters.status !== 'All' && item.status !== filters.status) return false;
+
+            // Advanced Filters
+            if (filters.itemType !== 'All') {
+                const hasItem = item.parcels.some((p: any) => p.itemType === filters.itemType);
+                if (!hasItem) return false;
+            }
+
+            if (filters.minAmount && item.costs.total < Number(filters.minAmount)) return false;
+            if (filters.maxAmount && item.costs.total > Number(filters.maxAmount)) return false;
 
             // Search (Case insensitive text search)
             if (filters.searchQuery) {
@@ -213,6 +219,9 @@ export function useReports() {
 
         // Sorting
         sortConfig,
-        handleSort
+        handleSort,
+
+        // Helpers
+        mutate
     };
 }

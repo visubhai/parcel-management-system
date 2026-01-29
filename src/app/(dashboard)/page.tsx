@@ -95,12 +95,9 @@ export default function BookingDashboard() {
     if (costs.total <= 0) return;
     setIsSubmitting(true);
 
-    console.log("Submitting Booking...", { fromBranch, toBranch, branchObjects });
     // Try to find IDs
     const fromBranchId = branchObjects.find(b => b.name === fromBranch)?._id;
     const toBranchId = branchObjects.find(b => b.name === toBranch)?._id;
-
-    console.log("Resolved IDs:", { fromBranchId, toBranchId });
 
     const bookingData: Booking = {
       // Temporary ID, ignored by server

@@ -5,6 +5,8 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import User from '../src/backend/models/User';
 import Branch from '../src/backend/models/Branch';
+import Booking from '../src/backend/models/Booking';
+import Transaction from '../src/backend/models/Transaction';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -31,6 +33,10 @@ const seedData = [
     { branch: 'savan', pass: '95008', state: 'Gujarat' }
 ];
 
+const senderNames = ['Rajesh Kumar', 'Suresh Patel', 'Amit Shah', 'Priya Mehta', 'Rahul Varma'];
+const receiverNames = ['Jayesh Bhai', 'Kiran Patel', 'Deepak Gupta', 'Sneha Reddy', 'Manish Jha'];
+const itemTypes = ['White Sack', 'Box', 'Packet', 'Industrial Part', 'Electronics'];
+
 async function seed() {
     try {
         console.log('🔄 Connecting to MongoDB...');
@@ -41,9 +47,13 @@ async function seed() {
         console.log('🧹 Clearing old data...');
         await User.deleteMany({});
         await Branch.deleteMany({});
+        await Booking.deleteMany({});
+        await Transaction.deleteMany({});
 
         // 2. Create Branches and Users
         console.log('🌱 Seeding Branches and Users...');
+
+        const createdBranches = [];
 
         // Admin
         const adminHash = await bcrypt.hash('password123', 10);
@@ -57,25 +67,102 @@ async function seed() {
         });
 
         for (const item of seedData) {
-            // Create Branch
-            // slug as branchCode for simplicity
             const branch = await Branch.create({
-                name: item.branch, // Name as shown in image
-                branchCode: item.branch,
+                name: item.branch,
+                branchCode: item.branch.toUpperCase(),
                 state: item.state
             });
+            createdBranches.push(branch);
 
-            // Create User linked to Branch
             const passHash = await bcrypt.hash(item.pass.toString(), 10);
             await User.create({
-                name: item.branch, // User name same as branch
+                name: item.branch,
                 email: `${item.branch}@system.com`,
-                username: item.branch, // USE BRANCH NAME AS USERNAME
+                username: item.branch,
                 password: passHash,
                 role: 'STAFF',
                 branch: branch._id
             });
             console.log(`Created: ${item.branch} / ${item.pass}`);
+        }
+
+        // 3. Create Mock Bookings
+        console.log('🌱 Creating Mock Bookings...');
+        const statuses = ['Booked', 'In Transit', 'Arrived', 'Delivered', 'Cancelled'];
+
+        for (let i = 0; i < 50; i++) {
+            const fromBranch = createdBranches[Math.floor(Math.random() * createdBranches.length)];
+            let toBranch = createdBranches[Math.floor(Math.random() * createdBranches.length)];
+            while (toBranch._id.equals(fromBranch._id)) {
+                toBranch = createdBranches[Math.floor(Math.random() * createdBranches.length)];
+            }
+
+            const status = statuses[Math.floor(Math.random() * statuses.length)];
+            const paymentType = Math.random() > 0.5 ? 'Paid' : 'To Pay';
+
+            // Random date in last 30 days
+            const daysAgo = Math.floor(Math.random() * 30);
+            const createdAt = new Date();
+            createdAt.setDate(createdAt.getDate() - daysAgo);
+
+            const dateStr = createdAt.toISOString().slice(2, 10).replace(/-/g, '');
+            const randomNum = Math.floor(1000 + Math.random() * 9000);
+            const lrNumber = `LR${fromBranch.branchCode}${dateStr}${randomNum}`;
+
+            const freight = Math.floor(Math.random() * 1000) + 100;
+            const handling = 10;
+            const hamali = Math.floor(Math.random() * 50);
+            const total = freight + handling + hamali;
+
+            const booking = await Booking.create({
+                lrNumber,
+                fromBranch: fromBranch._id,
+                toBranch: toBranch._id,
+                sender: {
+                    name: senderNames[Math.floor(Math.random() * senderNames.length)],
+                    mobile: '9876543210'
+                },
+                receiver: {
+                    name: receiverNames[Math.floor(Math.random() * receiverNames.length)],
+                    mobile: '9876543210'
+                },
+                parcels: [{
+                    quantity: Math.floor(Math.random() * 5) + 1,
+                    itemType: itemTypes[Math.floor(Math.random() * itemTypes.length)],
+                    weight: Math.floor(Math.random() * 50) + 1,
+                    rate: freight
+                }],
+                costs: { freight, handling, hamali, total },
+                paymentType,
+                status,
+                createdAt,
+                updatedAt: createdAt
+            });
+
+            // 4. Create Transactions for Ledger
+            // If Paid, it's a CREDIT to fromBranch
+            if (paymentType === 'Paid') {
+                await Transaction.create({
+                    branchId: fromBranch._id,
+                    type: 'CREDIT',
+                    amount: total,
+                    description: `Booking payment for ${lrNumber}`,
+                    referenceId: lrNumber,
+                    createdAt
+                });
+            }
+
+            // If Delivered and To Pay, it's a CREDIT to toBranch
+            if (status === 'Delivered' && paymentType === 'To Pay') {
+                await Transaction.create({
+                    branchId: toBranch._id,
+                    type: 'CREDIT',
+                    amount: total,
+                    description: `Collection for ${lrNumber}`,
+                    referenceId: lrNumber,
+                    createdAt: new Date().setDate(createdAt.getDate() + 2) // Delivered later
+                });
+            }
         }
 
         console.log('✅ Seeding Complete!');

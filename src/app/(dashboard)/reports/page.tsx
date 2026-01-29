@@ -13,23 +13,23 @@ const ReportSummary = ({ stats }: { stats: any }) => (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
             <p className="text-xs font-bold text-slate-400 uppercase">Revenue</p>
-            <p className="text-xl font-black text-slate-800 mt-1">₹{stats.totalRevenue.toLocaleString()}</p>
+            <p className="text-xl font-black text-slate-800 mt-1">₹{(stats.totalRevenue || 0).toLocaleString()}</p>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
             <p className="text-xs font-bold text-slate-400 uppercase">Paid</p>
-            <p className="text-xl font-black text-green-600 mt-1">₹{stats.paidAmount.toLocaleString()}</p>
+            <p className="text-xl font-black text-green-600 mt-1">₹{(stats.paidAmount || 0).toLocaleString()}</p>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
             <p className="text-xs font-bold text-slate-400 uppercase">To Pay</p>
-            <p className="text-xl font-black text-red-600 mt-1">₹{stats.toPayAmount.toLocaleString()}</p>
+            <p className="text-xl font-black text-red-600 mt-1">₹{(stats.toPayAmount || 0).toLocaleString()}</p>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
             <p className="text-xs font-bold text-slate-400 uppercase">Bookings</p>
-            <p className="text-xl font-black text-blue-600 mt-1">{stats.totalBookings}</p>
+            <p className="text-xl font-black text-blue-600 mt-1">{stats.totalBookings || 0}</p>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
             <p className="text-xs font-bold text-slate-400 uppercase">Cancelled</p>
-            <p className="text-xl font-black text-slate-400 mt-1">{stats.cancelledCount}</p>
+            <p className="text-xl font-black text-slate-400 mt-1">{stats.cancelledCount || 0}</p>
         </div>
     </div>
 );
@@ -51,7 +51,7 @@ export default function ReportsPage() {
         filters,
         setFilters,
         currentPage, totalPages, rowsPerPage, totalItems, setCurrentPage, setRowsPerPage,
-        sortConfig, handleSort
+        sortConfig, handleSort, mutate
     } = useReports();
 
     // Determine available branches based on Role
@@ -132,6 +132,7 @@ export default function ReportsPage() {
                     onSort={handleSort}
                     onPageChange={setCurrentPage}
                     onRowsPerPageChange={setRowsPerPage}
+                    mutate={mutate}
                 />
             </div>
 
