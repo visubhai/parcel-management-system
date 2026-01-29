@@ -47,9 +47,8 @@ export function ReportTable({
             }
 
             // Success
-            // Ideally: `mutate(['reports', ...])` but we don't have the key here easily.
-            // Given this is an Admin action, reload is acceptable or just letting SWR revalidate on focus.
-            window.location.reload();
+            // Use Next.js soft refresh to keep client state intact
+            router.refresh();
             setBookingToCancel(null);
             setCancelModalOpen(false);
         }
