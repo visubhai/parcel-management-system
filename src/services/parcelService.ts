@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { handleSupabaseRequest, ServiceResponse } from './base';
+import { ledgerService } from './ledgerService';
 import { Booking, Parcel, Branch } from '@/lib/types';
 
 export const parcelService = {
@@ -121,6 +122,20 @@ export const parcelService = {
         // 4. Create Items (if any)
         if (booking.parcels && booking.parcels.length > 0) {
             // ... item insertion logic (omitted for brevity, can be added if schema supports)
+        }
+
+        // 5. [NEW] Ledger Entry for PAID parcels
+        if (booking.paymentType === 'Paid') {
+            // We can use a dynamic import or just import at top. Let's assume top-level import is added.
+            // Importing directly inside here for cleaner diff if top-level is hard, but top level is better.
+            // Relying on subsequent tool call or user to ensure top-level import of ledgerService.
+            await ledgerService.addTransaction({
+                parcel_id: parcel.id,
+                amount: booking.costs?.total || 0,
+                type: 'CREDIT',
+                description: 'Initial Booking Payment',
+                branch_id: fromId
+            });
         }
 
         return { data: parcel, error: null };

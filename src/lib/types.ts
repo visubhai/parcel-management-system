@@ -51,8 +51,8 @@ export interface User {
     username: string; // Used for login
     password?: string; // Mock password
     role: Role;
-    branch?: Branch; // Primary branch (deprecated? or maybe "Home Branch") - keeping for backward compat if needed, but strictly controlled via allowedBranches now.
-
+    branch?: Branch; // Primary branch Name
+    branchId?: string; // Primary branch UUID (for Ledger)
     // Permission System
     allowedBranches: Branch[];
     allowedReports: ReportType[];

@@ -207,23 +207,7 @@ export function LoginPage() {
                         </p>
                     </div>
 
-                    <div className="bg-blue-50 px-6 py-4 rounded-xl border border-blue-100 text-center text-xs text-blue-800 space-y-2">
-                        <p>Demo Credentials (Password: <span className="font-mono font-bold">password</span>)</p>
-                        <div className="grid grid-cols-3 gap-2 font-mono font-bold opacity-80 text-[10px]">
-                            <div className="flex flex-col">
-                                <span className="uppercase text-[8px] opacity-60">Admin</span>
-                                <span>admin</span>
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="uppercase text-[8px] opacity-60">Branch A</span>
-                                <span>manager_a</span>
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="uppercase text-[8px] opacity-60">Branch B</span>
-                                <span>manager_b</span>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>

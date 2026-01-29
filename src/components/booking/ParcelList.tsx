@@ -1,8 +1,11 @@
 "use client";
 
-import { Plus, Trash2, Camera } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { ItemType, Parcel } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface ParcelListProps {
     parcels: Parcel[];
@@ -14,44 +17,46 @@ interface ParcelListProps {
 
 export function ParcelList({ parcels, onAdd, onRemove, onChange, disabled }: ParcelListProps) {
     return (
-        <div className="bg-white/90 backdrop-blur-sm p-6 rounded-xl border border-slate-200 shadow-lg shadow-slate-200/40 mt-4 hover:shadow-xl transition-all">
-            <div className="flex items-center justify-between mb-5">
-                <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+        <Card className="mt-4 hover:shadow-md transition-all border-border shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between py-4">
+                <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                     📦 Parcel Details
-                </h3>
-                <button
+                </CardTitle>
+                <Button
                     onClick={onAdd}
                     disabled={disabled}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-blue-200"
+                    variant="secondary"
+                    size="sm"
+                    className="gap-2 font-bold"
                 >
                     <Plus className="w-3.5 h-3.5" /> ADD ROW
-                </button>
-            </div>
+                </Button>
+            </CardHeader>
 
-            <div className="space-y-4">
-                {parcels.map((parcel, index) => (
-                    <div key={parcel.id} className="grid grid-cols-12 gap-4 items-end bg-slate-50/50 p-3 rounded-lg border border-slate-100 hover:border-slate-200 transition-colors">
+            <CardContent className="space-y-4">
+                {parcels.map((parcel) => (
+                    <div key={parcel.id} className="grid grid-cols-12 gap-4 items-end bg-muted/30 p-3 rounded-lg border border-border/50 hover:border-border transition-colors">
                         {/* Quantity */}
-                        <div className="col-span-2">
-                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Qty</label>
-                            <input
+                        <div className="col-span-2 space-y-2">
+                            <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Qty</Label>
+                            <Input
                                 type="number"
                                 min="1"
                                 value={parcel.quantity}
                                 disabled={disabled}
                                 onChange={(e) => onChange(parcel.id, "quantity", parseInt(e.target.value) || 0)}
-                                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100 text-center"
+                                className="font-bold text-center bg-background"
                             />
                         </div>
 
                         {/* Item Type - Expanded to 6 cols */}
-                        <div className="col-span-6">
-                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Type</label>
+                        <div className="col-span-6 space-y-2">
+                            <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Type</Label>
                             <select
                                 value={parcel.itemType}
                                 disabled={disabled}
                                 onChange={(e) => onChange(parcel.id, "itemType", e.target.value as ItemType)}
-                                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100 bg-white"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-bold"
                             >
                                 <option value="White Sack">White Sack</option>
                                 <option value="Carton">Carton</option>
@@ -60,38 +65,36 @@ export function ParcelList({ parcels, onAdd, onRemove, onChange, disabled }: Par
                         </div>
 
                         {/* Rate */}
-                        <div className="col-span-2">
-                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Rate</label>
-                            <input
+                        <div className="col-span-2 space-y-2">
+                            <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Rate</Label>
+                            <Input
                                 type="number"
                                 min="0"
                                 value={parcel.rate}
                                 disabled={disabled}
                                 onChange={(e) => onChange(parcel.id, "rate", parseFloat(e.target.value) || 0)}
-                                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100 text-right"
+                                className="font-bold text-right bg-background"
                             />
                         </div>
 
-
-
                         {/* Remove Button */}
-                        <div className="col-span-2 flex justify-end pb-2">
+                        <div className="col-span-2 flex justify-end pb-1">
                             {parcels.length > 1 && (
-                                <button
+                                <Button
                                     onClick={() => onRemove(parcel.id)}
                                     disabled={disabled}
-                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                     title="Remove Row"
                                 >
                                     <Trash2 className="w-4 h-4" />
-                                </button>
+                                </Button>
                             )}
                         </div>
                     </div>
                 ))}
-            </div>
-
-
-        </div>
+            </CardContent>
+        </Card>
     );
 }

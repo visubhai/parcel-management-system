@@ -45,6 +45,7 @@ export const authService = {
             username: profile.email, // using email as username for now
             role: profile.role,
             branch: profile.branches?.name || 'Global', // Global for super admin
+            branchId: profile.branch_id,
             isActive: profile.is_active,
             // Map new schema fields to old type for compatibility during migration
             allowedBranches: profile.branch_id ? [profile.branches?.name] : [],

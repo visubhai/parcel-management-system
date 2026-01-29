@@ -33,13 +33,12 @@ export const adminService = {
     },
 
     async getAuditLogs(limit = 100): Promise<ServiceResponse<any[]>> {
-        return handleSupabaseRequest(
-            supabase
-                .from('audit_logs')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(limit)
-                .then()
-        );
+        const query = supabase
+            .from('audit_logs')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        return handleSupabaseRequest(Promise.resolve(query));
     }
 };

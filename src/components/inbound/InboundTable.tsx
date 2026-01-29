@@ -6,6 +6,9 @@ import { Package, Truck, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import useSWR from "swr";
+import { ledgerService } from "@/services/ledgerService";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ReceiveModal } from "./ReceiveModal";
 import { IncomingParcel } from "@/lib/types";
 
@@ -63,15 +66,32 @@ export function InboundTable() {
     }, [serverData]);
 
 
-    const handleReceiveClick = (parcel: IncomingParcel) => {
-        if (parcel.status === "Arrived") return;
+    const handleActionClick = (parcel: IncomingParcel) => {
+        if (parcel.status === "Delivered") return;
         setSelectedParcel(parcel);
     };
 
-    const handleConfirmReceive = async () => {
+    const handleConfirmAction = async () => {
         if (selectedParcel) {
-            await parcelService.updateParcelStatus(selectedParcel.id, 'ARRIVED');
-            mutate(); // Refresh list
+            // If already Arrived, we are Delivering
+            if (selectedParcel.status === "Arrived") {
+                // 1. Payment Collection (if needed)
+                if (selectedParcel.paymentStatus === "To Pay") {
+                    await ledgerService.addTransaction({
+                        parcel_id: selectedParcel.id,
+                        amount: selectedParcel.totalAmount,
+                        type: 'CREDIT',
+                        description: 'Payment collected at Delivery',
+                        branch_id: currentUser?.branchId || '' // Use the new ID
+                    });
+                }
+                // 2. Mark Delivered
+                await parcelService.updateParcelStatus(selectedParcel.id, 'DELIVERED');
+            } else {
+                // We are Receiving (In Transit -> Arrived)
+                await parcelService.updateParcelStatus(selectedParcel.id, 'ARRIVED');
+            }
+            mutate();
             setSelectedParcel(null);
         }
     };
@@ -81,10 +101,10 @@ export function InboundTable() {
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <Card className="shadow-sm border-slate-200 overflow-hidden">
             <div className="p-6 border-b border-slate-100">
                 <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <Truck className="w-5 h-5 text-blue-600" />
+                    <Truck className="w-5 h-5 text-primary" />
                     Incoming Parcels for {targetBranchId}
                 </h2>
             </div>
@@ -114,7 +134,7 @@ export function InboundTable() {
                                 <span className={cn(
                                     "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold",
                                     parcel.paymentStatus === "Paid"
-                                        ? "bg-green-50 text-green-700 border border-green-100"
+                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
                                         : "bg-red-50 text-red-700 border border-red-100"
                                 )}>
                                     {parcel.paymentStatus}
@@ -122,33 +142,37 @@ export function InboundTable() {
                             </td>
                             <td className="px-6 py-4">
                                 <span className={cn(
-                                    "inline-flex items-center gap-1.5",
-                                    parcel.status === "Arrived" ? "text-green-600" : "text-amber-600"
+                                    "inline-flex items-center gap-1.5 font-semibold",
+                                    parcel.status === "Arrived" ? "text-blue-600" : (
+                                        parcel.status === "Delivered" ? "text-emerald-600" : "text-amber-600"
+                                    )
                                 )}>
                                     {parcel.status === "Arrived" ? (
                                         <>
-                                            <CheckCircle className="w-4 h-4" /> Arrived
+                                            <Package className="w-4 h-4" /> Arrived
                                         </>
                                     ) : (
-                                        <>
-                                            <Truck className="w-4 h-4" /> In Transit
-                                        </>
+                                        parcel.status === "Delivered" ? "Delivered" : "In Transit"
                                     )}
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-right">
-                                <button
-                                    onClick={() => handleReceiveClick(parcel)}
-                                    disabled={parcel.status === "Arrived"}
-                                    className={cn(
-                                        "px-4 py-2 rounded-lg text-xs font-bold transition-all",
-                                        parcel.status === "Arrived"
-                                            ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                                            : "bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/20"
-                                    )}
-                                >
-                                    {parcel.status === "Arrived" ? "Received" : "Receive"}
-                                </button>
+                                {parcel.status !== "Delivered" && (
+                                    <Button
+                                        onClick={() => handleActionClick(parcel)}
+                                        size="sm"
+                                        variant={parcel.status === "Arrived" ? "default" : "secondary"}
+                                        className={cn(
+                                            "min-w-[100px] font-bold shadow-sm",
+                                            parcel.status === "Arrived" ? "bg-primary hover:bg-primary/90" : "bg-white border hover:bg-slate-50 text-slate-700"
+                                        )}
+                                    >
+                                        {parcel.status === "Arrived" ? "Deliver" : "Receive"}
+                                    </Button>
+                                )}
+                                {parcel.status === "Delivered" && (
+                                    <span className="text-xs font-bold text-slate-400">Completed</span>
+                                )}
                             </td>
                         </tr>
                     ))}
@@ -167,9 +191,9 @@ export function InboundTable() {
                     parcel={selectedParcel}
                     isOpen={!!selectedParcel}
                     onClose={() => setSelectedParcel(null)}
-                    onConfirm={handleConfirmReceive}
+                    onConfirm={handleConfirmAction}
                 />
             )}
-        </div>
+        </Card>
     );
 }

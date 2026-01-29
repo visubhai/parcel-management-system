@@ -27,6 +27,11 @@ const MOCK_SUGGESTIONS = [
     "Metro Distributors"
 ];
 
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+// ... (keep MOCK_SUGGESTIONS)
+
 export function BookingForm({ title, type, values, onChange, disabled, branch, onBranchChange, branchLabel, availableBranches }: ContactFormProps) {
     const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -41,21 +46,21 @@ export function BookingForm({ title, type, values, onChange, disabled, branch, o
     };
 
     return (
-        <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-slate-100 shadow-lg shadow-slate-200/40 relative hover:shadow-xl transition-all flex flex-col">
-            <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-card text-card-foreground p-4 rounded-xl border border-border shadow-sm relative hover:shadow-md transition-all flex flex-col group">
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2 group-focus-within:text-primary transition-colors">
                     <User className="w-4 h-4" /> {title}
                 </h3>
 
                 {branch && onBranchChange && (
-                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="text-xs font-medium text-slate-500 hidden sm:inline">{branchLabel || "Branch"}:</span>
+                    <div className="flex items-center gap-2 bg-muted/50 border border-border rounded-lg px-2 py-1">
+                        <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground hidden sm:inline">{branchLabel || "Branch"}:</span>
                         <select
                             value={branch}
                             disabled={disabled}
                             onChange={(e) => onBranchChange(e.target.value as Branch)}
-                            className="bg-transparent text-xs font-bold text-slate-900 outline-none cursor-pointer focus:ring-0 border-none p-0 w-24"
+                            className="bg-transparent text-xs font-bold text-foreground outline-none cursor-pointer focus:ring-0 border-none p-0 w-24"
                         >
                             {availableBranches ? availableBranches.map(b => (
                                 <option key={b} value={b}>{b}</option>
@@ -71,26 +76,26 @@ export function BookingForm({ title, type, values, onChange, disabled, branch, o
             </div>
 
             <div className="grid grid-cols-1 gap-4">
-                {/* Name Input with Autocomplete */}
-                <div className="relative">
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Name / Company</label>
+                {/* Name Input */}
+                <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Name / Company</Label>
                     <div className="relative">
-                        <input
+                        <Input
                             type="text"
                             value={values.name}
                             disabled={disabled}
                             onChange={(e) => handleNameChange(e.target.value)}
                             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                            className="w-full pl-3 pr-3 py-2 rounded-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm font-semibold text-slate-900 disabled:bg-slate-50 disabled:text-slate-500"
+                            className="font-semibold"
                             placeholder="Rahul Transport Services"
                         />
                         {showSuggestions && !disabled && (
-                            <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-40 overflow-auto">
+                            <div className="absolute z-10 w-full mt-1 bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-40 overflow-auto">
                                 {MOCK_SUGGESTIONS.filter(s => s.toLowerCase().includes(values.name.toLowerCase())).map((s) => (
                                     <button
                                         key={s}
                                         onClick={() => selectSuggestion(s)}
-                                        className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 text-slate-700"
+                                        className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
                                     >
                                         {s}
                                     </button>
@@ -101,22 +106,20 @@ export function BookingForm({ title, type, values, onChange, disabled, branch, o
                 </div>
 
                 {/* Mobile */}
-                <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Mobile</label>
+                <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Mobile</Label>
                     <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                        <input
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                        <Input
                             type="text"
                             value={values.mobile}
                             disabled={disabled}
                             onChange={(e) => onChange("mobile", e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 rounded-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm font-semibold text-slate-900 disabled:bg-slate-50 disabled:text-slate-500"
+                            className="pl-9 font-semibold"
                             placeholder="9876543210"
                         />
                     </div>
                 </div>
-
-
             </div>
         </div>
     );
