@@ -3,7 +3,7 @@
 ## 1. System Overview
 **Product Name**: ABCD Logistics Platform (Enterprise Edition)
 **Version**: 1.0.0 (Commercial Release)
-**Architecture**: Next.js 15 (Frontend) + Supabase (Backend/Auth/Database)
+**Architecture**: Next.js 15 (Frontend) + MongoDB (Database) + NextAuth (Authentication)
 
 This system is a multi-tenant logistics ERP designed for transport companies to manage booking, dispatch, and delivery of parcels across multiple branches. It features Role-Based Access Control (RBAC), real-time reporting, and financial tracking.
 
@@ -44,15 +44,13 @@ This system is a multi-tenant logistics ERP designed for transport companies to 
 ### A. Environment Setup
 Create a `.env.local` (and set in Vercel Environment Variables):
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key (Backend only)
+MONGODB_URI=your-mongodb-connection-string
+AUTH_SECRET=your-nextauth-secret
 ```
 
-### B. Database Migration (Supabase)
-1.  Run `database/enterprise_full_setup.sql` in SQL Editor.
-2.  Run `database/commercial_hardening.sql` for Soft Deletes & Ledger.
-3.  Run `database/enterprise_seed.sql` for initial data.
+### B. Database Migration (MongoDB)
+1.  Ensure MongoDB instance is running.
+2.  Seed initial data using the admin seeding script: `npm run seed`.
 
 ### C. Vercel Deployment
 1.  Connect GitHub repo to Vercel.
@@ -65,18 +63,16 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key (Backend only)
 ## 4. 🔐 Security & Operations
 
 ### A. Data Backup
-Supabase provides automatic daily backups. For enterprise compliance:
-- **PITR (Point-in-Time Recovery)** is enabled on Pro Plan.
-- **Manual Dump**: Run `pg_dump` via Supabase CLI weekly.
+- **MongoDB Atlas**: Automatic backups are enabled by default on paid clusters.
+- **Manual Dump**: Use `mongodump` for manual backups.
 
 ### B. Disaster Recovery
-- **RPO (Recovery Point Objective)**: 24 hours (Standard), 1 hour (Pro).
-- **RTO (Recovery Time Objective)**: < 4 hours.
-- If region fails, restore backup to new Supabase project in different region.
+- **RPO (Recovery Point Objective)**: Depends on MongoDB configuration (Replica Sets).
+- **RTO (Recovery Time Objective)**: Fast failover with Replica Sets.
 
 ### C. Compliance
-- **GDPR**: "Right to be Forgotten" supported via `deleted_at` (Soft Delete) or Hard Delete request by Super Admin.
-- **Audit Logs**: All sensitive actions (Login, Update Parcel, Delete User) are logged in `audit_logs` table (immutable).
+- **GDPR**: Supported via soft deletes where applicable.
+- **Audit Logs**: Sensitive actions are logged.
 
 ---
 
@@ -89,4 +85,4 @@ A: Check if you are logged in. If you are an Admin, you only see parcels related
 A: You tried to perform an action not allowed for your role (e.g., Admin trying to delete a user).
 
 **Q: A user is locked out.**
-A: Super Admin can go to "User Management" and toggle "Active" status off and on, or reset password via Supabase Auth.
+A: Super Admin can update user status via the User Management dashboard.

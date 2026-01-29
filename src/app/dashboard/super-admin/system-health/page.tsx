@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { adminService } from '@/services/adminService';
-import { useToast } from '@/components/ui/toast';
+import { adminService } from '@/frontend/services/adminService';
+import { useToast } from '@/frontend/components/ui/toast';
 import { ShieldCheck, Server, Activity, AlertTriangle, Clock } from 'lucide-react';
 
 export default function SystemHealthPage() {

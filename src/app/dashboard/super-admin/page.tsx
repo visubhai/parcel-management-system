@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AdminList } from "@/components/super-admin/AdminList";
-import { PermissionEditor } from "@/components/super-admin/PermissionEditor";
-import { User } from "@/lib/types";
+import { AdminList } from "@/frontend/components/super-admin/AdminList";
+import { PermissionEditor } from "@/frontend/components/super-admin/PermissionEditor";
+import { User } from "@/shared/types";
 import { Plus, ShieldAlert } from "lucide-react";
-import { useBranchStore } from "@/lib/store";
+import { useBranchStore } from "@/frontend/lib/store";
 
 export default function SuperAdminDashboard() {
     const { currentUser } = useBranchStore();

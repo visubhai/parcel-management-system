@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useBranchStore } from "@/lib/store";
-import { BookingForm } from "@/components/booking/BookingForm";
-import { ParcelList } from "@/components/booking/ParcelList";
-import { PaymentBox } from "@/components/booking/PaymentBox";
-import { Booking, Parcel, PaymentStatus, Branch } from "@/lib/types";
+import { useBranchStore } from "@/frontend/lib/store";
+import { BookingForm } from "@/frontend/components/booking/BookingForm";
+import { ParcelList } from "@/frontend/components/booking/ParcelList";
+import { PaymentBox } from "@/frontend/components/booking/PaymentBox";
+import { Booking, Parcel, PaymentStatus, Branch } from "@/shared/types";
 // import { v4 as uuidv4 } from "uuid"; // We might not have uuid installed, I'll use a simple random string generator or date
 import { Printer } from "lucide-react";
-import { useBranches } from "@/hooks/useBranches";
-import { parcelService } from "@/services/parcelService";
+import { useBranches } from "@/frontend/hooks/useBranches";
+import { parcelService } from "@/frontend/services/parcelService";
 
 // Simple ID generator if uuid is not available
 const generateId = () => Math.random().toString(36).substr(2, 9);

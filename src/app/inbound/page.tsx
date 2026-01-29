@@ -1,4 +1,4 @@
-import { InboundTable } from "@/components/inbound/InboundTable";
+import { InboundTable } from "@/frontend/components/inbound/InboundTable";
 import { PackageCheck } from "lucide-react";
 
 export default function InboundPage() {

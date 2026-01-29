@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useBranchStore } from "@/lib/store";
-import { ProfileSettings } from "@/components/settings/ProfileSettings";
-import { UserManagement } from "@/components/settings/UserManagement";
-import { BranchManagement } from "@/components/settings/BranchManagement";
+import { useBranchStore } from "@/frontend/lib/store";
+import { ProfileSettings } from "@/frontend/components/settings/ProfileSettings";
+import { UserManagement } from "@/frontend/components/settings/UserManagement";
+import { BranchManagement } from "@/frontend/components/settings/BranchManagement";
 import { User, Users, Building2, Settings as SettingsIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/frontend/lib/utils";
 
 export default function SettingsPage() {
     const { currentUser } = useBranchStore();

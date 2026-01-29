@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { useBranchStore } from "@/lib/store";
-import { useReports } from "@/hooks/useReports";
-import { ReportFilters } from "@/components/reports/ReportFilters";
-import { ReportTable } from "@/components/reports/ReportTable";
-import { ReportCharts } from "@/components/reports/ReportCharts";
-import { ExportButtons } from "@/components/reports/ExportButtons";
-import { Branch } from "@/lib/types";
+import { useBranchStore } from "@/frontend/lib/store";
+import { useReports } from "@/frontend/hooks/useReports";
+import { ReportFilters } from "@/frontend/components/reports/ReportFilters";
+import { ReportTable } from "@/frontend/components/reports/ReportTable";
+import { ReportCharts } from "@/frontend/components/reports/ReportCharts";
+import { ExportButtons } from "@/frontend/components/reports/ExportButtons";
+import { Branch } from "@/shared/types";
 
 const ReportSummary = ({ stats }: { stats: any }) => (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
@@ -34,7 +34,7 @@ const ReportSummary = ({ stats }: { stats: any }) => (
     </div>
 );
 
-import { useBranches } from "@/hooks/useBranches";
+import { useBranches } from "@/frontend/hooks/useBranches";
 
 export default function ReportsPage() {
     const { currentUser } = useBranchStore();

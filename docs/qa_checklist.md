@@ -6,8 +6,8 @@
 ---
 
 ## 🛑 Pre-Flight Checks
-- [ ] **Environment Variables**: Verify `.env.production` has correct `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
-- [ ] **Database Migration**: Ensure `enterprise_full_setup.sql` and `commercial_hardening.sql` have been run on Production DB.
+- [ ] **Environment Variables**: Verify `.env.production` has correct `MONGODB_URI` and `AUTH_SECRET`.
+- [ ] **Database Migration**: Ensure database seeding (`npm run seed`) has been performed on Production DB.
 
 ## 1. Booking Workflow
 - [ ] **Create Booking (Paid)**:
