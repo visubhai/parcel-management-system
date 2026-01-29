@@ -52,7 +52,17 @@ export const parcelService = {
     },
 
     async updateParcelStatus(parcelId: string, status: string): Promise<ServiceResponse<void>> {
-        const response = await supabase.from('parcels').update({ status }).eq('id', parcelId);
+        // Map UI Status to DB Enum
+        const statusMap: Record<string, string> = {
+            'Booked': 'BOOKED',
+            'In Transit': 'IN_TRANSIT',
+            'Arrived': 'ARRIVED',
+            'Delivered': 'DELIVERED',
+            'Cancelled': 'CANCELLED'
+        };
+        const dbStatus = statusMap[status] || status;
+
+        const response = await supabase.from('parcels').update({ status: dbStatus }).eq('id', parcelId);
         return { data: null, error: response.error };
     },
 

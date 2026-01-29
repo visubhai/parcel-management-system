@@ -35,17 +35,18 @@ export function ReportTable({
 
     const handleConfirmCancel = async () => {
         if (bookingToCancel) {
-            // cancelBooking(bookingToCancel); // Legacy
-            await parcelService.updateParcelStatus(bookingToCancel, 'Cancelled');
-            // Optimistic update or mutate? 
-            // The parent "useReports" swr should eventually revalidate if we mutate or just wait for auto refresh.
-            // For now, simple await. Ideally pass "refresh" prop or use global mutate.
-            // Since this component is deep, let's just do it.
-            // Note: UI won't update immediately without re-fetch.
-            // For better UX, we could call an onRefresh prop if available.
-            window.location.reload(); // Quick fix for refresh or trigger parent re-fetch. 
+            const { error } = await parcelService.updateParcelStatus(bookingToCancel, 'Cancelled');
+
+            if (error) {
+                alert(`Failed to cancel booking: ${error.message}`);
+                // Don't close modal so user can retry or see error
+                return;
+            }
+
+            // Success
             // Ideally: `mutate(['reports', ...])` but we don't have the key here easily.
             // Given this is an Admin action, reload is acceptable or just letting SWR revalidate on focus.
+            window.location.reload();
             setBookingToCancel(null);
             setCancelModalOpen(false);
         }
