@@ -32,16 +32,22 @@ export default function BookingDashboard() {
   useEffect(() => {
     if (currentUser?.branch && currentUser.branch !== "Global") {
       setFromBranch(currentUser.branch as Branch);
-    } else if (branchNames.length > 0 && !fromBranch) {
-      setFromBranch(branchNames[0] as Branch);
+    } else if (branchNames.length > 0) {
+      // If Global or no user branch, default to first available branch
+      if (!fromBranch || fromBranch === "Branch A") {
+        setFromBranch(branchNames[0] as Branch);
+      }
     }
   }, [currentUser, branchNames, fromBranch]);
 
   // Sync To Branch
   useEffect(() => {
-    if (branchNames.length > 1 && (!toBranch || toBranch === fromBranch)) {
-      const alternate = branchNames.find(b => b !== fromBranch);
-      if (alternate) setToBranch(alternate as Branch);
+    if (branchNames.length > 1) {
+      // Ensure To Branch is not same as From Branch
+      if (!toBranch || toBranch === "Branch B" || toBranch === fromBranch) {
+        const alternate = branchNames.find(b => b !== fromBranch);
+        if (alternate) setToBranch(alternate as Branch);
+      }
     }
   }, [branchNames, fromBranch, toBranch]);
 

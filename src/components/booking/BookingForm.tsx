@@ -65,10 +65,7 @@ export function BookingForm({ title, type, values, onChange, disabled, branch, o
                             {availableBranches ? availableBranches.map(b => (
                                 <option key={b} value={b}>{b}</option>
                             )) : (
-                                <>
-                                    <option value="Branch A">Branch A</option>
-                                    <option value="Branch B">Branch B</option>
-                                </>
+                                <option value="" disabled>Loading branches...</option>
                             )}
                         </select>
                     </div>
