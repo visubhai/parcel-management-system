@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Branch } from "@/shared/types";
-import { User, Phone, Mail, MapPin } from "lucide-react";
-import { cn } from "@/frontend/lib/utils";
+import { User, Phone, MapPin } from "lucide-react";
+import { BranchObj } from "@/frontend/hooks/useBranches";
 
 interface ContactFormProps {
     title: string;
@@ -11,12 +10,11 @@ interface ContactFormProps {
     values: { name: string; mobile: string };
     onChange: (field: string, value: string) => void;
     disabled?: boolean;
-    // New Props for Branch Selection
-    // New Props for Branch Selection
-    branch?: Branch;
-    onBranchChange?: (branch: Branch) => void;
+    // Props for Branch Selection
+    branch?: string; // Branch ID
+    onBranchChange?: (branchId: string) => void;
     branchLabel?: string;
-    availableBranches?: Branch[];
+    availableBranches?: BranchObj[];
 }
 
 const MOCK_SUGGESTIONS = [
@@ -59,11 +57,11 @@ export function BookingForm({ title, type, values, onChange, disabled, branch, o
                         <select
                             value={branch}
                             disabled={disabled}
-                            onChange={(e) => onBranchChange(e.target.value as Branch)}
+                            onChange={(e) => onBranchChange(e.target.value)}
                             className="bg-transparent text-xs font-bold text-foreground outline-none cursor-pointer focus:ring-0 border-none p-0 w-24"
                         >
                             {availableBranches ? availableBranches.map(b => (
-                                <option key={b} value={b}>{b}</option>
+                                <option key={b._id} value={b._id}>{b.name}</option>
                             )) : (
                                 <option value="" disabled>Loading branches...</option>
                             )}

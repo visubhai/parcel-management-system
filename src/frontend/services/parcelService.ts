@@ -47,7 +47,7 @@ export const parcelService = {
                 .filter((p: any) => p.status !== 'Delivered' && p.status !== 'Cancelled')
                 .map((p: any) => ({
                     id: p._id,
-                    lrNumber: p.lrNumber,
+                    lrNumber: p.lrNumber || p.lr_number,
                     senderName: p.sender.name,
                     receiverName: p.receiver.name,
                     fromBranch: p.fromBranch.name,
@@ -111,7 +111,7 @@ export const parcelService = {
 
     async getBookingsForReports(startDate: string, endDate: string): Promise<ServiceResponse<any[]>> {
         try {
-            const res = await fetch(`/api/bookings?startDate=${startDate}&endDate=${endDate}`);
+            const res = await fetch(`/api/bookings?startDate=${startDate}&endDate=${endDate}&_t=${Date.now()}`);
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
             return { data, error: null };

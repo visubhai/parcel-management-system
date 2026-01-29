@@ -10,6 +10,7 @@ import { Booking, Parcel, PaymentStatus, Branch } from "@/shared/types";
 import { Printer } from "lucide-react";
 import { useBranches } from "@/frontend/hooks/useBranches";
 import { parcelService } from "@/frontend/services/parcelService";
+import { mutate } from "swr";
 
 // Simple ID generator if uuid is not available
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -25,31 +26,29 @@ export default function BookingDashboard() {
   const [isLocked, setIsLocked] = useState(false);
 
   // Initialize with sensible defaults. Authenticated user's branch takes precedence for "From".
-  const [fromBranch, setFromBranch] = useState<Branch>("Branch A");
-  const [toBranch, setToBranch] = useState<Branch>("Branch B");
+  const [fromBranch, setFromBranch] = useState<string>("");
+  const [toBranch, setToBranch] = useState<string>("");
 
   // Sync From Branch with Current User
   useEffect(() => {
-    if (currentUser?.branch && currentUser.branch !== "Global") {
-      setFromBranch(currentUser.branch as Branch);
-    } else if (branchNames.length > 0) {
-      // If Global or no user branch, default to first available branch
-      if (!fromBranch || fromBranch === "Branch A") {
-        setFromBranch(branchNames[0] as Branch);
+    if (currentUser?.branchId) {
+      setFromBranch(currentUser.branchId);
+    } else if (branchObjects.length > 0) {
+      if (!fromBranch) {
+        setFromBranch(branchObjects[0]._id);
       }
     }
-  }, [currentUser, branchNames, fromBranch]);
+  }, [currentUser, branchObjects, fromBranch]);
 
   // Sync To Branch
   useEffect(() => {
-    if (branchNames.length > 1) {
-      // Ensure To Branch is not same as From Branch
-      if (!toBranch || toBranch === "Branch B" || toBranch === fromBranch) {
-        const alternate = branchNames.find(b => b !== fromBranch);
-        if (alternate) setToBranch(alternate as Branch);
+    if (branchObjects.length > 1) {
+      if (!toBranch || toBranch === fromBranch) {
+        const alternate = branchObjects.find(b => b._id !== fromBranch);
+        if (alternate) setToBranch(alternate._id);
       }
     }
-  }, [branchNames, fromBranch, toBranch]);
+  }, [branchObjects, fromBranch, toBranch]);
 
   const [sender, setSender] = useState({ name: "", mobile: "" });
   const [receiver, setReceiver] = useState({ name: "", mobile: "" });
@@ -95,17 +94,13 @@ export default function BookingDashboard() {
     if (costs.total <= 0) return;
     setIsSubmitting(true);
 
-    // Try to find IDs
-    const fromBranchId = branchObjects.find(b => b.name === fromBranch)?._id;
-    const toBranchId = branchObjects.find(b => b.name === toBranch)?._id;
-
     const bookingData: Booking = {
       // Temporary ID, ignored by server
       id: generateId(),
       lrNumber: "GENERATING...",
       // Use Resolved ID or fallback (which will likely fail if it's a name)
-      fromBranch: fromBranchId || fromBranch,
-      toBranch: toBranchId || toBranch,
+      fromBranch: fromBranch,
+      toBranch: toBranch,
       date: new Date().toISOString(),
       sender,
       receiver,
@@ -117,7 +112,7 @@ export default function BookingDashboard() {
 
     console.log("Final Payload:", bookingData);
 
-    const { data: createdParcel, error } = await parcelService.createBooking(bookingData, currentUser?.id || '');
+    const { data: createdParcel, error } = await parcelService.createBooking(bookingData, currentUser?.id || '') as { data: any, error?: any };
 
     if (error) {
       setIsSubmitting(false);
@@ -126,9 +121,12 @@ export default function BookingDashboard() {
     }
 
     if (createdParcel) {
-      setLrNumber(createdParcel.lr_number);
+      setLrNumber(createdParcel.lrNumber);
       setIsLocked(true);
       setIsSubmitting(false);
+
+      // Refresh reports and ledger data globally
+      mutate(key => Array.isArray(key) && (key[0] === 'reports' || key[0] === 'ledger'));
 
       // Simulate Print
       setTimeout(() => {
@@ -174,7 +172,7 @@ export default function BookingDashboard() {
             branch={fromBranch}
             onBranchChange={setFromBranch}
             branchLabel="Dispatch Branch"
-            availableBranches={branchNames}
+            availableBranches={branchObjects}
           />
 
           <BookingForm
@@ -186,7 +184,7 @@ export default function BookingDashboard() {
             branch={toBranch}
             onBranchChange={setToBranch}
             branchLabel="Dest. Branch"
-            availableBranches={branchNames}
+            availableBranches={branchObjects}
           />
 
           <ParcelList

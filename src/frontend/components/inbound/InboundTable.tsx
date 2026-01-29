@@ -106,7 +106,7 @@ export function InboundTable() {
                 <tbody className="divide-y divide-slate-100">
                     {incomingParcels.map((parcel) => (
                         <tr key={parcel.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-6 py-4 font-mono font-medium text-slate-700">{parcel.lrNumber}</td>
+                            <td className="px-6 py-4 text-sm font-mono font-bold text-slate-700">{parcel.lrNumber}</td>
                             <td className="px-6 py-4 text-slate-600 font-medium">{parcel.fromBranch}</td>
                             <td className="px-6 py-4 text-slate-600">{parcel.toBranch}</td>
                             <td className="px-6 py-4 text-slate-600">{parcel.senderName}</td>

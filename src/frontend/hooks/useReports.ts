@@ -24,9 +24,16 @@ export function useReports() {
     const { currentUser } = useBranchStore();
 
     // -- State --
+    const getLocalDateString = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const [filters, setFilters] = useState<FilterState>({
-        startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0], // First day of month
-        endDate: new Date().toISOString().split('T')[0],
+        startDate: getLocalDateString(new Date(new Date().getFullYear(), new Date().getMonth(), 1)), // First day of month
+        endDate: getLocalDateString(new Date()),
         fromBranch: 'All',
         toBranch: 'All',
         paymentType: 'All',
