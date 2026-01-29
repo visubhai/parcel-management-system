@@ -19,11 +19,14 @@ interface ReportTableProps {
 
 import { parcelService } from "@/services/parcelService";
 
+import { useRouter } from "next/navigation";
+
 export function ReportTable({
     data, currentPage, totalPages, rowsPerPage, totalItems,
     sortConfig, onSort, onPageChange, onRowsPerPageChange
 }: ReportTableProps) {
     // const { cancelBooking } = useBranchStore(); // Removed
+    const router = useRouter();
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
 
