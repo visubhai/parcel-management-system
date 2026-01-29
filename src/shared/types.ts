@@ -40,7 +40,7 @@ export interface Booking {
     status: ParcelStatus;
 }
 
-export type Role = "SUPER_ADMIN" | "ADMIN";
+export type Role = "SUPER_ADMIN" | "ADMIN" | "STAFF";
 
 export type ReportType = "Daily" | "Revenue" | "Branch-wise" | "Payment" | "Sender/Receiver";
 

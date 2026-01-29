@@ -1,60 +1,116 @@
-// MOCKED PARCEL SERVICE
 import { Booking, Parcel, ParcelStatus, IncomingParcel } from "@/shared/types";
 import { ServiceResponse } from "./base";
 
 export const parcelService = {
     async createBooking(booking: Booking, userId: string): Promise<ServiceResponse<{ id: string, lr_number: string }>> {
-        console.log("Mock Booking Created", booking);
-        return {
-            data: { id: "mock-booking-id", lr_number: "LR-MOCK-" + Math.floor(Math.random() * 1000) },
-            error: null
-        };
+        try {
+            const res = await fetch('/api/bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(booking),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to create booking');
+
+            return {
+                data: { id: data.booking._id, lr_number: data.booking.lrNumber },
+                error: null
+            };
+        } catch (error: any) {
+            return { data: null, error: new Error(error.message) };
+        }
     },
 
     async getIncomingParcels(branchId: string): Promise<ServiceResponse<IncomingParcel[]>> {
-        return { data: [], error: null }; // Return empty list for now
+        try {
+            // Fetch bookings where toBranch is this branch and status is NOT delivered (or show all?)
+            // Usually Incoming means In Transit or Arrived?
+            // Let's fetch all relevant for "Incoming" view
+            const res = await fetch(`/api/bookings?toBranch=${branchId}&status=In Transit`);
+            const data = await res.json();
+
+            // Note: Also fetch Arrived?
+            // ideally we want to show everything targeted to this branch that is not Delivered?
+            // For now let's just fetch "In Transit" or handle filtering on client/server better.
+            // Let's try fetching just all and filtering.
+
+            // FIX: The backend supports filtering. Let's make multiple calls or update backend to support list.
+            // For now, let's just fetch by toBranch and filter content here.
+
+            const resAll = await fetch(`/api/bookings?toBranch=${branchId}`);
+            const dataAll = await resAll.json();
+
+            if (!resAll.ok) throw new Error(dataAll.error);
+
+            // Filter for Incoming Table (Exclude Delivered/Cancelled?)
+            const parcels = dataAll
+                .filter((p: any) => p.status !== 'Delivered' && p.status !== 'Cancelled')
+                .map((p: any) => ({
+                    id: p._id,
+                    lrNumber: p.lrNumber,
+                    senderName: p.sender.name,
+                    receiverName: p.receiver.name,
+                    fromBranch: p.fromBranch.name,
+                    toBranch: p.toBranch.name,
+                    status: p.status,
+                    paymentStatus: p.paymentType, // Note: Schema uses paymentType
+                    totalAmount: p.costs.total
+                }));
+
+            return { data: parcels, error: null };
+        } catch (error: any) {
+            return { data: [], error: new Error(error.message) };
+        }
+    },
+
+    async getIncomingParcelsByName(branchName: string): Promise<ServiceResponse<IncomingParcel[]>> {
+        // Since backend requires ID, this is tricky. 
+        // We really should strictly use IDs. 
+        // But for "InboundTable", if it passes Name, we are stuck.
+        // Let's assume the caller passes ID now because we fixed `store`? 
+        // No, `InboundTable` calls it with `targetBranchId` which logic says is `currentUser.branch`.
+        // `currentUser.branch` in `types` is just `Branch` (string).
+        // Wait, `User` model has `branch` which is ObjectId.
+        // But frontend `User` type has `branch` as `string` (name) and `branchId` as `string` (UUID).
+        // We should use `branchId`.
+
+        console.warn("getIncomingParcelsByName is deprecated. Use ID based fetching.");
+        return { data: [], error: new Error("Method deprecated. Use ID.") };
     },
 
     async getOutgoingParcels(branchId: string): Promise<ServiceResponse<any[]>> {
-        return { data: [], error: null };
+        try {
+            const res = await fetch(`/api/bookings?fromBranch=${branchId}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            return { data, error: null };
+        } catch (error: any) {
+            return { data: [], error: new Error(error.message) };
+        }
     },
 
     async updateParcelStatus(parcelId: string, status: ParcelStatus): Promise<ServiceResponse<null>> {
-        return { data: null, error: null };
+        try {
+            const res = await fetch(`/api/bookings/${parcelId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status }),
+            });
+            if (!res.ok) throw new Error('Failed to update status');
+            return { data: null, error: null };
+        } catch (error: any) {
+            return { data: null, error: new Error(error.message) };
+        }
     },
 
     async getParcelByLR(lrNumber: string): Promise<ServiceResponse<any>> {
-        return { data: null, error: null };
+        // Need a backend route for search? Or reuse GET /bookings?
+        // GET /bookings doesn't search by LR yet.
+        return { data: null, error: new Error("Search not implemented yet") };
     },
 
     async getBookingsForReports(startDate: string, endDate: string): Promise<ServiceResponse<any[]>> {
-        // Mock Data for Reports
-        const mockData = [
-            {
-                id: '1', lr_number: 'LR001', created_at: '2025-01-20T10:00:00Z',
-                from_branch: { name: 'Main Branch' }, to_branch: { name: 'Surat Hub' },
-                sender_name: 'John Doe', sender_mobile: '1234567890', sender_email: 'john@example.com',
-                receiver_name: 'Jane Smith', receiver_mobile: '0987654321', receiver_email: 'jane@example.com',
-                freight_charge: 100, handling_charge: 10, hamali_charge: 5, total_amount: 115,
-                payment_type: 'PAID', status: 'DELIVERED'
-            },
-            {
-                id: '2', lr_number: 'LR002', created_at: '2025-01-21T11:00:00Z',
-                from_branch: { name: 'Surat Hub' }, to_branch: { name: 'Mumbai Gateway' },
-                sender_name: 'Alice', sender_mobile: '1111111111',
-                receiver_name: 'Bob', receiver_mobile: '2222222222',
-                freight_charge: 200, handling_charge: 20, hamali_charge: 10, total_amount: 230,
-                payment_type: 'TO_PAY', status: 'ARRIVED'
-            },
-            {
-                id: '3', lr_number: 'LR003', created_at: '2025-01-22T14:30:00Z',
-                from_branch: { name: 'Mumbai Gateway' }, to_branch: { name: 'Main Branch' },
-                sender_name: 'Charlie', sender_mobile: '333',
-                receiver_name: 'David', receiver_mobile: '444',
-                freight_charge: 150, handling_charge: 15, hamali_charge: 5, total_amount: 170,
-                payment_type: 'PAID', status: 'BOOKED'
-            }
-        ];
-        return { data: mockData, error: null };
+        // Implement report fetching
+        return { data: [], error: null };
     }
 };

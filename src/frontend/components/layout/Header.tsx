@@ -24,6 +24,7 @@ export function Header() {
     const handleLogout = async () => {
         await authService.logout();
         setCurrentUser(null);
+        router.refresh();
         router.push("/login");
     };
 

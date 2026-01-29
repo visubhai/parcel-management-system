@@ -17,7 +17,7 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 export default function BookingDashboard() {
   // Services & State
   const { currentUser } = useBranchStore();
-  const { branches: branchNames } = useBranches();
+  const { branches: branchNames, branchObjects } = useBranches();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Local State
@@ -95,12 +95,20 @@ export default function BookingDashboard() {
     if (costs.total <= 0) return;
     setIsSubmitting(true);
 
+    console.log("Submitting Booking...", { fromBranch, toBranch, branchObjects });
+    // Try to find IDs
+    const fromBranchId = branchObjects.find(b => b.name === fromBranch)?._id;
+    const toBranchId = branchObjects.find(b => b.name === toBranch)?._id;
+
+    console.log("Resolved IDs:", { fromBranchId, toBranchId });
+
     const bookingData: Booking = {
       // Temporary ID, ignored by server
       id: generateId(),
       lrNumber: "GENERATING...",
-      fromBranch,
-      toBranch,
+      // Use Resolved ID or fallback (which will likely fail if it's a name)
+      fromBranch: fromBranchId || fromBranch,
+      toBranch: toBranchId || toBranch,
       date: new Date().toISOString(),
       sender,
       receiver,
@@ -109,6 +117,8 @@ export default function BookingDashboard() {
       paymentType,
       status: "Booked"
     };
+
+    console.log("Final Payload:", bookingData);
 
     const { data: createdParcel, error } = await parcelService.createBooking(bookingData, currentUser?.id || '');
 

@@ -23,7 +23,7 @@ export const authService = {
     },
 
     async logout(): Promise<ServiceResponse<any>> {
-        await signOut({ redirect: true, callbackUrl: '/login' });
+        await signOut({ redirect: false });
         return { data: null, error: null };
     },
 

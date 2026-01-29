@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User, Branch } from './types';
+import { User, Branch } from '@/shared/types';
 import { authService } from '@/frontend/services/authService';
 
 interface BranchState {
@@ -19,19 +19,9 @@ interface BranchState {
 }
 
 export const useBranchStore = create<BranchState>((set, get) => ({
-    currentUser: {
-        id: 'mock-admin-id',
-        name: 'Test Admin',
-        username: 'admin',
-        role: 'SUPER_ADMIN',
-        branch: 'Main Branch',
-        branchId: 'B001',
-        isActive: true, // @ts-ignore
-        allowedBranches: ['Main Branch', 'Surat Hub', 'Mumbai Gateway'],
-        allowedReports: ['Daily', 'Revenue', 'Branch-wise']
-    }, // Default to logged in
+    currentUser: null,
     isLoading: false,
-    isAuthenticated: true,
+    isAuthenticated: false,
     searchQuery: "",
 
     setCurrentUser: (user) => set({ currentUser: user, isAuthenticated: !!user, isLoading: false }),

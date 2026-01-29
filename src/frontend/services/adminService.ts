@@ -44,5 +44,11 @@ export const adminService = {
             ],
             error: null
         };
-    }
+    },
+    async getAuditLogs(limit: number): Promise<ServiceResponse<any[]>> {
+        return {
+            data: [],
+            error: null
+        };
+    },
 };

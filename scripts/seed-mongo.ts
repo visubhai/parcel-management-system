@@ -3,8 +3,8 @@ dotenv.config({ path: '.env.local' });
 
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import User from '../src/models/User';
-import Branch from '../src/models/Branch';
+import User from '../src/backend/models/User';
+import Branch from '../src/backend/models/Branch';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -12,6 +12,24 @@ if (!MONGODB_URI) {
     console.error('❌ MONGODB_URI is missing in .env.local');
     process.exit(1);
 }
+
+const seedData = [
+    { branch: 'mumbai-borivali', pass: 'savan3456', state: 'Maharashtra' },
+    { branch: 'amdavad-ctm', pass: 'savan6734', state: 'Gujarat' },
+    { branch: 'mumbai-andheri', pass: 'savan4598', state: 'Maharashtra' },
+    { branch: 'setelite', pass: '444245', state: 'Gujarat' },
+    { branch: 'mumbai-vasai', pass: 'savan2356', state: 'Maharashtra' },
+    { branch: 'udhana', pass: '1234', state: 'Gujarat' },
+    { branch: 'bapunagar', pass: '888942', state: 'Gujarat' },
+    { branch: 'hirabagh', pass: 'savan8980', state: 'Gujarat' },
+    { branch: 'rajkot-punitnagar', pass: '1234', state: 'Gujarat' },
+    { branch: 'sahara', pass: '1234', state: 'Gujarat' },
+    { branch: 'paldi', pass: '994142', state: 'Gujarat' },
+    { branch: 'rajkot-limdachok', pass: '1234', state: 'Gujarat' },
+    { branch: 'katargam', pass: 'savan4567', state: 'Gujarat' },
+    { branch: 'sachin', pass: '1234', state: 'Gujarat' },
+    { branch: 'savan', pass: '95008', state: 'Gujarat' }
+];
 
 async function seed() {
     try {
@@ -24,47 +42,43 @@ async function seed() {
         await User.deleteMany({});
         await Branch.deleteMany({});
 
-        // 2. Create Branches
-        console.log('🌱 Seeding Branches...');
-        const branches = await Branch.create([
-            { name: 'Main Branch', branchCode: 'B001', state: 'Gujarat' },
-            { name: 'Surat Hub', branchCode: 'B002', state: 'Gujarat' },
-            { name: 'Mumbai Gateway', branchCode: 'B003', state: 'Maharashtra' }
-        ]);
-
-        const mainBranch = branches[0];
-
-        // 3. Create Users
-        console.log('👤 Seeding Users...');
+        // 2. Create Branches and Users
+        console.log('🌱 Seeding Branches and Users...');
 
         // Admin
         const adminHash = await bcrypt.hash('password123', 10);
         await User.create({
-            name: 'Test Admin',
-            email: 'test@test.com',
+            name: 'Super Admin',
+            email: 'admin@system.com',
             username: 'admin',
             password: adminHash,
             role: 'SUPER_ADMIN',
-            branch: null // Super Admin has no specific branch
+            branch: null
         });
 
-        // Staff (Hirabagh)
-        const staffHash = await bcrypt.hash('savan8980', 10);
-        await User.create({
-            name: 'Hirabagh User',
-            email: 'hirabagh@abcd.com',
-            username: 'hirabagh',
-            password: staffHash,
-            role: 'STAFF',
-            branch: mainBranch._id
-        });
+        for (const item of seedData) {
+            // Create Branch
+            // slug as branchCode for simplicity
+            const branch = await Branch.create({
+                name: item.branch, // Name as shown in image
+                branchCode: item.branch,
+                state: item.state
+            });
+
+            // Create User linked to Branch
+            const passHash = await bcrypt.hash(item.pass.toString(), 10);
+            await User.create({
+                name: item.branch, // User name same as branch
+                email: `${item.branch}@system.com`,
+                username: item.branch, // USE BRANCH NAME AS USERNAME
+                password: passHash,
+                role: 'STAFF',
+                branch: branch._id
+            });
+            console.log(`Created: ${item.branch} / ${item.pass}`);
+        }
 
         console.log('✅ Seeding Complete!');
-        console.log('-----------------------------------');
-        console.log('Admin: test@test.com / password123');
-        console.log('Staff: hirabagh / savan8980');
-        console.log('-----------------------------------');
-
         process.exit(0);
     } catch (error) {
         console.error('❌ Seeding Failed:', error);
