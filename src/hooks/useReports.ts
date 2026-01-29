@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { Booking, Branch, PaymentStatus, ParcelStatus } from '@/lib/types';
 import { useBranchStore } from '@/lib/store';
+import useSWR from 'swr';
+import { parcelService } from '@/services/parcelService';
 
 export type SortField = 'date' | 'lrNumber' | 'fromBranch' | 'toBranch' | 'total' | 'sender' | 'receiver';
 export type SortOrder = 'asc' | 'desc';
@@ -16,7 +18,7 @@ export interface FilterState {
 }
 
 export function useReports() {
-    const { bookings } = useBranchStore();
+    // const { bookings } = useBranchStore(); // Removed
 
     // -- State --
     const [filters, setFilters] = useState<FilterState>({
@@ -28,6 +30,60 @@ export function useReports() {
         status: 'All',
         searchQuery: ''
     });
+
+    // -- Fetch Data --
+    // Fetch based on date range to minimize load
+    // We use a custom key to trigger re-fetch when dates change
+    const { data: serverData, error, isLoading } = useSWR(
+        ['reports', filters.startDate, filters.endDate],
+        async ([key, start, end]) => {
+            const { data } = await parcelService.getBookingsForReports(start, end);
+            if (!data) return [];
+
+            // Map DB Parcel to App Booking Type for UI consumption (Sharing logic from store legacy)
+            const mappedBookings: Booking[] = data.map((p: any) => {
+                // Helper to map Payment
+                const mapPayment = (pt: string): any => {
+                    if (pt === 'PAID') return 'Paid';
+                    return 'To Pay';
+                };
+
+                // Helper to map Status - DB has BOOKED, UI needs casing? 
+                // DB: BOOKED, IN_TRANSIT, ARRIVED, DELIVERED, CANCELLED
+                // UI Type: Booked, In Transit, Arrived, Delivered, Cancelled
+                const mapStatus = (st: string): any => {
+                    if (st === 'IN_TRANSIT') return 'In Transit';
+                    if (st === 'ARRIVED') return 'Arrived';
+                    if (st === 'DELIVERED') return 'Delivered';
+                    if (st === 'CANCELLED') return 'Cancelled';
+                    if (st === 'BOOKED') return 'Booked';
+                    return 'Booked';
+                };
+
+                return {
+                    id: p.id,
+                    lrNumber: p.lr_number,
+                    date: p.created_at, // Mapping created_at to date
+                    fromBranch: p.from_branch?.name || "Unknown",
+                    toBranch: p.to_branch?.name || "Unknown",
+                    sender: { name: p.sender_name, mobile: p.sender_mobile, email: p.sender_email },
+                    receiver: { name: p.receiver_name, mobile: p.receiver_mobile, email: p.receiver_email },
+                    parcels: [], // Items need fetch? For report summary, usually not needed. 
+                    costs: {
+                        freight: p.freight_charge,
+                        handling: p.handling_charge,
+                        hamali: p.hamali_charge,
+                        total: p.total_amount
+                    },
+                    paymentType: mapPayment(p.payment_type),
+                    status: mapStatus(p.status)
+                };
+            });
+            return mappedBookings;
+        }
+    );
+
+    const bookings = serverData || [];
 
     const [sortConfig, setSortConfig] = useState<{ field: SortField; order: SortOrder }>({
         field: 'date',
@@ -41,18 +97,11 @@ export function useReports() {
     const processedData = useMemo(() => {
         let data = [...bookings];
 
-        // 1. Filtering
-        const start = new Date(filters.startDate);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(filters.endDate);
-        end.setHours(23, 59, 59, 999);
+        // 1. Filtering (Client side refinement on fetched chunk)
+        // Date is already filtered by API, but strictly:
+        // const start... (redundant if API is correct, but safe to keep logic or just skip date check)
 
         data = data.filter(item => {
-            const itemDate = new Date(item.date);
-
-            // Date Range
-            if (itemDate < start || itemDate > end) return false;
-
             // Branch
             if (filters.fromBranch !== 'All' && item.fromBranch !== filters.fromBranch) return false;
             if (filters.toBranch !== 'All' && item.toBranch !== filters.toBranch) return false;

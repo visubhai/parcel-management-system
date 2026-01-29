@@ -1,38 +1,91 @@
 "use client";
 
 import { useBranchStore } from "@/lib/store";
+import { parcelService } from "@/services/parcelService";
 import { Package, Truck, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
+import useSWR from "swr";
 import { ReceiveModal } from "./ReceiveModal";
 import { IncomingParcel } from "@/lib/types";
 
 export function InboundTable() {
-    const { incomingParcels, markParcelReceived, fetchIncomingParcels } = useBranchStore();
+    const { currentUser } = useBranchStore();
     const [selectedParcel, setSelectedParcel] = useState<IncomingParcel | null>(null);
 
-    useEffect(() => {
-        fetchIncomingParcels();
-    }, [fetchIncomingParcels]);
+    // Fetch incoming parcels for current user's branch
+    // If Super Admin, maybe fetch all? Logic says "Manage incoming...". 
+    // Assuming currentUser.branch or allowedBranches[0] is the target. 
+    // For now we use currentUser.branch (assuming they are working in a specific branch context).
+    const targetBranchId = currentUser?.branch && currentUser.branch !== 'All' ? currentUser.branch : null;
+    // Note: If branch is 'All' or null, we might need a selector or default to empty.
+    // Given previous logic relied on "currentBranch" from store which is now "fromBranch" in some contexts but for Inbound it implies "My Branch".
+    // We will wait for "targetBranchId" to be available.
+
+    const { data: serverData, mutate } = useSWR(
+        targetBranchId ? ['incoming', targetBranchId] : null,
+        async ([key, branch]) => {
+            // Need Branch UUID, but store might have name. 
+            // Services usually handle UUIDs. 
+            // If `currentUser.branch` is a Name, getIncomingParcels needs to handle Name or we resolve ID.
+            // Current database schema uses UUIDs for relations.
+            // But `parcelService.getIncomingParcels` query uses `eq('to_branch_id', branchId)`.
+            // If `branch` is name, this fails.
+            // Helper: We need to resolve Name to ID if needed, OR the backend view handles it.
+            // Assumption: currentUser.branch in store IS the Name (based on types: Branch = string).
+            // So we need to query by Name.
+            // Let's update useSWR query to filter on joined table or change service to lookup ID.
+
+            // To be safe and quick: Fetch by Name via join filter?
+            // "getIncomingParcels" in service does: .eq('to_branch_id', branchId)
+            // I should change service to allow Name lookup or update getIncomingParcels.
+            // Better: update service to search by name in relation.
+
+            return (await parcelService.getIncomingParcelsByName(branch)).data || [];
+        }
+    );
+
+    // Map DB to UI Type
+    const incomingParcels: IncomingParcel[] = useMemo(() => {
+        if (!serverData) return [];
+        return serverData.map((p: any) => ({
+            id: p.id,
+            lrNumber: p.lr_number,
+            fromBranch: p.from_branch?.name || "Unknown",
+            toBranch: p.to_branch?.name || "Unknown",
+            senderName: p.sender_name,
+            receiverName: p.receiver_name,
+            paymentStatus: p.payment_type === 'PAID' ? 'Paid' : 'To Pay',
+            status: p.status === 'ARRIVED' ? 'Arrived' : (p.status === 'IN_TRANSIT' ? 'In Transit' : p.status),
+            items: [], // populate if needed
+            totalAmount: p.total_amount
+        }));
+    }, [serverData]);
+
 
     const handleReceiveClick = (parcel: IncomingParcel) => {
         if (parcel.status === "Arrived") return;
         setSelectedParcel(parcel);
     };
 
-    const handleConfirmReceive = () => {
+    const handleConfirmReceive = async () => {
         if (selectedParcel) {
-            markParcelReceived(selectedParcel.id);
+            await parcelService.updateParcelStatus(selectedParcel.id, 'ARRIVED');
+            mutate(); // Refresh list
             setSelectedParcel(null);
         }
     };
+
+    if (!targetBranchId) {
+        return <div className="p-12 text-center text-slate-400">Select a branch to view inbound parcels.</div>;
+    }
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-6 border-b border-slate-100">
                 <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <Truck className="w-5 h-5 text-blue-600" />
-                    Incoming Parcels
+                    Incoming Parcels for {targetBranchId}
                 </h2>
             </div>
 

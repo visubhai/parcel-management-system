@@ -2,7 +2,6 @@ import { Booking } from "@/lib/types";
 import { SortField, SortOrder } from "@/hooks/useReports";
 import { ChevronDown, ChevronUp, ChevronsUpDown, ArrowLeft, ArrowRight, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useBranchStore } from "@/lib/store";
 import { ConfirmationModal } from "@/components/common/ConfirmationModal";
 import { useState } from "react";
 
@@ -18,11 +17,13 @@ interface ReportTableProps {
     onRowsPerPageChange: (rows: number) => void;
 }
 
+import { parcelService } from "@/services/parcelService";
+
 export function ReportTable({
     data, currentPage, totalPages, rowsPerPage, totalItems,
     sortConfig, onSort, onPageChange, onRowsPerPageChange
 }: ReportTableProps) {
-    const { cancelBooking } = useBranchStore();
+    // const { cancelBooking } = useBranchStore(); // Removed
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
 
@@ -32,9 +33,19 @@ export function ReportTable({
         setCancelModalOpen(true);
     };
 
-    const handleConfirmCancel = () => {
+    const handleConfirmCancel = async () => {
         if (bookingToCancel) {
-            cancelBooking(bookingToCancel);
+            // cancelBooking(bookingToCancel); // Legacy
+            await parcelService.updateParcelStatus(bookingToCancel, 'Cancelled');
+            // Optimistic update or mutate? 
+            // The parent "useReports" swr should eventually revalidate if we mutate or just wait for auto refresh.
+            // For now, simple await. Ideally pass "refresh" prop or use global mutate.
+            // Since this component is deep, let's just do it.
+            // Note: UI won't update immediately without re-fetch.
+            // For better UX, we could call an onRefresh prop if available.
+            window.location.reload(); // Quick fix for refresh or trigger parent re-fetch. 
+            // Ideally: `mutate(['reports', ...])` but we don't have the key here easily.
+            // Given this is an Admin action, reload is acceptable or just letting SWR revalidate on focus.
             setBookingToCancel(null);
             setCancelModalOpen(false);
         }

@@ -27,7 +27,7 @@ export function ReportCharts({ data }: ReportChartsProps) {
 
     // 2. Status Counts
     const statusData = useMemo(() => {
-        const counts = { 'In Transit': 0, 'Arrived': 0, 'Delivered': 0, 'Cancelled': 0 };
+        const counts: Record<string, number> = { 'Booked': 0, 'In Transit': 0, 'Arrived': 0, 'Delivered': 0, 'Cancelled': 0 };
         data.forEach(item => {
             if (counts[item.status] !== undefined) counts[item.status]++;
         });

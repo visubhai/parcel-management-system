@@ -57,10 +57,10 @@ export function Sidebar() {
                 {/* Super Admin Link */}
                 {currentUser?.role === "SUPER_ADMIN" && (
                     <Link
-                        href="/admin"
+                        href="/dashboard/super-admin"
                         className={cn(
                             "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors mt-4 border-t border-slate-800",
-                            pathname === "/admin"
+                            pathname === "/dashboard/super-admin"
                                 ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
                                 : "text-purple-400 hover:bg-slate-800/50 hover:text-white"
                         )}

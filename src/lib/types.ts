@@ -2,7 +2,7 @@
 export type Branch = string; // Allow dynamic branches
 
 export type PaymentStatus = "Paid" | "To Pay";
-export type ParcelStatus = "In Transit" | "Arrived" | "Delivered" | "Cancelled";
+export type ParcelStatus = "Booked" | "In Transit" | "Arrived" | "Delivered" | "Cancelled";
 export type ItemType = "White Sack" | "Carton" | "Manual";
 
 export interface Parcel {
@@ -47,6 +47,7 @@ export type ReportType = "Daily" | "Revenue" | "Branch-wise" | "Payment" | "Send
 export interface User {
     id: string;
     name: string;
+    email?: string;
     username: string; // Used for login
     password?: string; // Mock password
     role: Role;

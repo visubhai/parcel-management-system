@@ -1,9 +1,9 @@
-import { useBranchStore } from "@/lib/store";
+import { useUsers } from "@/hooks/useUsers";
 import { Users, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function UserManagement() {
-    const { users } = useBranchStore();
+    const { users } = useUsers();
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

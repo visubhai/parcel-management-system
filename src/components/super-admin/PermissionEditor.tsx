@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useBranchStore } from "@/lib/store";
+import { useBranches } from "@/hooks/useBranches";
 import { User, Role, ReportType, Branch } from "@/lib/types";
 import { X, Check } from "lucide-react";
 
@@ -12,7 +12,7 @@ interface PermissionEditorProps {
 const REPORT_TYPES: ReportType[] = ["Daily", "Revenue", "Branch-wise", "Payment", "Sender/Receiver"];
 
 export function PermissionEditor({ user, isOpen, onClose }: PermissionEditorProps) {
-    const { branches } = useBranchStore();
+    const { branches } = useBranches();
 
     const [formData, setFormData] = useState({
         name: "",

@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useBranchStore } from "@/lib/store";
+import { authService } from "@/services/authService";
 import { ArrowRight, Package, Truck, ShieldCheck, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 export function LoginPage() {
-    const { login } = useBranchStore();
-    const [username, setUsername] = useState("");
+    const { setCurrentUser } = useBranchStore();
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -22,14 +23,23 @@ export function LoginPage() {
         setError("");
         setIsLoading(true);
 
-        // Simulate a sophisticated network request with dynamic timing
-        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 500));
+        const { data, error } = await authService.login(email, password);
 
-        const success = login(username, password);
-        if (!success) {
-            setError("Invalid credentials. Please try again.");
+        if (error) {
+            setError("Invalid credentials. Please check your details.");
             setIsLoading(false);
+            return;
         }
+
+        if (data && data.user) {
+            const user = await authService.getCurrentUser();
+            if (user) {
+                setCurrentUser(user);
+            } else {
+                setError("User profile not found.");
+            }
+        }
+        setIsLoading(false);
     };
 
     return (
@@ -108,8 +118,8 @@ export function LoginPage() {
                                     </div>
                                     <input
                                         type="text"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
                                         className="
                                             block w-full pl-11 pr-4 py-3.5 
                                             bg-slate-50 border border-slate-200 rounded-xl 
@@ -118,7 +128,7 @@ export function LoginPage() {
                                             transition-all duration-200 outline-none
                                             font-medium
                                         "
-                                        placeholder="Enter your username"
+                                        placeholder="Enter your email/username"
                                         required
                                     />
                                 </div>

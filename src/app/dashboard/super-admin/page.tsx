@@ -8,15 +8,15 @@ import { Plus, ShieldAlert } from "lucide-react";
 import { useBranchStore } from "@/lib/store";
 
 export default function SuperAdminDashboard() {
-    const { currentUser, fetchUsers } = useBranchStore();
+    const { currentUser } = useBranchStore();
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<Partial<User> | null>(null);
 
+    // Initial fetch handled by AdminList or SWR in future. 
+    // For now we just check auth.
     useEffect(() => {
-        if (currentUser?.role === 'SUPER_ADMIN') {
-            fetchUsers();
-        }
-    }, [currentUser, fetchUsers]);
+        // Validation check
+    }, [currentUser]);
 
     // Access Control
     if (currentUser?.role !== 'SUPER_ADMIN') {

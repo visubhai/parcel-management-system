@@ -5,9 +5,11 @@ import { useBranchStore } from "@/lib/store";
 import { useRouter } from "next/navigation";
 import { Lock, User } from "lucide-react";
 
+import { authService } from "@/services/authService";
+
 export default function LoginPage() {
     const router = useRouter();
-    const { login } = useBranchStore();
+    const { setCurrentUser } = useBranchStore();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -18,13 +20,28 @@ export default function LoginPage() {
         setError("");
         setIsLoading(true);
 
-        const success = await login(email, password);
-        if (success) {
-            router.push("/"); // Go to Dashboard
-        } else {
+        const { data, error } = await authService.login(email, password);
+
+        if (error) {
             setError("Invalid credentials. Please check your email and password.");
             setIsLoading(false);
+            return;
         }
+
+        if (data && data.user) {
+            // Fetch profile handled by session check or explicit fetch
+            const user = await authService.getCurrentUser();
+            if (user) {
+                setCurrentUser(user);
+                router.push("/");
+            } else {
+                setError("User profile not found.");
+            }
+        } else {
+            // Should not happen if error is null
+            setError("Login failed.");
+        }
+        setIsLoading(false);
     };
 
     return (

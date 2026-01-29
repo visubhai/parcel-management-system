@@ -1,8 +1,8 @@
-import { useBranchStore } from "@/lib/store";
+import { useBranches } from "@/hooks/useBranches";
 import { MapPin, Building2 } from "lucide-react";
 
 export function BranchManagement() {
-    const { branches } = useBranchStore();
+    const { branches } = useBranches();
 
     return (
         <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">

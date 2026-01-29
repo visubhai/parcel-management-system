@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useBranchStore } from "@/lib/store";
+import { useUsers } from "@/hooks/useUsers";
+import { adminService } from "@/services/adminService";
 import { User, Shield, Trash2, Edit2, CheckCircle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -8,17 +10,22 @@ interface AdminListProps {
 }
 
 export function AdminList({ onEdit }: AdminListProps) {
-    const { users, currentUser, deleteUser } = useBranchStore();
+    const { currentUser } = useBranchStore();
+    const { users, isLoading, mutate } = useUsers();
 
     // Filter to only show Admins (and Super Admins, but mainly we manage Admins)
-    // The requirement says "Admin List", implying we manage ADMIN role users.
     const admins = users.filter(u => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN');
 
-    const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this admin?")) {
-            deleteUser(id);
+    const handleDelete = async (id: string) => {
+        if (confirm("Are you sure you want to deactivate this admin?")) {
+            // We use toggleStatus(false) instead of delete for safety, or implement delete in service
+            // The store used 'deleteUser' which did soft delete (is_active=false)
+            await adminService.toggleUserStatus(id, false);
+            mutate(); // Refresh list
         }
     };
+
+    if (isLoading) return <div className="p-4 text-center text-slate-500">Loading admins...</div>;
 
     return (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">

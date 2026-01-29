@@ -34,13 +34,14 @@ const ReportSummary = ({ stats }: { stats: any }) => (
     </div>
 );
 
-export default function ReportsPage() {
-    const { currentUser, branches: allBranches, fetchBookings } = useBranchStore();
+import { useBranches } from "@/hooks/useBranches";
 
-    // Load bookings on mount
-    useEffect(() => {
-        fetchBookings();
-    }, [fetchBookings]);
+export default function ReportsPage() {
+    const { currentUser } = useBranchStore();
+    const { branches: allBranches } = useBranches();
+
+    // Data loaded by useReports internal SWR
+
 
     // Restore useReports hook
     const {
