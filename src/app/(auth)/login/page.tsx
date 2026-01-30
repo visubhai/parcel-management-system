@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Loader2, Building2, User, Lock, ArrowRight, Truck } from "lucide-react";
+import { Loader2, Building2, User, Lock, ArrowRight, Eye, EyeOff, Mail } from "lucide-react";
 
 interface Branch {
     _id: string;
@@ -16,6 +16,7 @@ export default function LoginPage() {
     const [branches, setBranches] = useState<Branch[]>([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
 
     const [formData, setFormData] = useState({
@@ -55,7 +56,7 @@ export default function LoginPage() {
         try {
             const res = await signIn("credentials", {
                 redirect: false,
-                email: formData.username, // mapping username to email field for auth provider
+                email: formData.username,
                 password: formData.password,
                 branchId: formData.branchId,
             });
@@ -75,145 +76,160 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex bg-[#0f172a] text-white overflow-hidden font-sans">
-            {/* Background Ambience */}
-            <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px]" />
-                <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px]" />
+        <div className="min-h-screen relative flex items-center justify-center font-sans overflow-hidden">
+            {/* Background Image with Overlay */}
+            <div
+                className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
+                style={{ backgroundImage: "url('/images/bg-bus.jpg')" }}
+            >
+                {/* Dynamic Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#0a2e1f]/90 via-[#05110c]/80 to-[#103a27]/90 mix-blend-multiply" />
+                <div className="absolute inset-0 bg-black/40" />
             </div>
 
-            {/* Left Panel - Branding */}
-            <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 relative z-10 bg-gradient-to-br from-slate-900/50 to-slate-900/10 backdrop-blur-sm border-r border-slate-800">
-                <div>
-                    <div className="flex items-center gap-3 mb-10">
-                        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
-                            <Truck className="w-6 h-6 text-white" />
+            {/* Floating Orbs for Extra Depth */}
+            <div className="absolute top-[10%] left-[15%] w-64 h-64 bg-green-500/20 rounded-full blur-[100px] animate-pulse" />
+            <div className="absolute bottom-[10%] right-[15%] w-96 h-96 bg-lime-500/10 rounded-full blur-[120px] animate-pulse delay-700" />
+
+            {/* Login Card Container */}
+            <div className="relative z-10 w-full max-w-[440px] px-6 py-8">
+                <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-[32px] p-8 lg:p-10 shadow-2xl relative overflow-hidden group">
+                    {/* Inner Glow/Border Effect */}
+                    <div className="absolute inset-0 border border-green-500/20 rounded-[32px] pointer-events-none group-hover:border-green-500/40 transition-colors duration-500" />
+
+                    {/* Branding */}
+                    <div className="text-center mb-10">
+                        <div className="inline-flex items-center gap-2 mb-2">
+                            <h1 className="text-5xl font-black tracking-tighter italic">
+                                <span className="text-white">SA</span>
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-lime-300">VAN</span>
+                            </h1>
                         </div>
-                        <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
-                            ParcelManage
-                        </span>
-                    </div>
-                    <h1 className="text-5xl font-bold leading-tight mb-6">
-                        Logistics Management <br />
-                        <span className="text-blue-400">Reimagined.</span>
-                    </h1>
-                    <p className="text-lg text-slate-400 max-w-md leading-relaxed">
-                        Streamline your parcel operations with our multi-branch management system.
-                        Efficient, secure, and real-time.
-                    </p>
-                </div>
-
-                <div className="space-y-6">
-                    <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-md">
-                        <div className="flex gap-4 items-start">
-                            <div className="p-3 rounded-lg bg-blue-500/10 text-blue-400">
-                                <Building2 className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-semibold mb-1">Multi-Branch Support</h3>
-                                <p className="text-slate-400 text-sm">Seamlessly switch between branches and manage specific operational data.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="text-slate-500 text-sm">
-                        &copy; {new Date().getFullYear()} Parcel Management System. All rights reserved.
-                    </div>
-                </div>
-            </div>
-
-            {/* Right Panel - Login Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 relative z-10">
-                <div className="w-full max-w-md space-y-8">
-                    <div className="text-center lg:text-left">
-                        <h2 className="text-3xl font-bold mb-2">Welcome Back</h2>
-                        <p className="text-slate-400">Please enter your details to sign in.</p>
+                        <h2 className="text-2xl font-bold text-white mb-2">Secure Logistics Portal</h2>
+                        <p className="text-green-100/60 text-sm">Manage your shipments efficiently</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-5">
                         {error && (
-                            <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm animate-in fade-in slide-in-from-top-2">
+                            <div className="p-3 text-center rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-xs animate-in fade-in slide-in-from-top-1">
                                 {error}
                             </div>
                         )}
 
                         {/* Branch Selection */}
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300 ml-1">Branch</label>
-                            <div className="relative group">
-                                <Building2 className="absolute left-3 top-3 h-5 w-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
-                                <select
-                                    disabled={loading}
-                                    value={formData.branchId}
-                                    onChange={(e) => {
-                                        const selectedId = e.target.value;
-                                        const selectedBranch = branches.find(b => b._id === selectedId);
-                                        // Auto-populate username with branch name if available
-                                        setFormData({
-                                            ...formData,
-                                            branchId: selectedId,
-                                            username: selectedBranch ? selectedBranch.name : ""
-                                        });
-                                    }}
-                                    className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-slate-200 placeholder-slate-500 appearance-none disabled:opacity-50"
-                                >
-                                    <option value="" disabled>Select your branch</option>
-                                    {branches.map((b) => (
-                                        <option key={b._id} value={b._id} className="bg-slate-800 text-slate-200">
-                                            {b.name} ({b.branchCode})
-                                        </option>
-                                    ))}
-                                </select>
-                                <div className="absolute right-3 top-3.5 pointer-events-none text-slate-500">
-                                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </div>
+                        <div className="relative group">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-green-400 transition-colors">
+                                <Building2 size={20} />
+                            </div>
+                            <select
+                                disabled={loading}
+                                value={formData.branchId}
+                                onChange={(e) => {
+                                    const selectedId = e.target.value;
+                                    const selectedBranch = branches.find(b => b._id === selectedId);
+                                    setFormData({
+                                        ...formData,
+                                        branchId: selectedId,
+                                        username: selectedBranch ? selectedBranch.name : ""
+                                    });
+                                }}
+                                className="w-full pl-12 pr-10 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20 outline-none transition-all text-white placeholder-white/40 appearance-none disabled:opacity-50 text-sm"
+                            >
+                                <option value="" disabled className="bg-[#05110c]">Select your branch</option>
+                                {branches.map((b) => (
+                                    <option key={b._id} value={b._id} className="bg-[#05110c] text-white">
+                                        {b.name} ({b.branchCode})
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/30">
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" className="group-focus-within:rotate-180 transition-transform duration-300">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
                             </div>
                         </div>
 
-                        {/* Password Selection */}
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <label className="text-sm font-medium text-slate-300 ml-1">Password</label>
-                                <a href="#" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">Forgot password?</a>
+                        {/* Email / Username */}
+                        <div className="relative group">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-green-400 transition-colors">
+                                <Mail size={20} />
                             </div>
-                            <div className="relative group">
-                                <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
-                                <input
-                                    type="password"
-                                    placeholder="Enter your password"
-                                    value={formData.password}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, password: e.target.value })
-                                    }
-                                    className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-slate-200 placeholder-slate-500"
-                                    required
-                                />
-                            </div>
+                            <input
+                                type="text"
+                                placeholder="Email address"
+                                value={formData.username}
+                                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20 outline-none transition-all text-white placeholder-white/40 text-sm"
+                                required
+                            />
                         </div>
 
-                        <button
-                            type="submit"
-                            disabled={submitting || loading}
-                            className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-600/20 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
-                        >
-                            {submitting ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    Logging in...
-                                </>
-                            ) : (
-                                <>
-                                    Sign In
-                                    <ArrowRight className="w-5 h-5" />
-                                </>
-                            )}
-                        </button>
+                        {/* Password */}
+                        <div className="relative group">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-green-400 transition-colors">
+                                <Lock size={20} />
+                            </div>
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Password"
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                className="w-full pl-12 pr-12 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20 outline-none transition-all text-white placeholder-white/40 text-sm"
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                            >
+                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                        </div>
+
+                        {/* Extra Options */}
+                        <div className="flex items-center justify-between text-xs px-1">
+                            <label className="flex items-center gap-2 text-white/60 cursor-pointer hover:text-white transition-colors">
+                                <input type="checkbox" className="w-4 h-4 rounded border-white/10 bg-white/5 checked:bg-green-500 transition-all cursor-pointer" />
+                                Remember me
+                            </label>
+                            <a href="#" className="text-green-400 hover:text-green-300 transition-colors font-medium">Forgot password?</a>
+                        </div>
+
+                        {/* Buttons */}
+                        <div className="space-y-3 pt-2">
+                            <button
+                                type="submit"
+                                disabled={submitting || loading}
+                                className="w-full py-4 px-6 bg-gradient-to-r from-green-500 to-lime-400 hover:from-green-400 hover:to-lime-300 text-[#05110c] font-bold rounded-2xl shadow-lg shadow-green-500/20 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base uppercase tracking-wider"
+                            >
+                                {submitting ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        Verifying...
+                                    </>
+                                ) : (
+                                    <>
+                                        Login
+                                        <ArrowRight className="w-5 h-5" />
+                                    </>
+                                )}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="w-full py-4 px-6 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-semibold rounded-2xl transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center uppercase tracking-widest text-sm"
+                            >
+                                Admin Login
+                            </button>
+                        </div>
                     </form>
+                </div>
 
-                    <div className="mt-8 pt-6 border-t border-slate-800 text-center text-sm text-slate-500">
-                        Need help? Contact system administrator.
-                    </div>
+                {/* Footer Copyright */}
+                <div className="mt-8 text-center">
+                    <p className="text-white/30 text-[10px] uppercase tracking-[0.2em]">
+                        &copy; {new Date().getFullYear()} SAVAN LOGISTICS SYSTEM • ALL RIGHTS RESERVED
+                    </p>
                 </div>
             </div>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Save, Printer, Lock } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { PaymentStatus } from "@/shared/types";
@@ -19,6 +19,8 @@ interface PaymentBoxProps {
 }
 
 export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked }: PaymentBoxProps) {
+    const freightRef = useRef<HTMLInputElement>(null);
+    const saveButtonRef = useRef<HTMLButtonElement>(null);
 
     // Auto-calculate total
     useEffect(() => {
@@ -28,17 +30,34 @@ export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked }: P
         }
     }, [costs.freight, costs.handling, costs.hamali, costs.total, onChange]);
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (isLocked) return;
+
+        if (e.key === "Enter") {
+            if (e.currentTarget === freightRef.current) {
+                e.preventDefault();
+                saveButtonRef.current?.focus();
+            }
+        }
+
+        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+            // Optional: Toggle payment type on arrows if focused on the section
+            const newType = paymentType === "Paid" ? "To Pay" : "Paid";
+            onChange("paymentType", newType);
+        }
+    };
+
     return (
         <div className={cn(
-            "p-6 rounded-xl border shadow-xl shadow-slate-200/50 sticky top-6 backdrop-blur-md transition-all",
-            isLocked ? "border-green-200 bg-green-50/80" : "bg-white/90 border-slate-200"
+            "p-6 rounded-[24px] border-2 shadow-xl shadow-slate-200/50 sticky top-6 backdrop-blur-md transition-all",
+            isLocked ? "border-green-200 bg-green-50/80" : "bg-white/90 border-slate-100"
         )}>
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
-                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    Payment
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                    Payment Gateway
                 </h3>
                 {isLocked && (
-                    <span className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold uppercase tracking-wide">
+                    <span className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase tracking-wide">
                         <Lock className="w-3.5 h-3.5" /> Booked
                     </span>
                 )}
@@ -47,63 +66,71 @@ export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked }: P
             <div className="space-y-5">
                 {/* Inputs */}
                 {[
-                    { label: "Freight Charge", field: "freight" },
+                    { label: "Freight Charge", field: "freight", ref: freightRef },
                     { label: "Builty Charge", field: "handling" },
                     { label: "Hamali", field: "hamali" }
                 ].map((item) => (
                     <div key={item.field}>
-                        <label className="flex items-center justify-between text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">
+                        <label className="flex items-center justify-between text-[10px] font-black text-slate-400 mb-1.5 uppercase tracking-wide ml-1">
                             {item.label}
                         </label>
                         <div className="relative group/input">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 font-bold">₹</span>
                             <input
                                 type="number"
+                                id="freight-input"
+                                ref={item.ref as any}
                                 value={costs[item.field as keyof typeof costs]}
                                 disabled={isLocked || item.field === "handling" || item.field === "hamali"}
+                                onFocus={(e) => e.target.select()}
+                                onKeyDown={handleKeyDown}
                                 onChange={(e) => onChange(item.field, parseFloat(e.target.value) || 0)}
                                 className={cn(
-                                    "w-full pl-8 pr-4 py-2.5 rounded-lg border border-slate-200 text-right font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-50 disabled:text-slate-500 transition-all",
-                                    !isLocked && item.field !== "handling" && item.field !== "hamali" && "bg-slate-50/50 focus:bg-white"
+                                    "w-full pl-8 pr-4 py-3 rounded-xl border border-transparent text-right font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/5 disabled:bg-slate-50 disabled:text-slate-400 transition-all bg-slate-50/50 focus:bg-white text-lg",
+                                    (isLocked || item.field === "handling" || item.field === "hamali") && "opacity-60"
                                 )}
                             />
                         </div>
                     </div>
                 ))}
 
-                <div className="pt-6 border-t border-slate-200">
+                <div className="pt-6 border-t border-slate-100">
                     <div className="flex items-end justify-between mb-6">
-                        <span className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-1">Total Amount</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Final Amount</span>
                         <div className="text-right">
-                            <span className="text-4xl font-black text-slate-900 tracking-tight">
-                                <span className="text-2xl text-slate-400 font-medium align-top mr-1">₹</span>
+                            <span className="text-4xl font-black text-slate-900 tracking-tighter">
+                                <span className="text-2xl text-slate-300 font-medium align-top mr-1">₹</span>
                                 {costs.total.toFixed(0)}
-                                <span className="text-lg text-slate-500 font-bold">.{costs.total.toFixed(2).split('.')[1]}</span>
+                                <span className="text-lg text-slate-400 font-bold">.{costs.total.toFixed(2).split('.')[1]}</span>
                             </span>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 mb-6">
                         <button
+                            type="button"
                             onClick={() => onChange("paymentType", "Paid")}
+                            onKeyDown={handleKeyDown}
                             disabled={isLocked}
                             className={cn(
-                                "py-2.5 text-sm font-bold rounded-lg transition-all border-2",
+                                "py-3 text-xs font-black rounded-xl transition-all border-2 tracking-widest uppercase",
                                 paymentType === "Paid"
                                     ? "bg-green-500 border-green-500 text-white shadow-lg shadow-green-200"
-                                    : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"
+                                    : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
                             )}
                         >
                             PAID
                         </button>
                         <button
+                            type="button"
                             onClick={() => onChange("paymentType", "To Pay")}
+                            onKeyDown={handleKeyDown}
                             disabled={isLocked}
                             className={cn(
-                                "py-2.5 text-sm font-bold rounded-lg transition-all border-2",
+                                "py-3 text-xs font-black rounded-xl transition-all border-2 tracking-widest uppercase",
                                 paymentType === "To Pay"
                                     ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-200"
-                                    : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"
+                                    : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
                             )}
                         >
                             TO PAY
@@ -111,22 +138,23 @@ export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked }: P
                     </div>
 
                     <button
+                        ref={saveButtonRef}
                         onClick={onSave}
                         disabled={isLocked || costs.total <= 0}
                         className={cn(
-                            "w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-white transition-all shadow-xl shadow-teal-500/20 text-base uppercase tracking-wide",
+                            "w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-white transition-all shadow-xl text-sm uppercase tracking-widest h-14",
                             isLocked
                                 ? "bg-slate-800 cursor-not-allowed shadow-none"
-                                : "bg-slate-900 hover:bg-slate-800 hover:scale-[1.02]"
+                                : "bg-slate-900 hover:bg-black active:scale-[0.98]"
                         )}
                     >
                         {isLocked ? (
                             <>
-                                <Printer className="w-5 h-5" /> Print Receipt
+                                <Printer size={18} /> Print LR
                             </>
                         ) : (
                             <>
-                                <Save className="w-5 h-5" /> Confirm Booking
+                                <Save size={18} /> Confirm LR (Enter)
                             </>
                         )}
                     </button>

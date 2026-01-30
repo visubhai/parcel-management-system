@@ -3,6 +3,7 @@ import connectDB from '@/backend/db';
 import Booking from '@/backend/models/Booking';
 import Branch from '@/backend/models/Branch';
 import Transaction from '@/backend/models/Transaction';
+import Counter from '@/backend/models/Counter';
 
 // GET: Fetch Bookings
 export async function GET(req: NextRequest) {
@@ -56,17 +57,22 @@ export async function POST(req: NextRequest) {
         await connectDB();
         const body = await req.json();
 
-        // 1. Generate LR Number
-        // Simple logic: timestamp + random. For production, maybe a counter.
-        // Format: LR-{BranchCode}-{Random4}
+        // 1. Generate Sequential LR Number
         const fromBranch = await Branch.findById(body.fromBranch);
         if (!fromBranch) {
             return NextResponse.json({ error: "Invalid Source Branch" }, { status: 400 });
         }
 
-        const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
-        const randomNum = Math.floor(1000 + Math.random() * 9000); // 4 digit random
-        const lrNumber = `LR${fromBranch.branchCode}${dateStr}${randomNum}`;
+        // Atomically increment the counter for this branch
+        const counter = await Counter.findOneAndUpdate(
+            { branchId: fromBranch._id, entity: 'Booking', field: 'lrNumber' },
+            { $inc: { count: 1 } },
+            { upsert: true, new: true }
+        );
+
+        // Format: {BranchCode}/{PaddedSequence} (e.g., HR/0001)
+        const sequenceStr = counter.count.toString().padStart(4, '0');
+        const lrNumber = `${fromBranch.branchCode}/${sequenceStr}`;
 
         const newBooking = await Booking.create({
             ...body,
