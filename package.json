@@ -1,48 +1,20 @@
 {
-  "name": "parcel-management-system",
-  "version": "0.1.0",
+  "name": "parcel-management-system-root",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "whatsapp": "node scripts/whatsapp-service.js",
-    "whatsapp-reset": "pkill -f whatsapp-service.js; rm -rf .wwebjs_auth; node scripts/whatsapp-service.js"
-  },
-  "dependencies": {
-    "bcryptjs": "^3.0.3",
-    "body-parser": "^2.2.2",
-    "clsx": "^2.1.1",
-    "date-fns": "^4.1.0",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
-    "jspdf": "^4.0.0",
-    "jspdf-autotable": "^5.0.7",
-    "lucide-react": "^0.563.0",
-    "mongoose": "^9.1.5",
-    "next": "16.1.5",
-    "next-auth": "^5.0.0-beta.30",
-    "qrcode": "^1.5.4",
-    "qrcode-terminal": "^0.12.0",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "recharts": "^3.7.0",
-    "swr": "^2.3.8",
-    "tailwind-merge": "^3.4.0",
-    "whatsapp-web.js": "github:pedroslopez/whatsapp-web.js#main",
-    "xlsx": "^0.18.5",
-    "zustand": "^5.0.10"
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "npm run dev -w apps/frontend",
+    "dev:backend": "npm run dev -w apps/backend",
+    "build:frontend": "npm run build -w apps/frontend",
+    "build:backend": "npm run build -w apps/backend",
+    "start:frontend": "npm run start -w apps/frontend",
+    "start:backend": "npm run start -w apps/backend"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.5",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "concurrently": "^9.2.1"
   }
 }
