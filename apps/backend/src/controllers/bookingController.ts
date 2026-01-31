@@ -138,3 +138,28 @@ export const updateStatus = async (req: Request, res: Response): Promise<any> =>
         return res.status(500).json({ error: "Failed to update status" });
     }
 };
+
+export const updateBooking = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { id } = req.params;
+        const body = req.body;
+
+        const updatedBooking = await Booking.findByIdAndUpdate(
+            id,
+            { ...body },
+            { new: true }
+        );
+
+        if (!updatedBooking) {
+            return res.status(404).json({ error: "Booking not found" });
+        }
+
+        return res.json({
+            message: "Booking updated successfully",
+            booking: updatedBooking
+        });
+    } catch (error: any) {
+        console.error("Error updating booking:", error);
+        return res.status(500).json({ error: "Failed to update booking" });
+    }
+};

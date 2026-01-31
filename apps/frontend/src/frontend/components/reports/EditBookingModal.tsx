@@ -25,6 +25,7 @@ export function EditBookingModal({ booking, isOpen, onClose, onSave, availableBr
     const [costs, setCosts] = useState(booking.costs);
     const [paymentType, setPaymentType] = useState(booking.paymentType);
     const [status, setStatus] = useState(booking.status);
+    const [remarks, setRemarks] = useState(booking.remarks || "");
 
     const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
 
@@ -35,6 +36,7 @@ export function EditBookingModal({ booking, isOpen, onClose, onSave, availableBr
         setCosts(booking.costs);
         setPaymentType(booking.paymentType);
         setStatus(booking.status);
+        setRemarks(booking.remarks || "");
     }, [booking, isOpen]);
 
     // Auto-calculate logic (matching BookingDashboard)
@@ -55,7 +57,8 @@ export function EditBookingModal({ booking, isOpen, onClose, onSave, availableBr
             parcels,
             costs,
             paymentType,
-            status
+            status,
+            remarks
         };
         onSave(updatedBooking);
     };
@@ -140,6 +143,18 @@ export function EditBookingModal({ booking, isOpen, onClose, onSave, availableBr
                                 <option value="Arrived">Arrived</option>
                                 <option value="Delivered">Delivered</option>
                             </select>
+                        </div>
+
+                        {/* Remarks */}
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Remarks / Notes</label>
+                            <textarea
+                                value={remarks}
+                                onChange={(e) => setRemarks(e.target.value)}
+                                className="w-full p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+                                placeholder="Add notes here..."
+                                rows={2}
+                            />
                         </div>
 
                         <button

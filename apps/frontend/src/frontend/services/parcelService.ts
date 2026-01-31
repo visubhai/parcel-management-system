@@ -90,5 +90,19 @@ export const parcelService = {
         } catch (error: any) {
             return { data: [], error: new Error(error.message) };
         }
+    },
+    async updateBooking(id: string, booking: Booking): Promise<ServiceResponse<Booking>> {
+        try {
+            const res = await fetchApi(`/bookings/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(booking),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            return { data: data.booking, error: null };
+        } catch (error: any) {
+            return { data: null as any, error: new Error(error.message) };
+        }
     }
 };
+

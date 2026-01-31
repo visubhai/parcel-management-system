@@ -3,6 +3,8 @@ import { SortField, SortOrder } from "@/frontend/hooks/useReports";
 import { ChevronDown, ChevronUp, ChevronsUpDown, ArrowLeft, ArrowRight, Ban } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { ConfirmationModal } from "@/frontend/components/common/ConfirmationModal";
+import { EditBookingModal } from "./EditBookingModal";
+import { useBranches } from "@/frontend/hooks/useBranches";
 import { useState } from "react";
 
 interface ReportTableProps {
@@ -28,13 +30,22 @@ export function ReportTable({
 }: ReportTableProps) {
     // const { cancelBooking } = useBranchStore(); // Removed
     const router = useRouter();
+    const { branches } = useBranches();
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
+    const [editModalOpen, setEditModalOpen] = useState(false);
     const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
+    const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
     const handleCancelClick = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         setBookingToCancel(id);
         setCancelModalOpen(true);
+    };
+
+    const handleEditClick = (e: React.MouseEvent, booking: Booking) => {
+        e.stopPropagation();
+        setSelectedBooking(booking);
+        setEditModalOpen(true);
     };
 
     const handleConfirmCancel = async () => {
@@ -52,6 +63,19 @@ export function ReportTable({
             mutate();
             setBookingToCancel(null);
             setCancelModalOpen(false);
+        }
+    };
+
+    const handleSaveEdit = async (updated: Booking) => {
+        if (selectedBooking) {
+            const { error } = await parcelService.updateBooking(selectedBooking.id, updated);
+            if (error) {
+                alert(`Failed to update booking: ${error.message}`);
+                return;
+            }
+            mutate();
+            setEditModalOpen(false);
+            setSelectedBooking(null);
         }
     };
 
@@ -149,15 +173,26 @@ export function ReportTable({
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            {!isCancelled && row.status !== 'Delivered' && (
-                                                <button
-                                                    onClick={(e) => handleCancelClick(e, row.id)}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 hover:text-red-700 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all"
-                                                    title="Cancel Booking"
-                                                >
-                                                    <Ban className="w-3.5 h-3.5" />
-                                                    Cancel
-                                                </button>
+                                            {!isCancelled && (
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={(e) => handleEditClick(e, row)}
+                                                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-transparent hover:border-blue-100 transition-all"
+                                                        title="Edit Booking"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    {row.status !== 'Delivered' && (
+                                                        <button
+                                                            onClick={(e) => handleCancelClick(e, row.id)}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 hover:text-red-700 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all"
+                                                            title="Cancel Booking"
+                                                        >
+                                                            <Ban className="w-3.5 h-3.5" />
+                                                            Cancel
+                                                        </button>
+                                                    )}
+                                                </div>
                                             )}
                                         </td>
                                     </tr>
@@ -226,6 +261,16 @@ export function ReportTable({
                 cancelText="No, Keep It"
                 isDanger={true}
             />
+            {/* Edit Booking Modal */}
+            {selectedBooking && (
+                <EditBookingModal
+                    booking={selectedBooking}
+                    isOpen={editModalOpen}
+                    availableBranches={branches as any}
+                    onClose={() => setEditModalOpen(false)}
+                    onSave={handleSaveEdit}
+                />
+            )}
         </div>
     );
 }
