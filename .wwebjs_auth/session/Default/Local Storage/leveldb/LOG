@@ -1,6 +1,0 @@
-2026/01/31-10:05:02.523 610a8 Reusing MANIFEST /Users/vishvampaghadar/Documents/parcel-management-system/.wwebjs_auth/session/Default/Local Storage/leveldb/MANIFEST-000001
-2026/01/31-10:05:02.526 610a8 Recovering log #3
-2026/01/31-10:05:02.527 610a8 Reusing old log /Users/vishvampaghadar/Documents/parcel-management-system/.wwebjs_auth/session/Default/Local Storage/leveldb/000003.log 
-2026/01/31-10:06:02.530 610ab Level-0 table #5: started
-2026/01/31-10:06:02.532 610ab Level-0 table #5: 18089 bytes OK
-2026/01/31-10:06:02.534 610ab Delete type=0 #3
