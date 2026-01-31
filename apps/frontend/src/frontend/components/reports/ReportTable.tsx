@@ -90,6 +90,7 @@ export function ReportTable({
                             <HeaderCell field="toBranch" label="Destination" />
                             <HeaderCell field="sender" label="Sender" />
                             <HeaderCell field="receiver" label="Receiver" />
+                            <th className="px-6 py-4 bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider">Remarks</th>
                             <th className="px-6 py-4 bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Qty</th>
                             <HeaderCell field="total" label="Amount" align="right" />
                             <th className="px-6 py-4 bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Payment</th>
@@ -117,6 +118,9 @@ export function ReportTable({
                                         <td className="px-6 py-4 text-sm text-slate-500">{row.toBranch}</td>
                                         <td className="px-6 py-4 text-sm text-slate-600 font-medium truncate max-w-[150px]" title={row.sender.name}>{row.sender.name}</td>
                                         <td className="px-6 py-4 text-sm text-slate-600 truncate max-w-[150px]" title={row.receiver.name}>{row.receiver.name}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-500 italic truncate max-w-[150px]" title={row.remarks || ""}>
+                                            {row.remarks || "-"}
+                                        </td>
                                         <td className="px-6 py-4 text-sm text-slate-700 text-right font-mono">
                                             {row.parcels.reduce((s, p) => s + p.quantity, 0)}
                                         </td>

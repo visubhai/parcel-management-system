@@ -70,4 +70,5 @@ export interface IncomingParcel {
     status: ParcelStatus;
     paymentStatus: PaymentStatus;
     totalAmount: number;
+    remarks?: string;
 }

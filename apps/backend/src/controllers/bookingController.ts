@@ -87,7 +87,8 @@ export const createBooking = async (req: Request, res: Response): Promise<any> =
                     if (toBranchObj) toBranchName = toBranchObj.name;
                 } catch (e) { console.error("Error fetching toBranch for WA", e); }
 
-                const message = `📦 *BOOKING CONFIRMATION*\n*SAVAN LOGISTICS*\n\n📄 *LR No:* ${lrNumber}\n📍 *Route:* ${fromBranchName} ➡️ ${toBranchName}\n📦 *Package:* ${body.parcels.map((p: any) => `${p.quantity} ${p.itemType}`).join(', ')}\n💰 *Total:* ₹${body.costs.total.toFixed(2)}\n📅 *Date:* ${dateStr}\n\n_Thank you for shipping with us!_`;
+                const remarksStr = body.remarks ? `\n📝 *Remarks:* ${body.remarks}` : '';
+                const message = `📦 *BOOKING CONFIRMATION*\n*SAVAN LOGISTICS*\n\n📄 *LR No:* ${lrNumber}\n📍 *Route:* ${fromBranchName} ➡️ ${toBranchName}\n📦 *Package:* ${body.parcels.map((p: any) => `${p.quantity} ${p.itemType}`).join(', ')}\n💰 *Total:* ₹${body.costs.total.toFixed(2)}\n📅 *Date:* ${dateStr}${remarksStr}\n\n_Thank you for shipping with us!_`;
 
                 if (body.sender?.mobile) {
                     await whatsappService.sendMessage(body.sender.mobile, message);

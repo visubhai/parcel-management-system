@@ -42,7 +42,8 @@ export function InboundTable() {
             paymentStatus: p.payment_type === 'PAID' ? 'Paid' : 'To Pay',
             status: p.status === 'ARRIVED' ? 'Arrived' : (p.status === 'IN_TRANSIT' ? 'In Transit' : p.status),
             items: [], // populate if needed
-            totalAmount: p.total_amount
+            totalAmount: p.total_amount,
+            remarks: p.remarks
         }));
     }, [serverData]);
 
@@ -98,6 +99,7 @@ export function InboundTable() {
                         <th className="px-6 py-3 font-medium">To</th>
                         <th className="px-6 py-3 font-medium">Sender</th>
                         <th className="px-6 py-3 font-medium">Receiver</th>
+                        <th className="px-6 py-3 font-medium">Remarks</th>
                         <th className="px-6 py-3 font-medium">Payment</th>
                         <th className="px-6 py-3 font-medium">Status</th>
                         <th className="px-6 py-3 font-medium text-right">Action</th>
@@ -111,6 +113,9 @@ export function InboundTable() {
                             <td className="px-6 py-4 text-slate-600">{parcel.toBranch}</td>
                             <td className="px-6 py-4 text-slate-600">{parcel.senderName}</td>
                             <td className="px-6 py-4 text-slate-600">{parcel.receiverName}</td>
+                            <td className="px-6 py-4 text-slate-500 italic truncate max-w-[150px]" title={parcel.remarks || ""}>
+                                {parcel.remarks || "-"}
+                            </td>
                             <td className="px-6 py-4">
                                 <span className={cn(
                                     "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold",
