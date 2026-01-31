@@ -90,6 +90,45 @@ export async function POST(req: NextRequest) {
             });
         }
 
+        // 3. Fire-and-Forget WhatsApp Notification (Background)
+        (async () => {
+            try {
+                // Construct Message
+                const dateStr = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' });
+
+                // Get branch name safely (populate didn't happen on newBooking, but we have fromBranch object)
+                const fromBranchName = fromBranch.name;
+                // We only have toBranch ID, need to populate or just show "Dest" if not fetched. 
+                // Actually, front-end sends IDs. We might need to fetch toBranch name if not available.
+                // For speed, let's try to fetch it or just use ID/Code if name unavailable.
+                // However, we don't want to slow down this main thread? 
+                // Wait, this async block IS detached from the response return. We can fetch here!
+
+                let toBranchName = "Destination";
+                try {
+                    const toBranchObj = await Branch.findById(body.toBranch);
+                    if (toBranchObj) toBranchName = toBranchObj.name;
+                } catch (e) { console.error("Error fetching toBranch for WA", e); }
+
+                const message = `📦 *BOOKING CONFIRMATION*\n*SAVAN LOGISTICS*\n\n📄 *LR No:* ${lrNumber}\n📍 *Route:* ${fromBranchName} ➡️ ${toBranchName}\n📦 *Package:* ${body.parcels.map((p: any) => `${p.quantity} ${p.itemType}`).join(', ')}\n💰 *Total:* ₹${body.costs.total.toFixed(2)}\n📅 *Date:* ${dateStr}\n\n_Thank you for shipping with us!_`;
+
+                // Send to Sender
+                if (body.sender?.mobile) {
+                    await fetch('http://localhost:3001/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            mobile: body.sender.mobile,
+                            message: message
+                        })
+                    }).catch(err => console.error("WA Trigger Error (Sender):", err.message));
+                }
+
+            } catch (bgError) {
+                console.error("Background Notification Error:", bgError);
+            }
+        })();
+
         return NextResponse.json({
             message: "Booking created successfully",
             booking: newBooking
