@@ -5,7 +5,8 @@ import { useBranchStore } from "@/frontend/lib/store";
 import { ProfileSettings } from "@/frontend/components/settings/ProfileSettings";
 import { UserManagement } from "@/frontend/components/settings/UserManagement";
 import { BranchManagement } from "@/frontend/components/settings/BranchManagement";
-import { User, Users, Building2, Settings as SettingsIcon } from "lucide-react";
+import { AuditLogTable } from "@/frontend/components/settings/AuditLogTable";
+import { User, Users, Building2, Settings as SettingsIcon, History } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 
 export default function SettingsPage() {
@@ -16,7 +17,7 @@ export default function SettingsPage() {
         { id: "profile", label: "Profile Settings", icon: User, adminOnly: false },
         { id: "users", label: "User Management", icon: Users, adminOnly: true },
         { id: "branches", label: "Branch Management", icon: Building2, adminOnly: true },
-        // { id: "system", label: "System", icon: SettingsIcon, adminOnly: true }, // Placeholder for future
+        { id: "logs", label: "Audit Logs", icon: History, adminOnly: true },
     ];
 
     const filteredTabs = tabs.filter(t => !t.adminOnly || currentUser?.role === 'SUPER_ADMIN');
@@ -64,6 +65,7 @@ export default function SettingsPage() {
                         {activeTab === 'profile' && <ProfileSettings />}
                         {activeTab === 'users' && currentUser?.role === 'SUPER_ADMIN' && <UserManagement />}
                         {activeTab === 'branches' && currentUser?.role === 'SUPER_ADMIN' && <BranchManagement />}
+                        {activeTab === 'logs' && currentUser?.role === 'SUPER_ADMIN' && <AuditLogTable />}
                     </div>
                 </div>
             </div>

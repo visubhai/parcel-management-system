@@ -3,10 +3,11 @@ dotenv.config({ path: '.env.local' });
 
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import User from '../src/backend/models/User';
-import Branch from '../src/backend/models/Branch';
-import Booking from '../src/backend/models/Booking';
-import Transaction from '../src/backend/models/Transaction';
+import User from '../apps/backend/src/models/User';
+import Branch from '../apps/backend/src/models/Branch';
+import Booking from '../apps/backend/src/models/Booking';
+import Transaction from '../apps/backend/src/models/Transaction';
+import Counter from '../apps/backend/src/models/Counter';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -49,6 +50,7 @@ async function seed() {
         await Branch.deleteMany({});
         await Booking.deleteMany({});
         await Transaction.deleteMany({});
+        await Counter.deleteMany({});
 
         // 2. Create Branches and Users
         console.log('🌱 Seeding Branches and Users...');
@@ -80,7 +82,8 @@ async function seed() {
                 email: `${item.branch}@system.com`,
                 username: item.branch,
                 password: passHash,
-                role: 'STAFF',
+                role: 'BRANCH',
+                branchId: branch._id,
                 branch: branch._id
             });
             console.log(`Created: ${item.branch} / ${item.pass}`);
@@ -118,6 +121,8 @@ async function seed() {
                 lrNumber,
                 fromBranch: fromBranch._id,
                 toBranch: toBranch._id,
+                senderBranchId: fromBranch._id,
+                receiverBranchId: toBranch._id,
                 sender: {
                     name: senderNames[Math.floor(Math.random() * senderNames.length)],
                     mobile: '9876543210'
@@ -134,7 +139,7 @@ async function seed() {
                 }],
                 costs: { freight, handling, hamali, total },
                 paymentType,
-                status,
+                status: status === 'Booked' ? 'INCOMING' : (status === 'Delivered' ? 'DELIVERED' : 'PENDING'),
                 createdAt,
                 updatedAt: createdAt
             });

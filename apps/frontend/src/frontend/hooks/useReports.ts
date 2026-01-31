@@ -190,11 +190,11 @@ export function useReports() {
     // -- Summary Stats --
     const stats = useMemo(() => {
         return {
-            totalRevenue: processedData.reduce((sum, item) => item.status !== 'Cancelled' ? sum + item.costs.total : sum, 0),
+            totalRevenue: processedData.reduce((sum, item) => item.status !== 'CANCELLED' ? sum + item.costs.total : sum, 0),
             totalBookings: processedData.length,
-            paidAmount: processedData.filter(i => i.paymentType === 'Paid' && i.status !== 'Cancelled').reduce((sum, i) => sum + i.costs.total, 0),
-            toPayAmount: processedData.filter(i => i.paymentType === 'To Pay' && i.status !== 'Cancelled').reduce((sum, i) => sum + i.costs.total, 0),
-            cancelledCount: processedData.filter(i => i.status === 'Cancelled').length
+            paidAmount: processedData.filter(i => i.paymentType === 'Paid' && i.status !== 'CANCELLED').reduce((sum, i) => sum + i.costs.total, 0),
+            toPayAmount: processedData.filter(i => i.paymentType === 'To Pay' && i.status !== 'CANCELLED').reduce((sum, i) => sum + i.costs.total, 0),
+            cancelledCount: processedData.filter(i => i.status === 'CANCELLED').length
         };
     }, [processedData]);
 
@@ -229,6 +229,7 @@ export function useReports() {
         handleSort,
 
         // Helpers
-        mutate
+        mutate,
+        isLoading
     };
 }

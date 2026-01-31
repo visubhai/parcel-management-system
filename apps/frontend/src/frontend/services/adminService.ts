@@ -1,4 +1,4 @@
-import { ServiceResponse, fetchApi, API_URL } from './base';
+import { ServiceResponse, fetchApi, API_URL, parseError } from './base';
 import { User } from '@/shared/types';
 
 export const adminService = {
@@ -6,7 +6,7 @@ export const adminService = {
         try {
             const res = await fetchApi('/users');
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error);
+            if (!res.ok) throw new Error(parseError(data));
             return { data, error: null };
         } catch (error: any) {
             return { data: null, error: new Error(error.message) };
@@ -20,7 +20,7 @@ export const adminService = {
                 body: JSON.stringify({ isActive }),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error);
+            if (!res.ok) throw new Error(parseError(data));
             return { data: null, error: null };
         } catch (error: any) {
             return { data: null, error: new Error(error.message) };
@@ -33,27 +33,69 @@ export const adminService = {
             const res = await fetchApi('/branches');
             if (!res.ok) {
                 const errorData = await res.json().catch(() => ({}));
-                throw new Error(errorData.error || `HTTP Error ${res.status}`);
+                throw new Error(parseError(errorData) || `HTTP Error ${res.status}`);
             }
             const data = await res.json();
             console.log("Branches fetched:", data);
             return { data, error: null };
         } catch (error: any) {
-            console.error("Failed to fetch branches, using fallback:", error);
-            // Fallback mock if API fails during migration
-            return {
-                data: [
-                    { _id: 'mock1', name: 'MOCK: Main Branch', branchCode: 'MOCK_01' },
-                    { _id: 'mock2', name: 'MOCK: Surat Hub', branchCode: 'MOCK_02' }
-                ],
-                error: null // Return null error so UI shows the mock data instead of breaking
-            };
+            console.error("Failed to fetch branches:", error);
+            return { data: [], error: new Error(error.message) };
         }
     },
-    async getAuditLogs(limit: number): Promise<ServiceResponse<any[]>> {
-        return {
-            data: [],
-            error: null
-        };
+    async getBranchPermissions(branchId: string): Promise<ServiceResponse<any>> {
+        try {
+            const res = await fetchApi(`/superadmin/permissions/${branchId}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(parseError(data));
+            return { data, error: null };
+        } catch (error: any) {
+            return { data: null, error: new Error(error.message) };
+        }
+    },
+
+    async updateBranchPermissions(branchId: string, allowedReports: string[]): Promise<ServiceResponse<any>> {
+        try {
+            const res = await fetchApi(`/superadmin/permissions/${branchId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ allowedReports }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(parseError(data));
+            return { data, error: null };
+        } catch (error: any) {
+            return { data: null, error: new Error(error.message) };
+        }
+    },
+
+    async getAuditLogs(page: number = 1, limit: number = 50, entityType?: string, action?: string): Promise<ServiceResponse<any>> {
+        try {
+            const params = new URLSearchParams();
+            params.append('page', page.toString());
+            params.append('limit', limit.toString());
+            if (entityType) params.append('entityType', entityType);
+            if (action) params.append('action', action);
+
+            const res = await fetchApi(`/superadmin/audit-logs?${params.toString()}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(parseError(data));
+            return { data, error: null };
+        } catch (error: any) {
+            return { data: { data: [], total: 0 }, error: new Error(error.message) };
+        }
+    },
+
+    async resetPassword(userId: string, password: string): Promise<ServiceResponse<any>> {
+        try {
+            const res = await fetchApi(`/users/${userId}/reset-password`, {
+                method: 'POST',
+                body: JSON.stringify({ password }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(parseError(data));
+            return { data, error: null };
+        } catch (error: any) {
+            return { data: null, error: new Error(error.message) };
+        }
     },
 };

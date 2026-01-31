@@ -7,7 +7,8 @@ import {
     PlusCircle,
     PackageCheck,
     BarChart3,
-    Settings
+    Settings,
+    ShieldAlert
 } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 
@@ -53,20 +54,35 @@ export function Sidebar() {
                     );
                 })}
 
-                {/* Super Admin Link */}
+                {/* Super Admin Links */}
                 {currentUser?.role === "SUPER_ADMIN" && (
-                    <Link
-                        href="/dashboard/super-admin"
-                        className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors mt-4 border-t border-slate-800",
-                            pathname === "/dashboard/super-admin"
-                                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
-                                : "text-purple-400 hover:bg-slate-800/50 hover:text-white"
-                        )}
-                    >
-                        <Settings className="w-5 h-5" />
-                        Admin Panel
-                    </Link>
+                    <div className="pt-4 mt-4 border-t border-slate-800 space-y-2">
+                        <p className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Admin Control</p>
+                        <Link
+                            href="/dashboard/super-admin"
+                            className={cn(
+                                "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
+                                pathname === "/dashboard/super-admin"
+                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
+                                    : "text-purple-400 hover:bg-slate-800/50 hover:text-white"
+                            )}
+                        >
+                            <Settings className="w-5 h-5" />
+                            User Management
+                        </Link>
+                        <Link
+                            href="/admin/report-permissions"
+                            className={cn(
+                                "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
+                                pathname === "/admin/report-permissions"
+                                    ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg"
+                                    : "text-indigo-400 hover:bg-slate-800/50 hover:text-white"
+                            )}
+                        >
+                            <ShieldAlert className="w-5 h-5" />
+                            Report Visibility
+                        </Link>
+                    </div>
                 )}
             </nav>
 

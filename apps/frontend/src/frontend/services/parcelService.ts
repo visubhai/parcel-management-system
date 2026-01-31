@@ -1,5 +1,5 @@
 import { Booking, Parcel, ParcelStatus, IncomingParcel } from "@/shared/types";
-import { ServiceResponse, fetchApi } from "./base";
+import { ServiceResponse, fetchApi, parseError } from "./base";
 
 export const parcelService = {
     async createBooking(booking: Booking, userId: string): Promise<ServiceResponse<{ id: string, lr_number: string }>> {
@@ -9,7 +9,7 @@ export const parcelService = {
                 body: JSON.stringify(booking),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to create booking');
+            if (!res.ok) throw new Error(parseError(data));
 
             return {
                 data: { id: data.booking._id, lr_number: data.booking.lrNumber },
@@ -25,7 +25,7 @@ export const parcelService = {
             const res = await fetchApi(`/bookings?toBranch=${branchId}`);
             const data = await res.json();
 
-            if (!res.ok) throw new Error(data.error);
+            if (!res.ok) throw new Error(parseError(data));
 
             // Filter for Incoming Table (Exclude Delivered/Cancelled?)
             const parcels = data
@@ -57,20 +57,21 @@ export const parcelService = {
         try {
             const res = await fetchApi(`/bookings?fromBranch=${branchId}`);
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error);
+            if (!res.ok) throw new Error(parseError(data));
             return { data, error: null };
         } catch (error: any) {
             return { data: [], error: new Error(error.message) };
         }
     },
 
-    async updateParcelStatus(parcelId: string, status: ParcelStatus): Promise<ServiceResponse<null>> {
+    async updateParcelStatus(parcelId: string, status: ParcelStatus, deliveredRemark?: string): Promise<ServiceResponse<null>> {
         try {
             const res = await fetchApi(`/bookings/${parcelId}/status`, {
                 method: 'PATCH',
-                body: JSON.stringify({ status }),
+                body: JSON.stringify({ status, deliveredRemark }),
             });
-            if (!res.ok) throw new Error('Failed to update status');
+            const data = await res.json();
+            if (!res.ok) throw new Error(parseError(data));
             return { data: null, error: null };
         } catch (error: any) {
             return { data: null, error: new Error(error.message) };
@@ -81,11 +82,16 @@ export const parcelService = {
         return { data: null, error: new Error("Search not implemented yet") };
     },
 
-    async getBookingsForReports(startDate: string, endDate: string): Promise<ServiceResponse<any[]>> {
+    async getBookingsForReports(startDate?: string, endDate?: string, lrNumber?: string): Promise<ServiceResponse<any[]>> {
         try {
-            const res = await fetchApi(`/bookings?startDate=${startDate}&endDate=${endDate}&_t=${Date.now()}`);
+            const params = new URLSearchParams();
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+            if (lrNumber) params.append('lrNumber', lrNumber);
+
+            const res = await fetchApi(`/bookings?${params.toString()}`);
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error);
+            if (!res.ok) throw new Error(parseError(data));
             return { data, error: null };
         } catch (error: any) {
             return { data: [], error: new Error(error.message) };
@@ -98,7 +104,7 @@ export const parcelService = {
                 body: JSON.stringify(booking),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error);
+            if (!res.ok) throw new Error(parseError(data));
             return { data: data.booking, error: null };
         } catch (error: any) {
             return { data: null as any, error: new Error(error.message) };

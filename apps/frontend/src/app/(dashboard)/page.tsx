@@ -9,6 +9,7 @@ import { Booking, Parcel, PaymentStatus } from "@/shared/types";
 import { Printer, Zap, Save, PlusCircle, CheckCircle2 } from "lucide-react";
 import { useBranches } from "@/frontend/hooks/useBranches";
 import { parcelService } from "@/frontend/services/parcelService";
+import { useToast } from "@/frontend/components/ui/toast";
 import { mutate } from "swr";
 
 // Simple ID generator
@@ -18,6 +19,7 @@ export default function BookingDashboard() {
   // Services & State
   const { currentUser } = useBranchStore();
   const { branchObjects } = useBranches();
+  const { addToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -120,7 +122,7 @@ export default function BookingDashboard() {
 
   const handleSave = async () => {
     if (costs.total <= 0 || !sender.name || !receiver.name) {
-      alert("Please fill in sender, receiver, and at least one item.");
+      addToast("Please fill in sender, receiver, and at least one item.", "error");
       return;
     }
     setIsSubmitting(true);
@@ -137,22 +139,23 @@ export default function BookingDashboard() {
       costs,
       paymentType,
       remarks,
-      status: "Booked"
+      status: "INCOMING"
     };
 
     const { data: createdParcel, error } = await parcelService.createBooking(bookingData, currentUser?.id || '') as { data: any, error?: any };
 
     if (error) {
       setIsSubmitting(false);
-      alert("Booking Failed: " + error.message);
+      addToast("Booking Failed: " + error.message, "error");
       return;
     }
 
     if (createdParcel) {
-      setLrNumber(createdParcel.lrNumber);
+      setLrNumber(createdParcel.lr_number); // Note: backend returns lr_number in this object
       setIsLocked(true);
       setIsSubmitting(false);
       setShowSuccess(true);
+      addToast("Booking Created Successfully!", "success");
 
       mutate(key => Array.isArray(key) && (key[0] === 'reports' || key[0] === 'ledger'));
 

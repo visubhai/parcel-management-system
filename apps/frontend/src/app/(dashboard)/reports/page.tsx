@@ -51,7 +51,7 @@ export default function ReportsPage() {
         filters,
         setFilters,
         currentPage, totalPages, rowsPerPage, totalItems, setCurrentPage, setRowsPerPage,
-        sortConfig, handleSort, mutate
+        sortConfig, handleSort, mutate, isLoading
     } = useReports();
 
     // Determine available branches based on Role
@@ -92,7 +92,7 @@ export default function ReportsPage() {
                         <h1 className="text-2xl font-black text-slate-800 tracking-tight">Enterprise Reports</h1>
                         <p className="text-slate-500 font-medium">Advanced analytics and data management</p>
                     </div>
-                    <ExportButtons data={allFilteredData} />
+                    <ExportButtons data={allFilteredData} filters={filters} />
                 </div>
             </div>
 
@@ -124,6 +124,7 @@ export default function ReportsPage() {
                 </div>
                 <ReportTable
                     data={data}
+                    isLoading={isLoading}
                     currentPage={currentPage}
                     totalPages={totalPages}
                     rowsPerPage={rowsPerPage}

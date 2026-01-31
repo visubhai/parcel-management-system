@@ -4,6 +4,8 @@ export interface IBooking extends Document {
     lrNumber: string;
     fromBranch: mongoose.Types.ObjectId;
     toBranch: mongoose.Types.ObjectId;
+    senderBranchId: mongoose.Types.ObjectId; // Strict isolation
+    receiverBranchId: mongoose.Types.ObjectId;
     sender: {
         name: string;
         mobile: string;
@@ -28,7 +30,16 @@ export interface IBooking extends Document {
     };
     paymentType: 'Paid' | 'To Pay';
     remarks?: string;
-    status: 'Booked' | 'In Transit' | 'Arrived' | 'Delivered' | 'Cancelled';
+    deliveredRemark?: string;
+    deliveredAt?: Date;
+    deliveredBy?: mongoose.Types.ObjectId;
+    status: 'INCOMING' | 'PENDING' | 'DELIVERED' | 'CANCELLED' | 'Booked' | 'In Transit' | 'Arrived';
+    editHistory: Array<{
+        oldRemark?: string;
+        newRemark: string;
+        editedBy: mongoose.Types.ObjectId;
+        editedAt: Date;
+    }>;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -37,6 +48,8 @@ const BookingSchema = new Schema<IBooking>({
     lrNumber: { type: String, required: true, unique: true },
     fromBranch: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
     toBranch: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
+    senderBranchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
+    receiverBranchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
     sender: {
         name: { type: String, required: true },
         mobile: { type: String, required: true },
@@ -61,11 +74,20 @@ const BookingSchema = new Schema<IBooking>({
     },
     paymentType: { type: String, enum: ['Paid', 'To Pay'], required: true },
     remarks: { type: String, required: false },
+    deliveredRemark: { type: String, required: false },
+    deliveredAt: { type: Date },
+    deliveredBy: { type: Schema.Types.ObjectId, ref: 'User' },
     status: {
         type: String,
-        enum: ['Booked', 'In Transit', 'Arrived', 'Delivered', 'Cancelled'],
-        default: 'Booked'
-    }
+        enum: ['INCOMING', 'PENDING', 'DELIVERED', 'CANCELLED', 'Booked', 'In Transit', 'Arrived'],
+        default: 'INCOMING'
+    },
+    editHistory: [{
+        oldRemark: String,
+        newRemark: { type: String, required: true },
+        editedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        editedAt: { type: Date, default: Date.now }
+    }]
 }, { timestamps: true });
 
 export default mongoose.models.Booking || mongoose.model<IBooking>('Booking', BookingSchema);

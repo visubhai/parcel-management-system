@@ -14,18 +14,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
                     const res = await fetch(`${API_URL}/auth/login`, {
                         method: 'POST',
-                        body: JSON.stringify(credentials),
+                        body: JSON.stringify({
+                            username: credentials.email,
+                            password: credentials.password,
+                            branchId: credentials.branchId,
+                        }),
                         headers: { "Content-Type": "application/json" }
                     });
 
-                    const user = await res.json();
+                    const data = await res.json();
 
                     if (!res.ok) {
-                        throw new Error(user.error || 'Authentication failed');
+                        // Extract message from new format
+                        let errorMsg = 'Authentication failed';
+                        if (data.message) {
+                            errorMsg = Array.isArray(data.message)
+                                ? data.message.map((m: any) => m.message).join(', ')
+                                : data.message;
+                        }
+                        throw new Error(errorMsg);
                     }
 
-                    // If login succeeds, return user
-                    return user;
+                    // Backend returns { token, user: { ... } }
+                    // NextAuth expects us to return an object that will be passed to the jwt callback
+                    return {
+                        ...data.user,
+                        accessToken: data.token
+                    };
 
                 } catch (error: any) {
                     console.error("Auth Error:", error.message);
@@ -40,6 +55,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 token.role = (user as any).role;
                 token.branchId = (user as any).branchId;
                 token.branchName = (user as any).branchName;
+                token.accessToken = (user as any).accessToken;
             }
             return token;
         },
@@ -51,6 +67,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 session.user.branchId = token.branchId;
                 // @ts-ignore
                 session.user.branchName = token.branchName;
+                // @ts-ignore
+                session.accessToken = token.accessToken;
             }
             return session;
         }

@@ -22,10 +22,15 @@ const UserSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['SUPER_ADMIN', 'ADMIN', 'STAFF'],
-        default: 'STAFF',
+        enum: ['SUPER_ADMIN', 'BRANCH'],
+        default: 'BRANCH',
     },
-    branch: {
+    branchId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Branch',
+        required: function (this: any) { return this.role === 'BRANCH'; }
+    },
+    branch: { // Keep for backward compatibility/populated data if needed
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Branch',
     },

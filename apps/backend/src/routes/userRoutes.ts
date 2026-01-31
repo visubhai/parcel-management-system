@@ -1,9 +1,19 @@
 import express from 'express';
-import { getUsers, toggleUserStatus } from '../controllers/userController';
+import { toggleUserStatusSchema, getUsersSchema, resetPasswordSchema } from '../validations/user';
+import { getUsers, toggleUserStatus, resetPassword } from '../controllers/userController';
+import { authMiddleware } from '../middleware/authMiddleware';
+import { roleMiddleware } from '../middleware/roleMiddleware';
+import { validate } from '../middleware/validate';
+
+import { passwordResetRateLimiter } from '../middleware/rateLimiter';
 
 const router = express.Router();
 
-router.get('/', getUsers);
-router.patch('/:id/status', toggleUserStatus);
+router.use(authMiddleware);
+router.use(roleMiddleware(['SUPER_ADMIN'])); // Only Super Admin can manage users
+
+router.get('/', validate(getUsersSchema), getUsers);
+router.patch('/:id/status', validate(toggleUserStatusSchema), toggleUserStatus);
+router.post('/:id/reset-password', passwordResetRateLimiter, validate(resetPasswordSchema), resetPassword);
 
 export default router;

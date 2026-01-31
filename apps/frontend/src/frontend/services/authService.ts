@@ -1,5 +1,5 @@
 import { signIn, signOut, getSession } from 'next-auth/react';
-import { ServiceResponse } from './base';
+import { ServiceResponse, parseError } from './base';
 import { User } from '@/shared/types';
 
 export const authService = {
@@ -13,12 +13,13 @@ export const authService = {
             });
 
             if (result?.error) {
+                // result.error is a string from NextAuth, but we can try to parse it if it's JSON from our authorize()
                 return { data: null, error: new Error(result.error) };
             }
 
             return { data: { success: true }, error: null };
         } catch (error: any) {
-            return { data: null, error };
+            return { data: null, error: new Error(parseError(error)) };
         }
     },
 

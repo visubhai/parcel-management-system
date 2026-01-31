@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useBranches } from "@/frontend/hooks/useBranches";
 import { User, Role, ReportType, Branch } from "@/shared/types";
 import { X, Check } from "lucide-react";
+import { useToast } from "@/frontend/components/ui/toast";
 
 interface PermissionEditorProps {
     user: Partial<User> | null;
@@ -9,16 +10,17 @@ interface PermissionEditorProps {
     onClose: () => void;
 }
 
-const REPORT_TYPES: ReportType[] = ["Daily", "Revenue", "Branch-wise", "Payment", "Sender/Receiver"];
+const REPORT_TYPES: ReportType[] = ["BOOKING_REPORT", "DELIVERY_REPORT", "LEDGER_REPORT", "SUMMARY_REPORT", "DAILY_REPORT"];
 
 export function PermissionEditor({ user, isOpen, onClose }: PermissionEditorProps) {
     const { branches } = useBranches();
+    const { addToast } = useToast();
 
     const [formData, setFormData] = useState({
         name: "",
         username: "",
         password: "",
-        role: "ADMIN" as Role,
+        role: "BRANCH" as Role,
         allowedBranches: [] as Branch[],
         allowedReports: [] as ReportType[],
         isActive: true
@@ -30,7 +32,7 @@ export function PermissionEditor({ user, isOpen, onClose }: PermissionEditorProp
                 name: user.name || "",
                 username: user.username || "",
                 password: "", // Reset password field on edit
-                role: user.role || "ADMIN",
+                role: user.role || "BRANCH",
                 allowedBranches: user.allowedBranches || [],
                 allowedReports: user.allowedReports || [],
                 isActive: user.isActive ?? true
@@ -40,7 +42,7 @@ export function PermissionEditor({ user, isOpen, onClose }: PermissionEditorProp
                 name: "",
                 username: "",
                 password: "",
-                role: "ADMIN",
+                role: "BRANCH",
                 allowedBranches: [],
                 allowedReports: [],
                 isActive: true
@@ -49,7 +51,7 @@ export function PermissionEditor({ user, isOpen, onClose }: PermissionEditorProp
     }, [user, isOpen]);
 
     const handleSubmit = () => {
-        alert("Permission updates are currently managed via the Database/Admin API.");
+        addToast("Permission updates are currently managed via the Database/Admin API.", "info");
         onClose();
     };
 
@@ -215,7 +217,7 @@ export function PermissionEditor({ user, isOpen, onClose }: PermissionEditorProp
                                         onChange={() => toggleReport(report)}
                                     />
                                     <span className={`text-sm font-bold ${formData.allowedReports.includes(report) ? "text-indigo-800" : "text-slate-600"}`}>
-                                        {report}
+                                        {report.replace('_REPORT', '').replace('_', ' ')}
                                     </span>
                                 </label>
                             ))}

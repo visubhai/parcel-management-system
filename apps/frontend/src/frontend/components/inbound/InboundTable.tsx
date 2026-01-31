@@ -12,15 +12,18 @@ import { Card } from "@/frontend/components/ui/card";
 import { ReceiveModal } from "./ReceiveModal";
 import { IncomingParcel } from "@/shared/types";
 
+import { BranchSelect } from "@/frontend/components/common/BranchSelect";
+
 export function InboundTable() {
     const { currentUser } = useBranchStore();
+    const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
     const [selectedParcel, setSelectedParcel] = useState<IncomingParcel | null>(null);
 
-    // Fetch incoming parcels for current user's branch
-    // If Super Admin, maybe fetch all? Logic says "Manage incoming...". 
-    // Assuming currentUser.branch or allowedBranches[0] is the target. 
-    // For now we use currentUser.branch (assuming they are working in a specific branch context).
-    const targetBranchId = currentUser?.branchId;
+    // Determine target branch:
+    // 1. If Branch User: Always use their assigned branch
+    // 2. If Super Admin: Use selected branch
+    const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+    const targetBranchId = isSuperAdmin ? selectedBranchId : currentUser?.branchId;
 
     const { data: serverData, mutate } = useSWR(
         targetBranchId ? ['incoming', targetBranchId] : null,
@@ -40,23 +43,23 @@ export function InboundTable() {
             senderName: p.sender_name,
             receiverName: p.receiver_name,
             paymentStatus: p.payment_type === 'PAID' ? 'Paid' : 'To Pay',
-            status: p.status === 'ARRIVED' ? 'Arrived' : (p.status === 'IN_TRANSIT' ? 'In Transit' : p.status),
+            status: p.status, // Standardized to uppercase in backend
             items: [], // populate if needed
-            totalAmount: p.total_amount,
+            totalAmount: p.costs?.total || 0,
             remarks: p.remarks
         }));
     }, [serverData]);
 
 
     const handleActionClick = (parcel: IncomingParcel) => {
-        if (parcel.status === "Delivered") return;
+        if (parcel.status === "DELIVERED") return;
         setSelectedParcel(parcel);
     };
 
-    const handleConfirmAction = async () => {
+    const handleConfirmAction = async (deliveredRemark?: string) => {
         if (selectedParcel) {
-            // If already Arrived, we are Delivering
-            if (selectedParcel.status === "Arrived") {
+            // If already ARRIVED, we are Delivering
+            if (selectedParcel.status === "ARRIVED") {
                 // 1. Payment Collection (if needed)
                 if (selectedParcel.paymentStatus === "To Pay") {
                     await ledgerService.addTransaction({
@@ -67,11 +70,11 @@ export function InboundTable() {
                         branch_id: currentUser?.branchId || '' // Use the new ID
                     });
                 }
-                // 2. Mark Delivered
-                await parcelService.updateParcelStatus(selectedParcel.id, 'Delivered');
+                // 2. Mark DELIVERED with Remark
+                await parcelService.updateParcelStatus(selectedParcel.id, 'DELIVERED', deliveredRemark);
             } else {
-                // We are Receiving (In Transit -> Arrived)
-                await parcelService.updateParcelStatus(selectedParcel.id, 'Arrived');
+                // We are Receiving (IN_TRANSIT -> ARRIVED)
+                await parcelService.updateParcelStatus(selectedParcel.id, 'ARRIVED');
             }
             mutate();
             setSelectedParcel(null);
@@ -84,11 +87,19 @@ export function InboundTable() {
 
     return (
         <Card className="shadow-sm border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-100">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                 <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <Truck className="w-5 h-5 text-primary" />
-                    Incoming Parcels for {targetBranchId}
+                    Incoming Parcels
+                    {targetBranchId && <span className="text-slate-400 text-sm font-normal ml-2">ID: {targetBranchId}</span>}
                 </h2>
+                {isSuperAdmin && (
+                    <BranchSelect
+                        value={selectedBranchId || ""}
+                        onSelect={setSelectedBranchId}
+                        placeholder="Select Branch to View"
+                    />
+                )}
             </div>
 
             <table className="w-full text-left text-sm">
@@ -129,34 +140,34 @@ export function InboundTable() {
                             <td className="px-6 py-4">
                                 <span className={cn(
                                     "inline-flex items-center gap-1.5 font-semibold",
-                                    parcel.status === "Arrived" ? "text-blue-600" : (
-                                        parcel.status === "Delivered" ? "text-emerald-600" : "text-amber-600"
+                                    parcel.status === "ARRIVED" ? "text-blue-600" : (
+                                        parcel.status === "DELIVERED" ? "text-emerald-600" : "text-amber-600"
                                     )
                                 )}>
-                                    {parcel.status === "Arrived" ? (
+                                    {parcel.status === "ARRIVED" ? (
                                         <>
-                                            <Package className="w-4 h-4" /> Arrived
+                                            <Package className="w-4 h-4" /> ARRIVED
                                         </>
                                     ) : (
-                                        parcel.status === "Delivered" ? "Delivered" : "In Transit"
+                                        parcel.status === "DELIVERED" ? "DELIVERED" : "IN TRANSIT"
                                     )}
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-right">
-                                {parcel.status !== "Delivered" && (
+                                {parcel.status !== "DELIVERED" && (
                                     <Button
                                         onClick={() => handleActionClick(parcel)}
                                         size="sm"
-                                        variant={parcel.status === "Arrived" ? "default" : "secondary"}
+                                        variant={parcel.status === "ARRIVED" ? "default" : "secondary"}
                                         className={cn(
                                             "min-w-[100px] font-bold shadow-sm",
-                                            parcel.status === "Arrived" ? "bg-primary hover:bg-primary/90" : "bg-white border hover:bg-slate-50 text-slate-700"
+                                            parcel.status === "ARRIVED" ? "bg-primary hover:bg-primary/90" : "bg-white border hover:bg-slate-50 text-slate-700"
                                         )}
                                     >
-                                        {parcel.status === "Arrived" ? "Deliver" : "Receive"}
+                                        {parcel.status === "ARRIVED" ? "Deliver" : "Receive"}
                                     </Button>
                                 )}
-                                {parcel.status === "Delivered" && (
+                                {parcel.status === "DELIVERED" && (
                                     <span className="text-xs font-bold text-slate-400">Completed</span>
                                 )}
                             </td>

@@ -2,7 +2,7 @@
 export type Branch = string; // Allow dynamic branches
 
 export type PaymentStatus = "Paid" | "To Pay";
-export type ParcelStatus = "Booked" | "In Transit" | "Arrived" | "Delivered" | "Cancelled";
+export type ParcelStatus = "INCOMING" | "PENDING" | "DELIVERED" | "CANCELLED" | "ARRIVED" | "IN_TRANSIT";
 export type ItemType = "White Sack" | "Carton" | "Manual";
 
 export interface Parcel {
@@ -41,9 +41,9 @@ export interface Booking {
     status: ParcelStatus;
 }
 
-export type Role = "SUPER_ADMIN" | "ADMIN" | "STAFF";
+export type Role = "SUPER_ADMIN" | "BRANCH";
 
-export type ReportType = "Daily" | "Revenue" | "Branch-wise" | "Payment" | "Sender/Receiver";
+export type ReportType = "DAILY_REPORT" | "DELIVERY_REPORT" | "LEDGER_REPORT" | "SUMMARY_REPORT" | "BOOKING_REPORT";
 
 export interface User {
     id: string;
@@ -71,4 +71,19 @@ export interface IncomingParcel {
     paymentStatus: PaymentStatus;
     totalAmount: number;
     remarks?: string;
+}
+
+export interface ReportPermission {
+    id: string;
+    branchId: string;
+    allowedReports: ReportType[];
+    createdBy: string; // Admin ID
+    updatedAt: string;
+}
+
+export interface EditHistoryEntry {
+    oldRemark?: string;
+    newRemark: string;
+    editedBy: string;
+    editedAt: string;
 }

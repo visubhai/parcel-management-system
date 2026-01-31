@@ -5,8 +5,11 @@ import { Search, Bell, Menu, ChevronDown, User, LogOut, Settings, Building2 } fr
 import { useBranchStore } from "@/frontend/lib/store";
 import { useBranches } from "@/frontend/hooks/useBranches";
 import { authService } from "@/frontend/services/authService";
+import { parcelService } from "@/frontend/services/parcelService";
 import { useRouter } from "next/navigation";
 import { cn } from "@/frontend/lib/utils";
+import { useDebounce } from "../../hooks/useDebounce";
+import { Booking } from "@/shared/types";
 
 export function Header() {
     const { currentUser, searchQuery, setSearchQuery, setCurrentUser } = useBranchStore();
@@ -15,11 +18,37 @@ export function Header() {
     // Local state for header clock
     const [time, setTime] = useState(new Date());
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [searchResults, setSearchResults] = useState<Booking[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showSearchResults, setShowSearchResults] = useState(false);
+
+    const debouncedSearch = useDebounce(searchQuery, 300);
 
     useEffect(() => {
         const timer = setInterval(() => setTime(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);
+
+    useEffect(() => {
+        const performSearch = async () => {
+            if (debouncedSearch.length < 3) {
+                setSearchResults([]);
+                setShowSearchResults(false);
+                return;
+            }
+
+            setIsSearching(true);
+            const { data, error } = await parcelService.getBookingsForReports('', '', debouncedSearch);
+            setIsSearching(false);
+
+            if (data) {
+                setSearchResults(data);
+                setShowSearchResults(true);
+            }
+        };
+
+        performSearch();
+    }, [debouncedSearch]);
 
     const handleLogout = async () => {
         await authService.logout();
@@ -44,9 +73,74 @@ export function Header() {
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search by LR number, sender, or receiver..."
+                        onFocus={() => searchQuery.length >= 3 && setShowSearchResults(true)}
+                        placeholder="Search LR number (min 3 chars)..."
                         className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-900/10 focus:bg-white transition-all"
                     />
+
+                    {/* Search Results Dropdown */}
+                    {showSearchResults && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden z-50">
+                            <div className="p-2 border-b border-slate-50 flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-2">Search Results</span>
+                                <button onClick={() => setShowSearchResults(false)} className="p-1 hover:bg-slate-100 rounded text-slate-400">
+                                    <Menu className="w-3 h-3" />
+                                </button>
+                            </div>
+                            <div className="max-h-80 overflow-y-auto">
+                                {isSearching ? (
+                                    <div className="p-8 text-center">
+                                        <div className="w-6 h-6 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin mx-auto" />
+                                        <p className="text-xs text-slate-400 mt-2 font-medium">Searching...</p>
+                                    </div>
+                                ) : searchResults.length > 0 ? (
+                                    searchResults.map((booking) => (
+                                        <button
+                                            key={booking.id}
+                                            onClick={() => {
+                                                setShowSearchResults(false);
+                                                router.push(`/reports?lrNumber=${booking.lrNumber}`);
+                                            }}
+                                            className="w-full p-3 hover:bg-slate-50 flex items-start gap-3 transition-colors text-left border-b border-slate-50/50 last:border-0"
+                                        >
+                                            <div className="h-8 w-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                                                <Search className="w-4 h-4" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className="text-sm font-bold text-slate-800 truncate">{booking.lrNumber}</span>
+                                                    <span className={cn(
+                                                        "text-[10px] px-1.5 py-0.5 rounded font-bold uppercase",
+                                                        booking.status === 'DELIVERED' ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600"
+                                                    )}>{booking.status}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1 text-[11px] text-slate-400 mt-0.5">
+                                                    <span className="font-medium text-slate-600 truncate max-w-[80px]">{booking.sender.name}</span>
+                                                    <span>→</span>
+                                                    <span className="font-medium text-slate-600 truncate max-w-[80px]">{booking.receiver.name}</span>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    ))
+                                ) : (
+                                    <div className="p-8 text-center">
+                                        <p className="text-sm font-medium text-slate-400">No parcels found with this LR number</p>
+                                    </div>
+                                )}
+                            </div>
+                            {searchResults.length > 0 && (
+                                <button
+                                    onClick={() => {
+                                        setShowSearchResults(false);
+                                        router.push(`/reports?search=${searchQuery}`);
+                                    }}
+                                    className="w-full p-3 bg-slate-50 text-[11px] font-bold text-slate-500 hover:bg-slate-100 transition-colors uppercase tracking-widest"
+                                >
+                                    View All Detailed Results
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 

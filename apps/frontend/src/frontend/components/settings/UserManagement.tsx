@@ -1,9 +1,37 @@
 import { useUsers } from "@/frontend/hooks/useUsers";
-import { Users, Shield } from "lucide-react";
+import { Users, Shield, Key, Eye, EyeOff, X } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
+import { useState } from "react";
+import { adminService } from "@/frontend/services/adminService";
+import { useToast } from "@/frontend/components/ui/toast";
 
 export function UserManagement() {
     const { users } = useUsers();
+    const { addToast } = useToast();
+    const [resettingUser, setResettingUser] = useState<any | null>(null);
+    const [newPassword, setNewPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleResetPassword = async () => {
+        if (!resettingUser || !newPassword) return;
+        if (newPassword.length < 6) {
+            addToast("Password must be at least 6 characters", "error");
+            return;
+        }
+
+        setIsSubmitting(true);
+        const { error } = await adminService.resetPassword(resettingUser.id, newPassword);
+        setIsSubmitting(false);
+
+        if (error) {
+            addToast("Failed to reset password: " + error.message, "error");
+        } else {
+            addToast("Password reset successfully for " + resettingUser.name, "success");
+            setResettingUser(null);
+            setNewPassword("");
+        }
+    };
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -28,6 +56,7 @@ export function UserManagement() {
                             <th className="px-6 py-4 font-semibold text-slate-500 text-sm">User Details</th>
                             <th className="px-6 py-4 font-semibold text-slate-500 text-sm">Role</th>
                             <th className="px-6 py-4 font-semibold text-slate-500 text-sm">Branch</th>
+                            <th className="px-6 py-4 font-semibold text-slate-500 text-sm text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -64,11 +93,76 @@ export function UserManagement() {
                                         <span className="text-sm text-slate-400 italic">All Branches</span>
                                     )}
                                 </td>
+                                <td className="px-6 py-4 text-right">
+                                    <button
+                                        onClick={() => setResettingUser(user)}
+                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                        title="Reset Password"
+                                    >
+                                        <Key className="w-4 h-4" />
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
+
+            {/* Reset Password Modal */}
+            {resettingUser && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-slate-800">Reset Password</h3>
+                            <button onClick={() => setResettingUser(null)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="flex items-center gap-3 p-3 bg-red-50 rounded-xl border border-red-100">
+                                <Shield className="w-5 h-5 text-red-600" />
+                                <p className="text-xs font-bold text-red-700 leading-tight">
+                                    Attention: This will immediately change the password for {resettingUser.name} ({resettingUser.username}).
+                                </p>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-700 px-1">New Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        placeholder="Min 6 characters..."
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-slate-900/10 focus:bg-white transition-all"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                    >
+                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-6 bg-slate-50 flex gap-3">
+                            <button
+                                onClick={() => setResettingUser(null)}
+                                className="flex-1 px-4 py-3 text-sm font-bold text-slate-600 hover:text-slate-800 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleResetPassword}
+                                disabled={isSubmitting || newPassword.length < 6}
+                                className="flex-[2] bg-slate-900 text-white rounded-xl py-3 px-4 text-sm font-bold shadow-lg shadow-slate-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
+                            >
+                                {isSubmitting ? "Updating..." : "Confirm & Change"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

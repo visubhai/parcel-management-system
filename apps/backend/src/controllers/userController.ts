@@ -1,56 +1,75 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
+import { catchAsync, AppError } from '../middleware/errorHandler';
+import bcrypt from 'bcryptjs';
+import { logAudit } from '../utils/auditLogger';
+import { AuthRequest } from '../middleware/authMiddleware';
 
-export const getUsers = async (req: Request, res: Response): Promise<any> => {
-    try {
-        const users = await User.find({})
-            .select('-password') // Exclude password
-            .populate('branch', 'name code') // Populate branch details
-            .sort({ createdAt: -1 });
+export const getUsers = catchAsync(async (req: Request, res: Response) => {
+    const users = await User.find({})
+        .select('-password') // Exclude password
+        .populate('branch', 'name code') // Populate branch details
+        .sort({ createdAt: -1 });
 
-        // Map to frontend expected format if necessary, or just return
-        const formattedUsers = users.map(user => ({
-            id: user._id,
-            name: user.name,
-            username: user.username,
-            email: user.email,
-            role: user.role,
-            branch: user.branch ? (user.branch as any).name : 'Global',
-            branchId: user.branch ? (user.branch as any)._id : null,
-            branchDetails: user.branch,
-            isActive: user.isActive,
-            createdAt: user.createdAt
-        }));
+    const formattedUsers = users.map(user => ({
+        id: user._id,
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        branch: user.branch ? (user.branch as any).name : 'Global',
+        branchId: user.branch ? (user.branch as any)._id : null,
+        branchDetails: user.branch,
+        isActive: user.isActive,
+        createdAt: user.createdAt
+    }));
 
-        return res.json(formattedUsers);
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        return res.status(500).json({ error: 'Failed to fetch users' });
+    return res.json(formattedUsers);
+});
+
+export const toggleUserStatus = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { isActive } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+        id,
+        { isActive },
+        { new: true }
+    ).select('-password');
+
+    if (!user) {
+        throw new AppError('User not found', 404);
     }
-};
 
-export const toggleUserStatus = async (req: Request, res: Response): Promise<any> => {
-    try {
-        const { id } = req.params;
-        const { isActive } = req.body;
+    return res.json(user);
+});
 
-        if (typeof isActive !== 'boolean') {
-            return res.status(400).json({ error: 'isActive must be a boolean' });
-        }
+export const resetPassword = catchAsync(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const { password } = req.body;
+    const adminUser = req.user;
 
-        const user = await User.findByIdAndUpdate(
-            id,
-            { isActive },
-            { new: true }
-        ).select('-password');
+    // Password hashing
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+    const user = await User.findByIdAndUpdate(
+        id,
+        { password: hashedPassword },
+        { new: true }
+    ).select('-password');
 
-        return res.json(user);
-    } catch (error) {
-        console.error('Error toggling user status:', error);
-        return res.status(500).json({ error: 'Failed to update user status' });
+    if (!user) {
+        throw new AppError('User not found', 404);
     }
-};
+
+    await logAudit({
+        userId: adminUser._id,
+        action: 'PASSWORD_RESET',
+        entityType: 'User',
+        entityId: id,
+        req
+    });
+
+    return res.json({ message: 'Password reset successful', user });
+});

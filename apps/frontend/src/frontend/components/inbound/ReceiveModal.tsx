@@ -1,5 +1,5 @@
 "use client";
-
+import { useState } from "react";
 import { X, Check, IndianRupee } from "lucide-react";
 import { IncomingParcel } from "@/shared/types";
 import { cn } from "@/frontend/lib/utils";
@@ -8,14 +8,16 @@ interface ReceiveModalProps {
     parcel: IncomingParcel;
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: () => void;
+    onConfirm: (remark?: string) => void;
 }
 
 export function ReceiveModal({ parcel, isOpen, onClose, onConfirm }: ReceiveModalProps) {
+    const [remark, setRemark] = useState("");
+
     if (!isOpen) return null;
 
     const isToPay = parcel.paymentStatus === "To Pay";
-    const isDeliverAction = parcel.status === "Arrived"; // If Arrived, we are now Delivering
+    const isDeliverAction = parcel.status === "ARRIVED"; // If ARRIVED, we are now Delivering
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
@@ -61,23 +63,35 @@ export function ReceiveModal({ parcel, isOpen, onClose, onConfirm }: ReceiveModa
 
                     {isDeliverAction ? (
                         // Delivery Context
-                        isToPay ? (
-                            <div className="bg-red-50 border border-red-100 rounded-lg p-4 mb-2">
-                                <p className="text-sm text-red-800 font-bold flex items-center gap-2">
-                                    ⚠️ Collect ₹{parcel.totalAmount} cash from customer.
-                                </p>
+                        <div className="space-y-4">
+                            {isToPay ? (
+                                <div className="bg-red-50 border border-red-100 rounded-lg p-4">
+                                    <p className="text-sm text-red-800 font-bold flex items-center gap-2">
+                                        ⚠️ Collect ₹{parcel.totalAmount} cash from customer.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4">
+                                    <p className="text-sm text-emerald-800 font-medium flex items-center gap-2">
+                                        <Check className="w-4 h-4" /> Payment Pre-paid. Safe to deliver.
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase">Delivery Remarks</label>
+                                <textarea
+                                    value={remark}
+                                    onChange={(e) => setRemark(e.target.value)}
+                                    placeholder="Enter delivery details (e.g., person name, ID, etc.)"
+                                    className="w-full h-24 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                                />
                             </div>
-                        ) : (
-                            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 mb-2">
-                                <p className="text-sm text-emerald-800 font-medium flex items-center gap-2">
-                                    <Check className="w-4 h-4" /> Payment Pre-paid. Safe to deliver.
-                                </p>
-                            </div>
-                        )
+                        </div>
                     ) : (
                         // Receive Context (In Transit -> Arrived)
-                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-2">
-                            <p className="text-sm text-blue-800 font-medium">
+                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                            <p className="text-sm text-blue-800 font-medium font-bold">
                                 Confirm physical receipt of goods at branch.
                             </p>
                         </div>
@@ -93,7 +107,7 @@ export function ReceiveModal({ parcel, isOpen, onClose, onConfirm }: ReceiveModa
                         Cancel
                     </button>
                     <button
-                        onClick={onConfirm}
+                        onClick={() => onConfirm(remark)}
                         className={cn(
                             "flex-1 py-2.5 rounded-lg text-sm font-bold text-primary-foreground shadow-lg hover:scale-[1.02] transition-all",
                             (isDeliverAction && isToPay) ? "bg-destructive hover:bg-destructive/90" : "bg-primary hover:bg-primary/90"

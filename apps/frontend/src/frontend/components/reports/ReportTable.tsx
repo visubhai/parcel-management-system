@@ -1,14 +1,17 @@
 import { Booking } from "@/shared/types";
 import { SortField, SortOrder } from "@/frontend/hooks/useReports";
+import { TableRowSkeleton } from "../ui/Skeleton";
 import { ChevronDown, ChevronUp, ChevronsUpDown, ArrowLeft, ArrowRight, Ban } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { ConfirmationModal } from "@/frontend/components/common/ConfirmationModal";
 import { EditBookingModal } from "./EditBookingModal";
 import { useBranches } from "@/frontend/hooks/useBranches";
+import { useToast } from "@/frontend/components/ui/toast";
 import { useState } from "react";
 
 interface ReportTableProps {
     data: Booking[];
+    isLoading?: boolean;
     currentPage: number;
     totalPages: number;
     rowsPerPage: number;
@@ -25,12 +28,13 @@ import { parcelService } from "@/frontend/services/parcelService";
 import { useRouter } from "next/navigation";
 
 export function ReportTable({
-    data, currentPage, totalPages, rowsPerPage, totalItems,
+    data, isLoading, currentPage, totalPages, rowsPerPage, totalItems,
     sortConfig, onSort, onPageChange, onRowsPerPageChange, mutate
 }: ReportTableProps) {
     // const { cancelBooking } = useBranchStore(); // Removed
     const router = useRouter();
     const { branches } = useBranches();
+    const { addToast } = useToast();
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
@@ -50,10 +54,10 @@ export function ReportTable({
 
     const handleConfirmCancel = async () => {
         if (bookingToCancel) {
-            const { error } = await parcelService.updateParcelStatus(bookingToCancel, 'Cancelled');
+            const { error } = await parcelService.updateParcelStatus(bookingToCancel, 'CANCELLED');
 
             if (error) {
-                alert(`Failed to cancel booking: ${error.message}`);
+                addToast(`Failed to cancel booking: ${error.message}`, "error");
                 // Don't close modal so user can retry or see error
                 return;
             }
@@ -70,7 +74,7 @@ export function ReportTable({
         if (selectedBooking) {
             const { error } = await parcelService.updateBooking(selectedBooking.id, updated);
             if (error) {
-                alert(`Failed to update booking: ${error.message}`);
+                addToast(`Failed to update booking: ${error.message}`, "error");
                 return;
             }
             mutate();
@@ -123,10 +127,14 @@ export function ReportTable({
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {data.length > 0 ? (
+                        {isLoading ? (
+                            Array.from({ length: rowsPerPage }).map((_, idx) => (
+                                <TableRowSkeleton key={idx} columns={12} />
+                            ))
+                        ) : data.length > 0 ? (
                             data.map((row) => {
                                 const dateObj = new Date(row.date);
-                                const isCancelled = row.status === 'Cancelled';
+                                const isCancelled = row.status === 'CANCELLED';
 
                                 return (
                                     <tr key={row.id} className={cn(
@@ -164,12 +172,12 @@ export function ReportTable({
                                         <td className="px-6 py-4 text-center">
                                             <span className={cn(
                                                 "px-2.5 py-1 rounded-full text-[11px] font-semibold border shadow-sm",
-                                                row.status === 'Delivered' && "bg-slate-100 text-slate-600 border-slate-200",
-                                                row.status === 'Arrived' && "bg-teal-50 text-teal-700 border-teal-200",
-                                                row.status === 'In Transit' && "bg-blue-50 text-blue-700 border-blue-200",
-                                                row.status === 'Cancelled' && "bg-red-50 text-red-700 border-red-200"
+                                                row.status === 'DELIVERED' && "bg-slate-100 text-slate-600 border-slate-200",
+                                                row.status === 'ARRIVED' && "bg-teal-50 text-teal-700 border-teal-200",
+                                                row.status === 'IN_TRANSIT' && "bg-blue-50 text-blue-700 border-blue-200",
+                                                row.status === 'CANCELLED' && "bg-red-50 text-red-700 border-red-200"
                                             )}>
-                                                {row.status}
+                                                {row.status.replace('_', ' ')}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
@@ -182,7 +190,7 @@ export function ReportTable({
                                                     >
                                                         Edit
                                                     </button>
-                                                    {row.status !== 'Delivered' && (
+                                                    {row.status !== 'DELIVERED' && (
                                                         <button
                                                             onClick={(e) => handleCancelClick(e, row.id)}
                                                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 hover:text-red-700 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all"
