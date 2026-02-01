@@ -43,7 +43,11 @@ class WhatsAppService {
                     '--disable-component-update',
                     '--disable-domain-reliability',
                     '--disable-sync',
-                    '--disable-features=Translate,BackForwardCache,AcceptCHFrame,MediaRouter,OptimizationHints'
+                    '--disable-features=Translate,BackForwardCache,AcceptCHFrame,MediaRouter,OptimizationHints',
+                    '--disk-cache-size=0',
+                    '--disable-application-cache',
+                    '--disable-offline-load-stale-cache',
+                    '--disable-gpu-shader-disk-cache'
                 ]
             }
         });
