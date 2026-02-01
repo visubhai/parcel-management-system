@@ -18,7 +18,7 @@ export function middleware(req: NextRequest) {
     // Content Security Policy (Basic starter)
     res.headers.set(
         'Content-Security-Policy',
-        "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self' data:; connect-src 'self' http://localhost:3001 http://127.0.0.1:3001;"
+        "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://parcel-backend-died.onrender.com; font-src 'self' data:; connect-src 'self' http://localhost:3001 http://127.0.0.1:3001 https://parcel-backend-died.onrender.com;"
     )
 
     return res
