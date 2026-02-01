@@ -2,6 +2,7 @@ import { FilterState } from "@/frontend/hooks/useReports";
 import { Branch, PaymentStatus, ParcelStatus } from "@/shared/types";
 import { Search, Calendar, Filter, X } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
+import { MultiSelect, Option } from "@/frontend/components/ui/multi-select-dropdown";
 import { useBranchStore } from "@/frontend/lib/store";
 
 interface ReportFiltersProps {
@@ -31,6 +32,47 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
 
     const allowedReports = currentUser?.allowedReports || [];
     const hasPaymentAccess = currentUser?.role === 'SUPER_ADMIN' || allowedReports.includes('Payment');
+
+    // Helper to Convert String "A,B" to Array ["A", "B"]
+    const toArray = (val: string | string[]) => {
+        if (Array.isArray(val)) return val;
+        if (!val || val === 'All') return [];
+        return val.split(',');
+    };
+
+    const branchOptions: Option[] = branches.map(b => ({ label: b, value: b }));
+
+    const handleMultiChange = (key: 'fromBranch' | 'toBranch', selected: string[]) => {
+        setFilters(prev => {
+            const newVal = selected.length > 0 ? selected.join(',') : 'All';
+            const newFilters = { ...prev, [key]: newVal };
+
+            // STRICT BRANCH LOCKING LOGIC for Branch Users
+            if (isBranchRestricted && userBranch) {
+                // Determine if the new selection implies a "Foreign" query
+                // Foreign = Selecting anything other than JUST my branch (e.g. "Surat" or "Surat, Rajkot")
+                const isForeign = selected.length !== 1 || selected[0] !== userBranch;
+
+                // Case 1: Changing FROM branch
+                if (key === 'fromBranch') {
+                    if (isForeign) {
+                        // If From is Foreign, To MUST be My Branch
+                        newFilters.toBranch = userBranch;
+                    }
+                    // If From is My Branch, To can be anything (keep existing)
+                }
+
+                // Case 2: Changing TO branch
+                if (key === 'toBranch') {
+                    if (isForeign) {
+                        // If To is Foreign, From MUST be My Branch
+                        newFilters.fromBranch = userBranch;
+                    }
+                }
+            }
+            return newFilters;
+        });
+    };
 
     const handleChange = (key: keyof FilterState, value: any) => {
         setFilters(prev => {
@@ -120,30 +162,25 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
             <div className="flex flex-wrap items-center gap-3">
 
                 {/* Branch Selectors */}
-                <select
-                    value={filters.fromBranch}
-                    // disabled={isBranchRestricted} // REMOVED: Allow selection but enforce logic
-                    onChange={(e) => handleChange('fromBranch', e.target.value)}
-                    className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 hover:border-slate-300"
-                // className={cn(
-                //     "px-3 py-2 rounded-lg text-sm font-medium border outline-none focus:ring-2 focus:ring-blue-500/20",
-                //     isBranchRestricted
-                //         ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200"
-                //         : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
-                // )}
-                >
-                    <option value="All">All Origins</option>
-                    {branches.map(b => <option key={b} value={b}>{b}</option>)}
-                </select>
+                <div className="w-64">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Origin (From)</span>
+                    <MultiSelect
+                        options={branchOptions}
+                        selected={toArray(filters.fromBranch)}
+                        onChange={(selected) => handleMultiChange('fromBranch', selected)}
+                        placeholder="Select Origin..."
+                    />
+                </div>
 
-                <select
-                    value={filters.toBranch}
-                    onChange={(e) => handleChange('toBranch', e.target.value)}
-                    className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 hover:border-slate-300"
-                >
-                    <option value="All">All Destinations</option>
-                    {branches.map(b => <option key={b} value={b}>{b}</option>)}
-                </select>
+                <div className="w-64">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Destination (To)</span>
+                    <MultiSelect
+                        options={branchOptions}
+                        selected={toArray(filters.toBranch)}
+                        onChange={(selected) => handleMultiChange('toBranch', selected)}
+                        placeholder="Select Destination..."
+                    />
+                </div>
 
                 {/* Status & Payment */}
                 {hasPaymentAccess && (

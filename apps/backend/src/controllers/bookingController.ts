@@ -26,8 +26,14 @@ export const getBookings = catchAsync(async (req: AuthRequest, res: Response) =>
         ];
     }
 
-    if (fromBranch) query.fromBranch = fromBranch;
-    if (toBranch) query.toBranch = toBranch;
+    if (fromBranch) {
+        const branches = (fromBranch as string).split(',');
+        query.fromBranch = branches.length > 1 ? { $in: branches } : branches[0];
+    }
+    if (toBranch) {
+        const branches = (toBranch as string).split(',');
+        query.toBranch = branches.length > 1 ? { $in: branches } : branches[0];
+    }
     if (status) query.status = status;
     if (lrNumber) query.lrNumber = { $regex: lrNumber, $options: 'i' }; // Substring case-insensitive match
 
