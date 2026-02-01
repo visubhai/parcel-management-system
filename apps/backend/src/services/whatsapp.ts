@@ -54,7 +54,10 @@ class WhatsAppService {
 
                 if (connection === 'close') {
                     const shouldReconnect = (lastDisconnect?.error as any)?.output?.statusCode !== DisconnectReason.loggedOut;
-                    this.log(`❌ Connection closed. Reconnecting: ${shouldReconnect}. Error: ${lastDisconnect?.error}`);
+                    // Safely extract error message
+                    const errorDetails = lastDisconnect?.error?.message || String(lastDisconnect?.error);
+
+                    this.log(`❌ Connection closed. Error: ${errorDetails}. Reconnecting: ${shouldReconnect}`);
                     this.isReady = false;
 
                     if (shouldReconnect) {
