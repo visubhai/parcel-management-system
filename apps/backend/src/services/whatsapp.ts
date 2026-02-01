@@ -40,14 +40,13 @@ class WhatsAppService {
                 logger: pino({ level: 'silent' }) as any,
                 printQRInTerminal: false,
                 auth: state,
-                browser: ['Chrome (Linux)', 'Chrome', '124.0.0.0'],
+                // browser: Use Default (Safest to avoid 405 errors)
                 connectTimeoutMs: 60000,
                 keepAliveIntervalMs: 10000,
                 emitOwnEvents: true,
                 retryRequestDelayMs: 250,
-                // FINALEST OPTIMIZATIONS
-                markOnlineOnConnect: false, // Don't show 'Online' status (Stealth)
-                syncFullHistory: false,    // Don't sync old chats (Saves Memory & Startup Time)
+
+                syncFullHistory: false,
                 generateHighQualityLinkPreview: true,
             });
 
