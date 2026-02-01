@@ -124,12 +124,13 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
                     value={filters.fromBranch}
                     // disabled={isBranchRestricted} // REMOVED: Allow selection but enforce logic
                     onChange={(e) => handleChange('fromBranch', e.target.value)}
-                    className={cn(
-                        "px-3 py-2 rounded-lg text-sm font-medium border outline-none focus:ring-2 focus:ring-blue-500/20",
-                        isBranchRestricted
-                            ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200"
-                            : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
-                    )}
+                    className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 hover:border-slate-300"
+                // className={cn(
+                //     "px-3 py-2 rounded-lg text-sm font-medium border outline-none focus:ring-2 focus:ring-blue-500/20",
+                //     isBranchRestricted
+                //         ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200"
+                //         : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
+                // )}
                 >
                     <option value="All">All Origins</option>
                     {branches.map(b => <option key={b} value={b}>{b}</option>)}
