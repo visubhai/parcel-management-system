@@ -1,9 +1,8 @@
 FROM node:20-alpine
 
 # Standard Node.js Alpine image
-RUN apk add --no-cache \
-    nodejs \
-    yarn
+# node:20-alpine already includes nodejs and yarn/npm
+
 
 WORKDIR /app
 
