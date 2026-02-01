@@ -32,7 +32,12 @@ export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
 export const parseError = (data: any): string => {
     if (!data) return 'An unknown error occurred';
 
-    // Handle Zod errors (array of objects)
+    // Handle Zod errors from validate middleware (data.errors array)
+    if (Array.isArray(data.errors)) {
+        return data.errors.map((err: any) => err.message).join(', ');
+    }
+
+    // Handle legacy Zod errors where message itself is array
     if (Array.isArray(data.message)) {
         return data.message.map((err: any) => err.message).join(', ');
     }

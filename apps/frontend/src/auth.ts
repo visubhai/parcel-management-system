@@ -80,6 +80,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 session.user.name = token.name; // Explicitly ensure name is passed
                 // @ts-ignore
                 session.user.accessToken = token.accessToken;
+                // @ts-ignore
+                session.accessToken = token.accessToken; // FIX: Ensure token is at root for base.ts
                 if (token.email) session.user.email = token.email as string;
             }
             return session;
