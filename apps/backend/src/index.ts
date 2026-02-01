@@ -19,7 +19,12 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'https://savan-travels-transport-byvisu.vercel.app', // Production Frontend
+        process.env.FRONTEND_URL || '' // Flexible Env Var
+    ],
     credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
