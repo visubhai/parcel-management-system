@@ -3,7 +3,7 @@ export type Branch = string; // Allow dynamic branches
 
 export type PaymentStatus = "Paid" | "To Pay";
 export type ParcelStatus = "INCOMING" | "PENDING" | "DELIVERED" | "CANCELLED" | "ARRIVED" | "IN_TRANSIT" | "Booked" | "In Transit" | "Arrived" | "Cancelled";
-export type ItemType = "White Sack" | "Carton" | "Manual";
+export type ItemType = string; // Flexible to support many categories
 
 export interface Parcel {
     id: string;
