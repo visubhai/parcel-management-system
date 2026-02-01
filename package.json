@@ -12,7 +12,8 @@
     "build:frontend": "npm run build -w apps/frontend",
     "build:backend": "npm run build -w apps/backend",
     "start:frontend": "npm run start -w apps/frontend",
-    "start:backend": "npm run start -w apps/backend"
+    "start:backend": "npm run start -w apps/backend",
+    "db:reset": "tsx scripts/production-reset.ts"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

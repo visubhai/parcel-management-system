@@ -14,17 +14,11 @@ export const getBookings = catchAsync(async (req: AuthRequest, res: Response) =>
     const { fromBranch, toBranch, status, startDate, endDate, lrNumber, export: exportType, reportType = 'BOOKING_REPORT' } = req.query;
     const user = req.user;
 
-    // Requirement 1: RBAC Permission Check for Reports
-    if (user.role === 'BRANCH') {
-        const permission = await ReportPermission.findOne({ branchId: user.branchId });
-        if (!permission || !permission.allowedReports.includes(reportType as string)) {
-            throw new AppError(`Access Denied: Your branch is not authorized to view ${reportType}`, 403);
-        }
-    }
-
     const query: any = {};
 
     // Requirement 3: Strong Branch Data Isolation
+    // Branch users can only see parcels where they are the sender or receiver.
+    // This is automatic and does not require extra permissions.
     if (user.role === 'BRANCH') {
         query.$or = [
             { senderBranchId: user.branchId },
@@ -202,12 +196,21 @@ export const updateBooking = catchAsync(async (req: AuthRequest, res: Response) 
     const oldBooking = await Booking.findById(id);
     if (!oldBooking) throw new AppError("Booking not found", 404);
 
-    // track history if remarks changed
+    // track history if remarks or deliveredRemark changed
     const editHistory = [...(oldBooking.editHistory || [])];
-    if (body.remarks && body.remarks !== oldBooking.remarks) {
+    if (body.remarks !== undefined && body.remarks !== oldBooking.remarks) {
         editHistory.push({
             oldRemark: oldBooking.remarks,
             newRemark: body.remarks,
+            editedBy: user._id,
+            editedAt: new Date()
+        });
+    }
+
+    if (body.deliveredRemark !== undefined && body.deliveredRemark !== oldBooking.deliveredRemark) {
+        editHistory.push({
+            oldRemark: oldBooking.deliveredRemark,
+            newRemark: body.deliveredRemark,
             editedBy: user._id,
             editedAt: new Date()
         });

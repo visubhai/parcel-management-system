@@ -27,19 +27,20 @@ export const parcelService = {
 
             if (!res.ok) throw new Error(parseError(data));
 
-            // Filter for Incoming Table (Exclude Delivered/Cancelled?)
-            const parcels = data
-                .filter((p: any) => p.status !== 'Delivered' && p.status !== 'Cancelled')
+            // Map with safety checks
+            const parcels: IncomingParcel[] = data
+                .filter((p: any) => p.status !== 'DELIVERED' && p.status !== 'CANCELLED')
                 .map((p: any) => ({
                     id: p._id,
-                    lrNumber: p.lrNumber || p.lr_number,
-                    senderName: p.sender.name,
-                    receiverName: p.receiver.name,
-                    fromBranch: p.fromBranch.name,
-                    toBranch: p.toBranch.name,
+                    lrNumber: p.lrNumber,
+                    senderName: p.sender?.name || 'N/A',
+                    receiverName: p.receiver?.name || 'N/A',
+                    fromBranch: p.fromBranch?.name || 'Unknown',
+                    toBranch: p.toBranch?.name || 'Unknown',
                     status: p.status,
                     paymentStatus: p.paymentType,
-                    totalAmount: p.costs.total
+                    totalAmount: p.costs?.total || 0,
+                    remarks: p.remarks || ''
                 }));
 
             return { data: parcels, error: null };

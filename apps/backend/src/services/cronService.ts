@@ -7,27 +7,26 @@ export const initCronJobs = () => {
     cron.schedule('* * * * *', async () => {
         try {
             const now = new Date();
-            // Server time based check for 05:00 AM today
-            const today5AM = new Date();
-            today5AM.setHours(5, 0, 0, 0);
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
 
-            // Find parcels with status "INCOMING" that were created before 05:00 AM of the current day
-            // If current time is after 05:00 AM, then "Today 05:00 AM" is the threshold.
-            // If current time is before 05:00 AM, then "Yesterday 05:00 AM" would have been the threshold but conceptually they shouldn't change until it hits 5 AM.
+            // Threshold: 9:00 AM
+            if (currentHour >= 9) {
+                // We want to update parcels created BEFORE "Today 00:00:00"
+                const startOfToday = new Date();
+                startOfToday.setHours(0, 0, 0, 0);
 
-            // The requirement says: "At next day exactly 05:00 AM (server time): All parcels with status INCOMING automatically change to: PENDING"
-            // This means if it was created at 10 PM on Monday, at 5 AM on Tuesday it becomes PENDING.
+                const result = await Booking.updateMany(
+                    {
+                        status: 'INCOMING',
+                        createdAt: { $lt: startOfToday }
+                    },
+                    { $set: { status: 'PENDING' } }
+                );
 
-            const result = await Booking.updateMany(
-                {
-                    status: 'INCOMING',
-                    createdAt: { $lt: today5AM }
-                },
-                { $set: { status: 'PENDING' } }
-            );
-
-            if (result.modifiedCount > 0) {
-                console.log(`[CRON] ${result.modifiedCount} parcels transitioned from INCOMING to PENDING.`);
+                if (result.modifiedCount > 0) {
+                    console.log(`[CRON] ${result.modifiedCount} parcels transitioned from INCOMING to PENDING at ${now.toLocaleTimeString()}.`);
+                }
             }
         } catch (error) {
             console.error('[CRON ERROR]', error);

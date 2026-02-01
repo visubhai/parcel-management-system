@@ -1,19 +1,20 @@
 import dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
 import mongoose from 'mongoose';
 
+dotenv.config();
+
+const MONGODB_URI = process.env.MONGODB_URI;
+
 async function test() {
-    console.log('Testing connection to:', process.env.MONGODB_URI);
     try {
-        await mongoose.connect(process.env.MONGODB_URI as string, {
-            serverSelectionTimeoutMS: 5000,
-        });
-        console.log('SUCCESS: Connected to MongoDB');
+        console.log('🔄 Testing MongoDB connection...');
+        await mongoose.connect(MONGODB_URI!, { serverSelectionTimeoutMS: 20000 });
+        console.log('✅ Connected.');
         const collections = await mongoose.connection.db?.listCollections().toArray();
         console.log('Collections:', collections?.map(c => c.name));
         process.exit(0);
-    } catch (err) {
-        console.error('FAILURE:', err);
+    } catch (error) {
+        console.error('❌ Connection Failed:', error);
         process.exit(1);
     }
 }

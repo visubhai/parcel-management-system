@@ -27,8 +27,9 @@ export const login = catchAsync(async (req: Request, res: Response) => {
 
     // Branch Validation
     if (branchId) {
-        if (user.branch && user.branch._id.toString() !== branchId) {
-            throw new AppError(`Access denied. You belong to ${user.branch.name}`, 403);
+        const userBranchId = user.branch?._id || user.branchId;
+        if (userBranchId && userBranchId.toString() !== branchId) {
+            throw new AppError(`Access denied. You belong to ${user.branch?.name || 'another branch'}`, 403);
         }
     }
 

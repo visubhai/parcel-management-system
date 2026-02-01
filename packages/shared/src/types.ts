@@ -38,7 +38,9 @@ export interface Booking {
     };
     paymentType: PaymentStatus;
     remarks?: string;
+    deliveredRemark?: string;
     status: ParcelStatus;
+    editHistory?: EditHistoryEntry[];
 }
 
 export type Role = "SUPER_ADMIN" | "BRANCH";

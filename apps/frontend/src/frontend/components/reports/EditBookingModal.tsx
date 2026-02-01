@@ -26,6 +26,7 @@ export function EditBookingModal({ booking, isOpen, onClose, onSave, availableBr
     const [paymentType, setPaymentType] = useState(booking.paymentType);
     const [status, setStatus] = useState(booking.status);
     const [remarks, setRemarks] = useState(booking.remarks || "");
+    const [deliveredRemark, setDeliveredRemark] = useState(booking.deliveredRemark || "");
 
     const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
 
@@ -37,6 +38,7 @@ export function EditBookingModal({ booking, isOpen, onClose, onSave, availableBr
         setPaymentType(booking.paymentType);
         setStatus(booking.status);
         setRemarks(booking.remarks || "");
+        setDeliveredRemark(booking.deliveredRemark || "");
     }, [booking, isOpen]);
 
     // Auto-calculate logic (matching BookingDashboard)
@@ -58,7 +60,8 @@ export function EditBookingModal({ booking, isOpen, onClose, onSave, availableBr
             costs,
             paymentType,
             status,
-            remarks
+            remarks,
+            deliveredRemark
         };
         onSave(updatedBooking);
     };
@@ -153,6 +156,18 @@ export function EditBookingModal({ booking, isOpen, onClose, onSave, availableBr
                                 onChange={(e) => setRemarks(e.target.value)}
                                 className="w-full p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
                                 placeholder="Add notes here..."
+                                rows={2}
+                            />
+                        </div>
+
+                        {/* Delivery Remarks */}
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Delivery Remark (Collection)</label>
+                            <textarea
+                                value={deliveredRemark}
+                                onChange={(e) => setDeliveredRemark(e.target.value)}
+                                className="w-full p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+                                placeholder="Add delivery notes here..."
                                 rows={2}
                             />
                         </div>

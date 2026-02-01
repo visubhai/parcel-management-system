@@ -17,7 +17,7 @@ export function ReceiveModal({ parcel, isOpen, onClose, onConfirm }: ReceiveModa
     if (!isOpen) return null;
 
     const isToPay = parcel.paymentStatus === "To Pay";
-    const isDeliverAction = parcel.status === "ARRIVED"; // If ARRIVED, we are now Delivering
+    const isDeliverAction = parcel.status === "PENDING" || parcel.status === "INCOMING"; // If PENDING or INCOMING, we are Delivering
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">

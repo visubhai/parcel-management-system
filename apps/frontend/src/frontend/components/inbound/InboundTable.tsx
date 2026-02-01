@@ -11,11 +11,13 @@ import { Button } from "@/frontend/components/ui/button";
 import { Card } from "@/frontend/components/ui/card";
 import { ReceiveModal } from "./ReceiveModal";
 import { IncomingParcel } from "@/shared/types";
+import { useToast } from "@/frontend/components/ui/toast";
 
 import { BranchSelect } from "@/frontend/components/common/BranchSelect";
 
 export function InboundTable() {
     const { currentUser } = useBranchStore();
+    const { addToast } = useToast();
     const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
     const [selectedParcel, setSelectedParcel] = useState<IncomingParcel | null>(null);
 
@@ -32,22 +34,10 @@ export function InboundTable() {
         }
     );
 
-    // Map DB to UI Type
+    // Standardize incoming parcels for display
     const incomingParcels: IncomingParcel[] = useMemo(() => {
         if (!serverData) return [];
-        return serverData.map((p: any) => ({
-            id: p.id,
-            lrNumber: p.lr_number,
-            fromBranch: p.from_branch?.name || "Unknown",
-            toBranch: p.to_branch?.name || "Unknown",
-            senderName: p.sender_name,
-            receiverName: p.receiver_name,
-            paymentStatus: p.payment_type === 'PAID' ? 'Paid' : 'To Pay',
-            status: p.status, // Standardized to uppercase in backend
-            items: [], // populate if needed
-            totalAmount: p.costs?.total || 0,
-            remarks: p.remarks
-        }));
+        return serverData;
     }, [serverData]);
 
 
@@ -57,27 +47,34 @@ export function InboundTable() {
     };
 
     const handleConfirmAction = async (deliveredRemark?: string) => {
-        if (selectedParcel) {
-            // If already ARRIVED, we are Delivering
-            if (selectedParcel.status === "ARRIVED") {
+        if (!selectedParcel) return;
+
+        try {
+            // If PENDING or INCOMING, we are Delivering
+            if (selectedParcel.status === "PENDING" || selectedParcel.status === "INCOMING") {
                 // 1. Payment Collection (if needed)
                 if (selectedParcel.paymentStatus === "To Pay") {
-                    await ledgerService.addTransaction({
-                        parcel_id: selectedParcel.id,
+                    const ledgerRes = await ledgerService.addTransaction({
+                        referenceId: selectedParcel.id,
                         amount: selectedParcel.totalAmount,
                         type: 'CREDIT',
-                        description: 'Payment collected at Delivery',
-                        branch_id: currentUser?.branchId || '' // Use the new ID
+                        description: `Payment collected for LR ${selectedParcel.lrNumber}`,
+                        branchId: currentUser?.branchId || ''
                     });
+                    if (ledgerRes.error) throw ledgerRes.error;
                 }
-                // 2. Mark DELIVERED with Remark
-                await parcelService.updateParcelStatus(selectedParcel.id, 'DELIVERED', deliveredRemark);
-            } else {
-                // We are Receiving (IN_TRANSIT -> ARRIVED)
-                await parcelService.updateParcelStatus(selectedParcel.id, 'ARRIVED');
+
+                // 2. Mark DELIVERED with Remark (Backend requires non-empty remark)
+                const finalRemark = deliveredRemark?.trim() || "Delivered at counter";
+                const statusRes = await parcelService.updateParcelStatus(selectedParcel.id, 'DELIVERED', finalRemark);
+                if (statusRes.error) throw statusRes.error;
             }
+
             mutate();
             setSelectedParcel(null);
+            addToast("Operation successful", "success");
+        } catch (error: any) {
+            addToast("Error: " + error.message, "error");
         }
     };
 
@@ -102,79 +99,78 @@ export function InboundTable() {
                 )}
             </div>
 
-            <table className="w-full text-left text-sm">
-                <thead>
-                    <tr className="bg-slate-50 text-slate-500 border-b border-slate-100">
-                        <th className="px-6 py-3 font-medium">LR Number</th>
-                        <th className="px-6 py-3 font-medium">From</th>
-                        <th className="px-6 py-3 font-medium">To</th>
-                        <th className="px-6 py-3 font-medium">Sender</th>
-                        <th className="px-6 py-3 font-medium">Receiver</th>
-                        <th className="px-6 py-3 font-medium">Remarks</th>
-                        <th className="px-6 py-3 font-medium">Payment</th>
-                        <th className="px-6 py-3 font-medium">Status</th>
-                        <th className="px-6 py-3 font-medium text-right">Action</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                    {incomingParcels.map((parcel) => (
-                        <tr key={parcel.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-6 py-4 text-sm font-mono font-bold text-slate-700">{parcel.lrNumber}</td>
-                            <td className="px-6 py-4 text-slate-600 font-medium">{parcel.fromBranch}</td>
-                            <td className="px-6 py-4 text-slate-600">{parcel.toBranch}</td>
-                            <td className="px-6 py-4 text-slate-600">{parcel.senderName}</td>
-                            <td className="px-6 py-4 text-slate-600">{parcel.receiverName}</td>
-                            <td className="px-6 py-4 text-slate-500 italic truncate max-w-[150px]" title={parcel.remarks || ""}>
-                                {parcel.remarks || "-"}
-                            </td>
-                            <td className="px-6 py-4">
-                                <span className={cn(
-                                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold",
-                                    parcel.paymentStatus === "Paid"
-                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                        : "bg-red-50 text-red-700 border border-red-100"
-                                )}>
-                                    {parcel.paymentStatus}
-                                </span>
-                            </td>
-                            <td className="px-6 py-4">
-                                <span className={cn(
-                                    "inline-flex items-center gap-1.5 font-semibold",
-                                    parcel.status === "ARRIVED" ? "text-blue-600" : (
-                                        parcel.status === "DELIVERED" ? "text-emerald-600" : "text-amber-600"
-                                    )
-                                )}>
-                                    {parcel.status === "ARRIVED" ? (
-                                        <>
-                                            <Package className="w-4 h-4" /> ARRIVED
-                                        </>
-                                    ) : (
-                                        parcel.status === "DELIVERED" ? "DELIVERED" : "IN TRANSIT"
-                                    )}
-                                </span>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                                {parcel.status !== "DELIVERED" && (
-                                    <Button
-                                        onClick={() => handleActionClick(parcel)}
-                                        size="sm"
-                                        variant={parcel.status === "ARRIVED" ? "default" : "secondary"}
-                                        className={cn(
-                                            "min-w-[100px] font-bold shadow-sm",
-                                            parcel.status === "ARRIVED" ? "bg-primary hover:bg-primary/90" : "bg-white border hover:bg-slate-50 text-slate-700"
-                                        )}
-                                    >
-                                        {parcel.status === "ARRIVED" ? "Deliver" : "Receive"}
-                                    </Button>
-                                )}
-                                {parcel.status === "DELIVERED" && (
-                                    <span className="text-xs font-bold text-slate-400">Completed</span>
-                                )}
-                            </td>
+            <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm border-collapse">
+                    <thead>
+                        <tr className="bg-slate-50 text-slate-500 border-b border-slate-100">
+                            <th className="px-4 py-4 font-bold uppercase tracking-wider text-[10px] w-[140px]">LR Number</th>
+                            <th className="px-4 py-4 font-bold uppercase tracking-wider text-[10px] w-[120px]">From</th>
+                            <th className="px-4 py-4 font-bold uppercase tracking-wider text-[10px] w-[120px]">To</th>
+                            <th className="px-4 py-4 font-bold uppercase tracking-wider text-[10px] w-[150px]">Sender</th>
+                            <th className="px-4 py-4 font-bold uppercase tracking-wider text-[10px] w-[150px]">Receiver</th>
+                            <th className="px-4 py-4 font-bold uppercase tracking-wider text-[10px]">Remarks</th>
+                            <th className="px-4 py-4 font-bold uppercase tracking-wider text-[10px] w-[100px]">Payment</th>
+                            <th className="px-4 py-4 font-bold uppercase tracking-wider text-[10px] w-[130px]">Status</th>
+                            <th className="px-4 py-4 font-bold uppercase tracking-wider text-[10px] text-right w-[120px]">Action</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {incomingParcels.map((parcel) => (
+                            <tr key={parcel.id} className="hover:bg-slate-50/50 transition-colors group">
+                                <td className="px-4 py-4 text-sm font-mono font-black text-slate-700">{parcel.lrNumber}</td>
+                                <td className="px-4 py-4 text-slate-600 font-bold text-xs uppercase">{parcel.fromBranch}</td>
+                                <td className="px-4 py-4 text-slate-600 font-bold text-xs uppercase">{parcel.toBranch}</td>
+                                <td className="px-4 py-4 text-slate-600 font-medium">{parcel.senderName}</td>
+                                <td className="px-4 py-4 text-slate-600 font-medium">{parcel.receiverName}</td>
+                                <td className="px-4 py-4 text-slate-400 italic text-xs truncate max-w-[150px]" title={parcel.remarks || ""}>
+                                    {parcel.remarks || "-"}
+                                </td>
+                                <td className="px-4 py-4">
+                                    <span className={cn(
+                                        "inline-flex px-2 py-1 rounded text-[10px] font-black uppercase tracking-tighter",
+                                        parcel.paymentStatus === "Paid"
+                                            ? "bg-emerald-100 text-emerald-700"
+                                            : "bg-red-100 text-red-700 shadow-sm"
+                                    )}>
+                                        {parcel.paymentStatus}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-4">
+                                    <div className={cn(
+                                        "flex items-center gap-1.5 font-black text-[10px] uppercase tracking-wider",
+                                        parcel.status === "PENDING" ? "text-blue-600" : (
+                                            parcel.status === "DELIVERED" ? "text-emerald-600" : "text-orange-500"
+                                        )
+                                    )}>
+                                        {parcel.status === "PENDING" ? (
+                                            <Package className="w-3.5 h-3.5" />
+                                        ) : parcel.status === "DELIVERED" ? (
+                                            <CheckCircle className="w-3.5 h-3.5" />
+                                        ) : (
+                                            <Truck className="w-3.5 h-3.5" />
+                                        )}
+                                        {parcel.status}
+                                    </div>
+                                </td>
+                                <td className="px-4 py-4 text-right">
+                                    {parcel.status !== "DELIVERED" ? (
+                                        <button
+                                            onClick={() => handleActionClick(parcel)}
+                                            className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700"
+                                        >
+                                            Deliver
+                                        </button>
+                                    ) : (
+                                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">
+                                            Success
+                                        </span>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
 
             {incomingParcels.length === 0 && (
                 <div className="p-12 text-center text-slate-400">

@@ -30,7 +30,7 @@ export function Sidebar() {
         <div className="w-64 h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white flex flex-col border-r border-slate-700/50 shadow-2xl">
             <div className="h-16 flex items-center px-6 border-b border-slate-700/50 bg-slate-900/50 backdrop-blur">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">
-                    ABCD Logistics
+                    SAVAN Logistics
                 </h1>
             </div>
 
