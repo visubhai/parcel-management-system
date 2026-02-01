@@ -347,7 +347,7 @@ export default function BookingDashboard() {
       {/* Using absolute positioning and inch units for precision */}
       <div className="hidden print:block fixed inset-0 bg-white z-[9999] overflow-hidden text-black font-sans leading-tight">
         {/* Spacer for pre-printed header */}
-        <div style={{ height: "0.1in" }}></div>
+        <div style={{ height: "1in" }}></div>
 
         {/* Printable Area Container (height reduced by ~10%, width increased by reducing padding) */}
         <div className="px-2 relative h-[2.5in]" style={{ fontFamily: "Arial, sans-serif", width: "100%" }}>

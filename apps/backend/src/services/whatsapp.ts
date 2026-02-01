@@ -37,10 +37,9 @@ class WhatsAppService {
             const { state, saveCreds } = await useMultiFileAuthState(this.authFolder);
 
             this.sock = makeWASocket({
-                logger: pino({ level: 'error' }) as any,
-                printQRInTerminal: true, // We serve it via web
+                logger: pino({ level: 'info' }) as any, // Info level to see handshake progress
+                printQRInTerminal: false,
                 auth: state,
-                browser: ['Ubuntu', 'Chrome', '20.0.04'], // Standard Linux signature
                 connectTimeoutMs: 60000,
             });
 
@@ -48,21 +47,25 @@ class WhatsAppService {
                 const { connection, lastDisconnect, qr } = update;
 
                 if (qr) {
-                    this.log('⚡ QR Code generated!');
+                    this.log('⚡ QR Code generated! Scan now.');
                     this.currentQR = qr;
                 }
 
                 if (connection === 'close') {
-                    const shouldReconnect = (lastDisconnect?.error as any)?.output?.statusCode !== DisconnectReason.loggedOut;
-                    // Safely extract error message
-                    const errorDetails = lastDisconnect?.error?.message || String(lastDisconnect?.error);
+                    const error = lastDisconnect?.error as any;
+                    const statusCode = error?.output?.statusCode;
+                    const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
-                    this.log(`❌ Connection closed. Error: ${errorDetails}. Reconnecting: ${shouldReconnect}`);
+                    this.log(`❌ Connection closed. Status: ${statusCode}. Error: ${error?.message}. Reconnecting: ${shouldReconnect}`);
+
+                    // Log full error for diagnosing (only visible in Render console)
+                    console.log('DEBUG_ERROR:', JSON.stringify(error, null, 2));
+
                     this.isReady = false;
 
                     if (shouldReconnect) {
-                        // Wait 2 seconds before reconnecting to avoid spamming
-                        setTimeout(() => this.initializeClient(), 2000);
+                        // Exponential backoff or standard delay
+                        setTimeout(() => this.initializeClient(), 5000);
                     } else {
                         this.log('❌ Logged out. Please use the Reset button.');
                     }
