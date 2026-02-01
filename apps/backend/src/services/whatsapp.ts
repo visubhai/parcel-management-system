@@ -8,15 +8,17 @@ class WhatsAppService {
     private isReady: boolean = false;
     private currentQR: string | null = null;
     private sessionPath: string;
+    private logs: string[] = [];
 
     constructor() {
+        this.log('Initializing WhatsApp Service...');
         this.sessionPath = path.resolve(__dirname, '../../../../.wwebjs_auth');
 
         this.client = new Client({
             authStrategy: new LocalAuth({ dataPath: this.sessionPath }),
             authTimeoutMs: 60000,
             puppeteer: {
-                headless: false,
+                headless: true, // Headless MUST be true for server environments
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
@@ -24,8 +26,8 @@ class WhatsAppService {
                     '--disable-accelerated-2d-canvas',
                     '--no-first-run',
                     '--no-zygote',
-                    '--disable-gpu',
-                    '--disable-features=site-per-process'
+                    '--single-process', // Important for some Docker envs
+                    '--disable-gpu'
                 ]
             }
         });
@@ -33,26 +35,40 @@ class WhatsAppService {
         this.initializeClient();
     }
 
+    private log(msg: string) {
+        const timestamp = new Date().toLocaleTimeString();
+        const logMsg = `[${timestamp}] ${msg}`;
+        console.log(logMsg);
+        this.logs.unshift(logMsg); // Add to beginning
+        if (this.logs.length > 20) this.logs.pop(); // Keep last 20
+    }
+
     private initializeClient() {
         this.client.on('qr', (qr) => {
-            console.log('⚡ QR Code generated! Please scan it.');
+            this.log('⚡ QR Code generated!');
             this.currentQR = qr;
         });
 
         this.client.on('ready', () => {
-            console.log('\n✅ WhatsApp Manager Client is READY!');
+            this.log('✅ WhatsApp Manager Client is READY!');
             this.isReady = true;
             this.currentQR = null;
         });
 
         this.client.on('auth_failure', (msg) => {
-            console.error('❌ Authentication failed:', msg);
+            this.log(`❌ Authentication failed: ${msg}`);
             this.isReady = false;
         });
 
         this.client.on('disconnected', (reason) => {
-            console.log('❌ Client was disconnected:', reason);
+            this.log(`❌ Client was disconnected: ${reason}`);
             this.isReady = false;
+        });
+
+        this.client.initialize().then(() => {
+            this.log('Client initialized started...');
+        }).catch(err => {
+            this.log(`FATAL: Client initialization failed: ${err.message}`);
         });
     }
 
@@ -77,14 +93,20 @@ class WhatsAppService {
     }
 
     public async initialize(app: Express) {
-        // Web Interface for QR Code
+        // Web Interface for QR Code with Logs
         app.get('/whatsapp', async (req: Request, res: Response) => {
+            const logsHtml = this.logs.map(l => `<div style="font-size: 12px; color: #555; margin-bottom: 5px; font-family: monospace;">${l}</div>`).join('');
+
             if (this.isReady) {
                 return res.send(`
                     <html>
-                        <body style="font-family: sans-serif; text-align: center; padding: 50px;">
+                        <body style="font-family: sans-serif; text-align: center; padding: 20px;">
                             <h1 style="color: green;">✅ Service Is Ready</h1>
                             <p>WhatsApp is connected and running.</p>
+                            <div style="margin-top: 20px; text-align: left; background: #f0f0f0; padding: 10px; border-radius: 5px;">
+                                <h3>Logs:</h3>
+                                ${logsHtml}
+                            </div>
                         </body>
                     </html>
                 `);
@@ -93,10 +115,14 @@ class WhatsAppService {
             if (!this.currentQR) {
                 return res.send(`
                     <html>
-                        <body style="font-family: sans-serif; text-align: center; padding: 50px;">
+                        <body style="font-family: sans-serif; text-align: center; padding: 20px;">
                             <h1>⏳ Waiting for QR Code...</h1>
                             <p>Please wait for the service to generate a code.</p>
-                            <script>setTimeout(() => location.reload(), 2000);</script>
+                            <script>setTimeout(() => location.reload(), 3000);</script>
+                            <div style="margin-top: 20px; text-align: left; background: #f0f0f0; padding: 10px; border-radius: 5px;">
+                                <h3>Debug Logs:</h3>
+                                ${logsHtml}
+                            </div>
                         </body>
                     </html>
                 `);
@@ -106,13 +132,17 @@ class WhatsAppService {
                 const url = await QRCode.toDataURL(this.currentQR);
                 res.send(`
                     <html>
-                        <body style="font-family: sans-serif; text-align: center; padding: 50px;">
+                        <body style="font-family: sans-serif; text-align: center; padding: 20px;">
                             <h1>📱 Scan with WhatsApp</h1>
                             <p>Open WhatsApp on your phone -> Linked Devices -> Link a Device</p>
                             <img src="${url}" style="width: 300px; height: 300px; border: 1px solid #ccc; padding: 10px; border-radius: 10px;" />
                             <br><br>
                             <p>Page auto-refreshes...</p>
                             <script>setTimeout(() => location.reload(), 5000);</script>
+                            <div style="margin-top: 20px; text-align: left; background: #f0f0f0; padding: 10px; border-radius: 5px;">
+                                <h3>Debug Logs:</h3>
+                                ${logsHtml}
+                            </div>
                         </body>
                     </html>
                 `);
@@ -152,12 +182,6 @@ class WhatsAppService {
                 return res.status(500).json({ error: 'Failed to send message', details: error.message });
             }
         });
-
-        try {
-            await this.client.initialize();
-        } catch (err) {
-            console.error('Failed to initialize WhatsApp client:', err);
-        }
     }
 }
 
