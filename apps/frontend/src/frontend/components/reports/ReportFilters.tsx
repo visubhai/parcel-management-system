@@ -45,32 +45,65 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
     const handleMultiChange = (key: 'fromBranch' | 'toBranch', selected: string[]) => {
         setFilters(prev => {
             const newVal = selected.length > 0 ? selected.join(',') : 'All';
-            const newFilters = { ...prev, [key]: newVal };
 
             // STRICT BRANCH LOCKING LOGIC for Branch Users
             if (isBranchRestricted && userBranch) {
-                // Determine if the new selection implies a "Foreign" query
-                // Foreign = Selecting anything other than JUST my branch (e.g. "Surat" or "Surat, Rajkot")
-                const isForeign = selected.length !== 1 || selected[0] !== userBranch;
+                // Feature: Default to "My Branch -> All" when everything is cleared
+                if (selected.length === 0) {
+                    if (key === 'fromBranch') {
+                        // User cleared "From" -> Reset to standard Outgoing
+                        return { ...prev, fromBranch: userBranch, toBranch: 'All' };
+                    }
+                    if (key === 'toBranch') {
+                        // User cleared "To" -> Reset to "All" (Outgoing mode)
+                        // But verifying consistency: if From is Foreign, To CANNOT be All.
+                        const currentFrom = prev.fromBranch; // Use previous state since we haven't changed From
+                        // Actually, if we are changing To, From is stable.
+                        const fromArr = toArray(currentFrom);
+                        const isFromForeign = fromArr.length !== 1 || fromArr[0] !== userBranch;
+
+                        if (isFromForeign) {
+                            // If From is Foreign, To must remain Home. Can't set to All.
+                            // So we force it to Home.
+                            return { ...prev, toBranch: userBranch };
+                        }
+                        // Else (From is Home), we can set To to All.
+                        return { ...prev, toBranch: 'All' };
+                    }
+                }
+
+                const newFilters = { ...prev, [key]: newVal };
+
+                // Determine Foreign-ness based on proposed values
+                const currentFrom = key === 'fromBranch' ? newVal : prev.fromBranch;
+                const currentTo = key === 'toBranch' ? newVal : prev.toBranch;
+
+                const fromArr = toArray(currentFrom);
+                const isFromForeign = fromArr.length !== 1 || fromArr[0] !== userBranch;
+
+                const toArr = toArray(currentTo);
+                const isToForeign = toArr.length !== 1 || toArr[0] !== userBranch;
 
                 // Case 1: Changing FROM branch
                 if (key === 'fromBranch') {
-                    if (isForeign) {
+                    if (isFromForeign) {
                         // If From is Foreign, To MUST be My Branch
                         newFilters.toBranch = userBranch;
                     }
-                    // If From is My Branch, To can be anything (keep existing)
                 }
 
                 // Case 2: Changing TO branch
                 if (key === 'toBranch') {
-                    if (isForeign) {
+                    if (isToForeign) {
                         // If To is Foreign, From MUST be My Branch
                         newFilters.fromBranch = userBranch;
                     }
                 }
+                return newFilters;
             }
-            return newFilters;
+
+            // Non-restricted behavior
+            return { ...prev, [key]: newVal };
         });
     };
 
