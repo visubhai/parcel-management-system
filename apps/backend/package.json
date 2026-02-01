@@ -20,11 +20,12 @@
         "jspdf": "^4.0.0",
         "jspdf-autotable": "^5.0.7",
         "mongoose": "^8.3.2",
-        "node-cron": "^4.2.1",
-        "qrcode": "^1.5.4",
+        "node-cron": "^3.0.0",
+        "qrcode": "^1.5.0",
         "qrcode-terminal": "^0.12.0",
-        "whatsapp-web.js": "github:pedroslopez/whatsapp-web.js#main",
-        "winston": "^3.19.0",
+        "@whiskeysockets/baileys": "^6.6.0",
+        "pino": "^9.0.0",
+        "winston": "^3.11.0",
         "zod": "^4.3.6"
     },
     "devDependencies": {
