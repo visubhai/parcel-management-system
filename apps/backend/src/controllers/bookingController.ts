@@ -4,6 +4,7 @@ import Booking from '../models/Booking';
 import Branch from '../models/Branch';
 import Counter from '../models/Counter';
 import Transaction from '../models/Transaction';
+import mongoose from 'mongoose';
 import { whatsappService } from '../services/whatsapp';
 import { exportService } from '../services/exportService';
 import ReportPermission from '../models/ReportPermission';
@@ -27,12 +28,26 @@ export const getBookings = catchAsync(async (req: AuthRequest, res: Response) =>
     }
 
     if (fromBranch) {
-        const branches = (fromBranch as string).split(',');
-        query.fromBranch = branches.length > 1 ? { $in: branches } : branches[0];
+        const branchNames = (fromBranch as string).split(',');
+        const branches = await Branch.find({ name: { $in: branchNames } }).select('_id');
+        const branchIds = branches.map(b => b._id);
+        if (branchIds.length > 0) {
+            query.fromBranch = branchIds.length > 1 ? { $in: branchIds } : branchIds[0];
+        } else {
+            // Provided names didn't match any branch -> Force empty result (or handle gracefully)
+            // If we don't set this, it might ignore the filter. Setting adummy prevents showing all.
+            query.fromBranch = new mongoose.Types.ObjectId();
+        }
     }
     if (toBranch) {
-        const branches = (toBranch as string).split(',');
-        query.toBranch = branches.length > 1 ? { $in: branches } : branches[0];
+        const branchNames = (toBranch as string).split(',');
+        const branches = await Branch.find({ name: { $in: branchNames } }).select('_id');
+        const branchIds = branches.map(b => b._id);
+        if (branchIds.length > 0) {
+            query.toBranch = branchIds.length > 1 ? { $in: branchIds } : branchIds[0];
+        } else {
+            query.toBranch = new mongoose.Types.ObjectId();
+        }
     }
     if (status) query.status = status;
     if (lrNumber) query.lrNumber = { $regex: lrNumber, $options: 'i' }; // Substring case-insensitive match

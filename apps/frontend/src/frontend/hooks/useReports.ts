@@ -74,10 +74,10 @@ export function useReports() {
                     },
                     parcels: p.parcels || [],
                     costs: {
-                        freight: p.costs?.freight || 0,
-                        handling: p.costs?.handling || 0,
-                        hamali: p.costs?.hamali || 0,
-                        total: p.costs?.total || 0
+                        freight: Number(p.costs?.freight || 0),
+                        handling: Number(p.costs?.handling || 0),
+                        hamali: Number(p.costs?.hamali || 0),
+                        total: Number(p.costs?.total || 0)
                     },
                     paymentType: p.paymentType,
                     status: p.status
@@ -97,6 +97,8 @@ export function useReports() {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
+    const normalizeStatus = (status: string) => status.toUpperCase().replace(/_/g, ' ');
+
     // -- Derived Data --
     const processedData = useMemo(() => {
         let data = [...bookings];
@@ -114,14 +116,22 @@ export function useReports() {
 
         data = data.filter(item => {
             // Branch
-            if (filters.fromBranch !== 'All' && item.fromBranch !== filters.fromBranch) return false;
-            if (filters.toBranch !== 'All' && item.toBranch !== filters.toBranch) return false;
+            if (filters.fromBranch !== 'All') {
+                const branches = filters.fromBranch.split(',');
+                if (!branches.includes(item.fromBranch)) return false;
+            }
+            if (filters.toBranch !== 'All') {
+                const branches = filters.toBranch.split(',');
+                if (!branches.includes(item.toBranch)) return false;
+            }
 
             // Payment Type
             if (filters.paymentType !== 'All' && item.paymentType !== filters.paymentType) return false;
 
             // Status
-            if (filters.status !== 'All' && item.status !== filters.status) return false;
+            if (filters.status !== 'All') {
+                if (normalizeStatus(item.status) !== normalizeStatus(filters.status)) return false;
+            }
 
             // Advanced Filters
             if (filters.itemType !== 'All') {
@@ -190,11 +200,11 @@ export function useReports() {
     // -- Summary Stats --
     const stats = useMemo(() => {
         return {
-            totalRevenue: processedData.reduce((sum, item) => item.status !== 'CANCELLED' ? sum + item.costs.total : sum, 0),
+            totalRevenue: processedData.reduce((sum, item) => normalizeStatus(item.status) !== 'CANCELLED' ? sum + item.costs.total : sum, 0),
             totalBookings: processedData.length,
-            paidAmount: processedData.filter(i => i.paymentType === 'Paid' && i.status !== 'CANCELLED').reduce((sum, i) => sum + i.costs.total, 0),
-            toPayAmount: processedData.filter(i => i.paymentType === 'To Pay' && i.status !== 'CANCELLED').reduce((sum, i) => sum + i.costs.total, 0),
-            cancelledCount: processedData.filter(i => i.status === 'CANCELLED').length
+            paidAmount: processedData.filter(i => i.paymentType === 'Paid' && normalizeStatus(i.status) !== 'CANCELLED').reduce((sum, i) => sum + i.costs.total, 0),
+            toPayAmount: processedData.filter(i => i.paymentType === 'To Pay' && normalizeStatus(i.status) !== 'CANCELLED').reduce((sum, i) => sum + i.costs.total, 0),
+            cancelledCount: processedData.filter(i => normalizeStatus(i.status) === 'CANCELLED').length
         };
     }, [processedData]);
 
