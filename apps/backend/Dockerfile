@@ -2,14 +2,14 @@ FROM node:18-alpine
 
 # Install Puppeteer dependencies
 RUN apk add --no-cache \
-      chromium \
-      nss \
-      freetype \
-      harfbuzz \
-      ca-certificates \
-      ttf-freefont \
-      nodejs \
-      yarn
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    nodejs \
+    yarn
 
 # Tell Puppeteer to skip installing Chrome (we use the installed package)
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
@@ -21,6 +21,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/backend/package.json ./apps/backend/
+COPY apps/frontend/package.json ./apps/frontend/
 
 # Install dependencies
 RUN npm ci
