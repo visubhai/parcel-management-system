@@ -2,7 +2,7 @@
 export type Branch = string; // Allow dynamic branches
 
 export type PaymentStatus = "Paid" | "To Pay";
-export type ParcelStatus = "INCOMING" | "PENDING" | "DELIVERED" | "CANCELLED" | "ARRIVED" | "IN_TRANSIT";
+export type ParcelStatus = "INCOMING" | "PENDING" | "DELIVERED" | "CANCELLED" | "ARRIVED" | "IN_TRANSIT" | "Booked" | "In Transit" | "Arrived" | "Cancelled";
 export type ItemType = "White Sack" | "Carton" | "Manual";
 
 export interface Parcel {
@@ -43,7 +43,7 @@ export interface Booking {
 
 export type Role = "SUPER_ADMIN" | "BRANCH";
 
-export type ReportType = "DAILY_REPORT" | "DELIVERY_REPORT" | "LEDGER_REPORT" | "SUMMARY_REPORT" | "BOOKING_REPORT";
+export type ReportType = "DAILY_REPORT" | "DELIVERY_REPORT" | "LEDGER_REPORT" | "SUMMARY_REPORT" | "BOOKING_REPORT" | "Payment";
 
 export interface User {
     id: string;

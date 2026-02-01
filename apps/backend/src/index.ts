@@ -2,8 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db';
-import { whatsappService } from './services/whatsapp';
-import { initCronJobs } from './services/cronService';
 import authRoutes from './routes/authRoutes';
 import branchRoutes from './routes/branchRoutes';
 import bookingRoutes from './routes/bookingRoutes';
@@ -51,16 +49,23 @@ app.use(errorHandler);
 
 // Initialize Services & Start Server
 // Initialize Services & Start Server
-if (process.env.NODE_ENV !== 'test') {
+// In Vercel, we export the app for serverless function usage.
+// We only start the server explicitly if NOT in Vercel.
+// Initialize Services & Start Server
+// Docker/VPS: VERCEL is undefined -> Full Mode (WhatsApp + Cron)
+// Vercel: VERCEL is defined -> Serverless Mode (No background services)
+if (!process.env.VERCEL) {
     (async () => {
         try {
             await connectDB();
             console.log('✅ Database connected');
 
             // Initialize WhatsApp Service
+            const { whatsappService } = await import('./services/whatsapp');
             whatsappService.initialize(app);
 
             // Initialize Background Schedulers
+            const { initCronJobs } = await import('./services/cronService');
             initCronJobs();
 
             app.listen(PORT, () => {
@@ -71,6 +76,9 @@ if (process.env.NODE_ENV !== 'test') {
             process.exit(1);
         }
     })();
+} else {
+    // Serverless Optimizations
+    connectDB().then(() => console.log('✅ Database connected (Serverless)')).catch(err => console.error('❌ DB Connection Error:', err));
 }
 
 export default app;

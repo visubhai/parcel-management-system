@@ -14,7 +14,7 @@ export function AdminList({ onEdit }: AdminListProps) {
     const { users, isLoading, mutate } = useUsers();
 
     // Filter to only show Admins (and Super Admins, but mainly we manage Admins)
-    const admins = users.filter(u => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN');
+    const admins = users.filter(u => u.role === 'BRANCH' || u.role === 'SUPER_ADMIN');
 
     const handleDelete = async (id: string) => {
         if (confirm("Are you sure you want to deactivate this admin?")) {
