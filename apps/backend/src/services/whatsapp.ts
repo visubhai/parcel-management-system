@@ -37,10 +37,18 @@ class WhatsAppService {
             const { state, saveCreds } = await useMultiFileAuthState(this.authFolder);
 
             this.sock = makeWASocket({
-                logger: pino({ level: 'info' }) as any, // Info level to see handshake progress
+                logger: pino({ level: 'silent' }) as any,
                 printQRInTerminal: false,
                 auth: state,
+                browser: ['Chrome (Linux)', 'Chrome', '124.0.0.0'],
                 connectTimeoutMs: 60000,
+                keepAliveIntervalMs: 10000,
+                emitOwnEvents: true,
+                retryRequestDelayMs: 250,
+                // FINALEST OPTIMIZATIONS
+                markOnlineOnConnect: false, // Don't show 'Online' status (Stealth)
+                syncFullHistory: false,    // Don't sync old chats (Saves Memory & Startup Time)
+                generateHighQualityLinkPreview: true,
             });
 
             this.sock.ev.on('connection.update', async (update: any) => {
@@ -54,20 +62,27 @@ class WhatsAppService {
                 if (connection === 'close') {
                     const error = lastDisconnect?.error as any;
                     const statusCode = error?.output?.statusCode;
-                    const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
-                    this.log(`❌ Connection closed. Status: ${statusCode}. Error: ${error?.message}. Reconnecting: ${shouldReconnect}`);
-
-                    // Log full error for diagnosing (only visible in Render console)
-                    console.log('DEBUG_ERROR:', JSON.stringify(error, null, 2));
-
+                    this.log(`❌ Connection closed. Status: ${statusCode}. Reason: ${error?.message}`);
                     this.isReady = false;
 
-                    if (shouldReconnect) {
-                        // Exponential backoff or standard delay
-                        setTimeout(() => this.initializeClient(), 5000);
+                    // Specific Error IHandling
+                    if (statusCode === DisconnectReason.loggedOut) {
+                        this.log('⛔ Session Invalidated (Logged Out). Deleting session and restarting...');
+                        await this.resetSession();
+                    } else if (statusCode === DisconnectReason.restartRequired) {
+                        this.log('🔄 Restart required. Reconnecting immediately...');
+                        this.initializeClient();
+                    } else if (statusCode === DisconnectReason.timedOut) {
+                        this.log('⏳ Timed out. Reconnecting in 3s...');
+                        setTimeout(() => this.initializeClient(), 3000);
                     } else {
-                        this.log('❌ Logged out. Please use the Reset button.');
+                        // Default Reconnect Strategy
+                        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+                        if (shouldReconnect) {
+                            this.log(`🔄 Reconnecting automatically in 3s...`);
+                            setTimeout(() => this.initializeClient(), 3000);
+                        }
                     }
                 } else if (connection === 'open') {
                     this.log('✅ WhatsApp connected successfully!');
@@ -83,6 +98,20 @@ class WhatsAppService {
         }
     }
 
+    private async resetSession() {
+        try {
+            if (fs.existsSync(this.authFolder)) {
+                fs.rmSync(this.authFolder, { recursive: true, force: true });
+            }
+            this.currentQR = null;
+            this.isReady = false;
+            // Delay to allow FS to catch up
+            setTimeout(() => this.initializeClient(), 1000);
+        } catch (error: any) {
+            this.log(`Error resetting session: ${error.message}`);
+        }
+    }
+
     public async sendMessage(mobile: string, message: string): Promise<boolean> {
         if (!this.isReady || !this.sock) {
             console.warn('WhatsApp socket not ready');
@@ -93,7 +122,7 @@ class WhatsAppService {
             if (sanitizedNumber.length === 10) {
                 sanitizedNumber = '91' + sanitizedNumber;
             }
-            const jid = `${sanitizedNumber}@s.whatsapp.net`; // Baileys uses @s.whatsapp.net
+            const jid = `${sanitizedNumber}@s.whatsapp.net`;
 
             await this.sock.sendMessage(jid, { text: message });
             this.log(`[SENT] Message sent to ${mobile}`);
@@ -108,21 +137,12 @@ class WhatsAppService {
     public async initialize(app: Express) {
         // Reset Endpoint
         app.get('/whatsapp/reset', async (req: Request, res: Response) => {
-            try {
-                if (fs.existsSync(this.authFolder)) {
-                    fs.rmSync(this.authFolder, { recursive: true, force: true });
-                }
-                this.isReady = false;
-                this.currentQR = null;
-                this.log('🗑️ Session reset. Restarting...');
-                this.initializeClient();
-                res.send('<script>window.location.href = "/whatsapp";</script>');
-            } catch (error: any) {
-                res.status(500).send(`Failed to reset: ${error.message}`);
-            }
+            await this.resetSession();
+            this.log('🗑️ Manual Reset triggered via Web.');
+            res.send('<script>setTimeout(() => window.location.href = "/whatsapp", 1000);</script><h1>Resetting...</h1>');
         });
 
-        // Web Interface used for QR Code & Logs
+        // Web Interface
         app.get('/whatsapp', async (req: Request, res: Response) => {
             const logsHtml = this.logs.map(l => `<div style="font-size: 11px; color: #444; margin-bottom: 2px; font-family: monospace; border-bottom: 1px solid #eee;">${l}</div>`).join('');
 
