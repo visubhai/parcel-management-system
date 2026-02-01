@@ -57,6 +57,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 token.branchId = (user as any).branchId;
                 token.branchName = (user as any).branchName;
                 token.accessToken = (user as any).accessToken;
+                if (user.email) {
+                    token.email = user.email;
+                } else if ((user as any).branchName) {
+                    // Fallback to constructed email if missing from DB for some reason
+                    token.email = `${(user as any).branchName.toLowerCase().replace(/\s+/g, '')}@savan.com`;
+                }
             }
             return token;
         },
@@ -69,7 +75,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 // @ts-ignore
                 session.user.branchName = token.branchName;
                 // @ts-ignore
-                session.accessToken = token.accessToken;
+                session.user.branch = token.branchName; // FIX: Map branchName to 'branch' for frontend types
+                // @ts-ignore
+                session.user.name = token.name; // Explicitly ensure name is passed
+                // @ts-ignore
+                session.user.accessToken = token.accessToken;
+                if (token.email) session.user.email = token.email as string;
             }
             return session;
         }

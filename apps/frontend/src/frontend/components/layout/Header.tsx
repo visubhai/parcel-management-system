@@ -185,7 +185,7 @@ export function Header() {
                             <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 animate-in fade-in slide-in-from-top-2 z-50">
                                 <div className="px-4 py-3 border-b border-slate-50">
                                     <p className="text-sm font-bold text-slate-800">{currentUser?.name}</p>
-                                    <p className="text-xs text-slate-500 truncate">{currentUser?.email || "user@example.com"}</p>
+                                    <p className="text-xs text-slate-500 truncate">{currentUser?.email || `${currentUser?.username || currentUser?.name?.toLowerCase().replace(/\s+/g, '')}@savan.com`}</p>
                                 </div>
                                 <div className="p-1">
                                     <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">

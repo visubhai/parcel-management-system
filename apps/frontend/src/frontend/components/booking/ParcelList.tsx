@@ -16,6 +16,15 @@ interface ParcelListProps {
     disabled?: boolean;
 }
 
+const ITEM_CATEGORIES = [
+    "BLACK PARCEL", "WHITE PARCEL", "RED PARCEL", "GREEN PARCEL", "KHAKHI PARCEL", "COLORING PARCEL", "YELLOW PARCEL",
+    "KHAKHI BOX", "WHITE BOX", "BLACK BOX", "WHITE KANTAN BOX", "GREEN KANTAN BOX", "COLORING BOX",
+    "WHITE KANTAN", "BLACK KANTAN", "KHAKHI KANTAN", "YELLOW KANTAN", "RED KANTAN", "GREEN KANTAN", "COLORING KANTAN",
+    "KHAKHI COVER", "WHITE COVER", "GREEN COVER", "COLORING COVER",
+    "THELI", "COLORING THELI", "WHITE THELI",
+    "ROLL", "DABBA", "PETI", "ACTIVA", "BIKE", "PAIPE", "OTHER"
+];
+
 export function ParcelList({ parcels, onAdd, onRemove, onChange, onNext, disabled }: ParcelListProps) {
     const handleKeyDown = (e: React.KeyboardEvent, field: keyof Parcel, index: number) => {
         if (e.key === "Enter") {
@@ -89,11 +98,14 @@ export function ParcelList({ parcels, onAdd, onRemove, onChange, onNext, disable
                                 disabled={disabled}
                                 onKeyDown={(e) => handleKeyDown(e, "itemType", index)}
                                 onChange={(e) => onChange(parcel.id, "itemType", e.target.value as ItemType)}
-                                className="flex h-12 w-full rounded-xl border border-transparent bg-white px-3 py-2 text-sm shadow-sm ring-offset-background focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/5 disabled:cursor-not-allowed disabled:opacity-50 font-bold transition-all"
+                                className="flex h-12 w-full rounded-xl border border-transparent bg-white px-3 py-2 text-sm shadow-sm ring-offset-background focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/5 disabled:cursor-not-allowed disabled:opacity-50 font-bold transition-all appearance-none"
                             >
-                                <option value="White Sack">White Sack (Silo)</option>
-                                <option value="Carton">Carton (Peti)</option>
-                                <option value="Manual">Manual Entry</option>
+                                <option value="" disabled>Select Item</option>
+                                {ITEM_CATEGORIES.map((cat) => (
+                                    <option key={cat} value={cat}>
+                                        {cat}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 

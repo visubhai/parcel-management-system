@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(req: NextRequest) {
+import { getToken } from 'next-auth/jwt';
+
+export async function middleware(req: NextRequest) {
     const res = NextResponse.next()
 
     // 1. ADD SECURITY HEADERS
@@ -21,11 +23,33 @@ export function middleware(req: NextRequest) {
         "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://parcel-backend-died.onrender.com; font-src 'self' data:; connect-src 'self' http://localhost:3001 http://127.0.0.1:3001 https://parcel-backend-died.onrender.com;"
     )
 
+    // 2. AUTHENTICATION CHECK
+    const token = await getToken({ req: req, secret: process.env.AUTH_SECRET });
+    const isLoginPage = req.nextUrl.pathname.startsWith('/login');
+
+    // If NOT logged in and trying to access protected route (Home), redirect to Login
+    if (!token && !isLoginPage) {
+        return NextResponse.redirect(new URL('/login', req.url));
+    }
+
+    // If Logged in and trying to access Login, redirect to key (Dashboard)
+    if (token && isLoginPage) {
+        return NextResponse.redirect(new URL('/', req.url));
+    }
+
     return res
 }
 
 export const config = {
     matcher: [
-        '/((?!api|_next/static|_next/image|favicon.ico).*)',
+        /*
+         * Match all request paths except for the ones starting with:
+         * - api (API routes)
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - images (public images folder) - ADDED THIS
+         * - favicon.ico (favicon file)
+         */
+        '/((?!api|_next/static|_next/image|images|favicon.ico).*)',
     ],
 }
