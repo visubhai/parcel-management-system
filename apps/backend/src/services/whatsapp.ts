@@ -37,10 +37,10 @@ class WhatsAppService {
             const { state, saveCreds } = await useMultiFileAuthState(this.authFolder);
 
             this.sock = makeWASocket({
-                logger: pino({ level: 'silent' }) as any,
-                printQRInTerminal: false, // We serve it via web
+                logger: pino({ level: 'error' }) as any,
+                printQRInTerminal: true, // We serve it via web
                 auth: state,
-                browser: ['Vercel-Baileys', 'Chrome', '120.0.0.0'], // Spoof browser
+                browser: ['Ubuntu', 'Chrome', '20.0.04'], // Standard Linux signature
                 connectTimeoutMs: 60000,
             });
 
@@ -54,13 +54,14 @@ class WhatsAppService {
 
                 if (connection === 'close') {
                     const shouldReconnect = (lastDisconnect?.error as any)?.output?.statusCode !== DisconnectReason.loggedOut;
-                    this.log(`❌ Connection closed due to ${lastDisconnect?.error}, reconnecting: ${shouldReconnect}`);
+                    this.log(`❌ Connection closed. Reconnecting: ${shouldReconnect}. Error: ${lastDisconnect?.error}`);
                     this.isReady = false;
 
                     if (shouldReconnect) {
-                        this.initializeClient();
+                        // Wait 2 seconds before reconnecting to avoid spamming
+                        setTimeout(() => this.initializeClient(), 2000);
                     } else {
-                        this.log('❌ Logged out. Delete .baileys_auth and restart to scan again.');
+                        this.log('❌ Logged out. Please use the Reset button.');
                     }
                 } else if (connection === 'open') {
                     this.log('✅ WhatsApp connected successfully!');
@@ -99,7 +100,23 @@ class WhatsAppService {
     }
 
     public async initialize(app: Express) {
-        // Web Interface for QR Code & Logs
+        // Reset Endpoint
+        app.get('/whatsapp/reset', async (req: Request, res: Response) => {
+            try {
+                if (fs.existsSync(this.authFolder)) {
+                    fs.rmSync(this.authFolder, { recursive: true, force: true });
+                }
+                this.isReady = false;
+                this.currentQR = null;
+                this.log('🗑️ Session reset. Restarting...');
+                this.initializeClient();
+                res.send('<script>window.location.href = "/whatsapp";</script>');
+            } catch (error: any) {
+                res.status(500).send(`Failed to reset: ${error.message}`);
+            }
+        });
+
+        // Web Interface used for QR Code & Logs
         app.get('/whatsapp', async (req: Request, res: Response) => {
             const logsHtml = this.logs.map(l => `<div style="font-size: 11px; color: #444; margin-bottom: 2px; font-family: monospace; border-bottom: 1px solid #eee;">${l}</div>`).join('');
 
@@ -131,6 +148,9 @@ class WhatsAppService {
                 <html>
                     <body style="font-family: system-ui, sans-serif; text-align: center; padding: 20px; max-width: 600px; margin: 0 auto;">
                         ${statusHtml}
+                        <div style="margin-top: 20px;">
+                            <a href="/whatsapp/reset" style="background: #ff4444; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">🗑️ Reset Session</a>
+                        </div>
                         <div style="margin-top: 30px; text-align: left; background: #fafafa; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
                             <h3 style="margin-top: 0;">System Logs</h3>
                             <div style="max-height: 300px; overflow-y: auto;">
@@ -142,7 +162,7 @@ class WhatsAppService {
             `);
         });
 
-        // API Endpoint
+        // API Endpoint for Application Trigger
         app.post('/api/whatsapp/send', async (req: Request, res: Response): Promise<any> => {
             if (!this.isReady) return res.status(503).json({ error: 'WhatsApp not ready' });
             const { mobile, message } = req.body;
