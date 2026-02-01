@@ -1,56 +1,25 @@
-import { Client, LocalAuth } from 'whatsapp-web.js';
+import makeWASocket, { DisconnectReason, useMultiFileAuthState } from '@whiskeysockets/baileys';
 import { Express, Request, Response } from 'express';
 import QRCode from 'qrcode';
 import path from 'path';
+import pino from 'pino';
+import fs from 'fs';
 
 class WhatsAppService {
-    private client: Client;
+    private sock: any;
     private isReady: boolean = false;
     private currentQR: string | null = null;
-    private sessionPath: string;
+    private authFolder: string;
     private logs: string[] = [];
 
     constructor() {
-        this.log('Initializing WhatsApp Service...');
-        this.sessionPath = path.resolve(__dirname, '../../../../.wwebjs_auth');
+        this.log('Initializing WhatsApp Service (Baileys)...');
+        this.authFolder = path.resolve(__dirname, '../../../../.baileys_auth');
 
-        this.client = new Client({
-            authStrategy: new LocalAuth({ dataPath: this.sessionPath }),
-            authTimeoutMs: 60000,
-            puppeteer: {
-                headless: true,
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-accelerated-2d-canvas',
-                    '--no-first-run',
-                    '--no-zygote',
-                    '--single-process',
-                    '--disable-gpu',
-                    '--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    '--disable-extensions',
-                    '--disable-component-extensions-with-background-pages',
-                    '--disable-default-apps',
-                    '--mute-audio',
-                    '--no-default-browser-check',
-                    '--autoplay-policy=user-gesture-required',
-                    '--disable-background-timer-throttling',
-                    '--disable-backgrounding-occluded-windows',
-                    '--disable-notifications',
-                    '--disable-background-networking',
-                    '--disable-breakpad',
-                    '--disable-component-update',
-                    '--disable-domain-reliability',
-                    '--disable-sync',
-                    '--disable-features=Translate,BackForwardCache,AcceptCHFrame,MediaRouter,OptimizationHints',
-                    '--disk-cache-size=0',
-                    '--disable-application-cache',
-                    '--disable-offline-load-stale-cache',
-                    '--disable-gpu-shader-disk-cache'
-                ]
-            }
-        });
+        // Ensure auth folder exists
+        if (!fs.existsSync(this.authFolder)) {
+            fs.mkdirSync(this.authFolder, { recursive: true });
+        }
 
         this.initializeClient();
     }
@@ -59,42 +28,57 @@ class WhatsAppService {
         const timestamp = new Date().toLocaleTimeString();
         const logMsg = `[${timestamp}] ${msg}`;
         console.log(logMsg);
-        this.logs.unshift(logMsg); // Add to beginning
-        if (this.logs.length > 20) this.logs.pop(); // Keep last 20
+        this.logs.unshift(logMsg);
+        if (this.logs.length > 50) this.logs.pop();
     }
 
-    private initializeClient() {
-        this.client.on('qr', (qr) => {
-            this.log('⚡ QR Code generated!');
-            this.currentQR = qr;
-        });
+    private async initializeClient() {
+        try {
+            const { state, saveCreds } = await useMultiFileAuthState(this.authFolder);
 
-        this.client.on('ready', () => {
-            this.log('✅ WhatsApp Manager Client is READY!');
-            this.isReady = true;
-            this.currentQR = null;
-        });
+            this.sock = makeWASocket({
+                logger: pino({ level: 'silent' }) as any,
+                printQRInTerminal: false, // We serve it via web
+                auth: state,
+                browser: ['Vercel-Baileys', 'Chrome', '120.0.0.0'], // Spoof browser
+                connectTimeoutMs: 60000,
+            });
 
-        this.client.on('auth_failure', (msg) => {
-            this.log(`❌ Authentication failed: ${msg}`);
-            this.isReady = false;
-        });
+            this.sock.ev.on('connection.update', async (update: any) => {
+                const { connection, lastDisconnect, qr } = update;
 
-        this.client.on('disconnected', (reason) => {
-            this.log(`❌ Client was disconnected: ${reason}`);
-            this.isReady = false;
-        });
+                if (qr) {
+                    this.log('⚡ QR Code generated!');
+                    this.currentQR = qr;
+                }
 
-        this.client.initialize().then(() => {
-            this.log('Client initialized started...');
-        }).catch(err => {
-            this.log(`FATAL: Client initialization failed: ${err.message}`);
-        });
+                if (connection === 'close') {
+                    const shouldReconnect = (lastDisconnect?.error as any)?.output?.statusCode !== DisconnectReason.loggedOut;
+                    this.log(`❌ Connection closed due to ${lastDisconnect?.error}, reconnecting: ${shouldReconnect}`);
+                    this.isReady = false;
+
+                    if (shouldReconnect) {
+                        this.initializeClient();
+                    } else {
+                        this.log('❌ Logged out. Delete .baileys_auth and restart to scan again.');
+                    }
+                } else if (connection === 'open') {
+                    this.log('✅ WhatsApp connected successfully!');
+                    this.isReady = true;
+                    this.currentQR = null;
+                }
+            });
+
+            this.sock.ev.on('creds.update', saveCreds);
+
+        } catch (error: any) {
+            this.log(`FATAL: Failed to initialize Baileys: ${error.message}`);
+        }
     }
 
     public async sendMessage(mobile: string, message: string): Promise<boolean> {
-        if (!this.isReady) {
-            console.warn('WhatsApp client not ready');
+        if (!this.isReady || !this.sock) {
+            console.warn('WhatsApp socket not ready');
             return false;
         }
         try {
@@ -102,105 +86,71 @@ class WhatsAppService {
             if (sanitizedNumber.length === 10) {
                 sanitizedNumber = '91' + sanitizedNumber;
             }
-            const chatId = `${sanitizedNumber}@c.us`;
-            await this.client.sendMessage(chatId, message);
-            console.log(`[SENT] Message sent to ${mobile}`);
+            const jid = `${sanitizedNumber}@s.whatsapp.net`; // Baileys uses @s.whatsapp.net
+
+            await this.sock.sendMessage(jid, { text: message });
+            this.log(`[SENT] Message sent to ${mobile}`);
             return true;
-        } catch (error) {
+        } catch (error: any) {
             console.error(`[ERROR] Failed to send to ${mobile}:`, error);
+            this.log(`[ERROR] Send failed: ${error.message}`);
             return false;
         }
     }
 
     public async initialize(app: Express) {
-        // Web Interface for QR Code with Logs
+        // Web Interface for QR Code & Logs
         app.get('/whatsapp', async (req: Request, res: Response) => {
-            const logsHtml = this.logs.map(l => `<div style="font-size: 12px; color: #555; margin-bottom: 5px; font-family: monospace;">${l}</div>`).join('');
+            const logsHtml = this.logs.map(l => `<div style="font-size: 11px; color: #444; margin-bottom: 2px; font-family: monospace; border-bottom: 1px solid #eee;">${l}</div>`).join('');
 
+            let statusHtml = '';
             if (this.isReady) {
-                return res.send(`
-                    <html>
-                        <body style="font-family: sans-serif; text-align: center; padding: 20px;">
-                            <h1 style="color: green;">✅ Service Is Ready</h1>
-                            <p>WhatsApp is connected and running.</p>
-                            <div style="margin-top: 20px; text-align: left; background: #f0f0f0; padding: 10px; border-radius: 5px;">
-                                <h3>Logs:</h3>
-                                ${logsHtml}
-                            </div>
-                        </body>
-                    </html>
-                `);
+                statusHtml = `<h1 style="color: green;">✅ Connected</h1><p>Ready to send messages.</p>`;
+            } else if (this.currentQR) {
+                try {
+                    const url = await QRCode.toDataURL(this.currentQR);
+                    statusHtml = `
+                        <h1>📱 Scan QR Code</h1>
+                        <p>Open WhatsApp -> Linked Devices -> Link</p>
+                        <img src="${url}" style="width: 300px; height: 300px; border: 1px solid #ddd; padding: 10px; border-radius: 8px;" />
+                        <p>Searching for phone...</p>
+                        <script>setTimeout(() => location.reload(), 3000);</script>
+                    `;
+                } catch (e) {
+                    statusHtml = `<p style="color:red">Error generating QR: ${e}</p>`;
+                }
+            } else {
+                statusHtml = `
+                    <h1>⏳ Initializing...</h1>
+                    <p>Please wait...</p>
+                    <script>setTimeout(() => location.reload(), 2000);</script>
+                `;
             }
 
-            if (!this.currentQR) {
-                return res.send(`
-                    <html>
-                        <body style="font-family: sans-serif; text-align: center; padding: 20px;">
-                            <h1>⏳ Waiting for QR Code...</h1>
-                            <p>Please wait for the service to generate a code.</p>
-                            <script>setTimeout(() => location.reload(), 3000);</script>
-                            <div style="margin-top: 20px; text-align: left; background: #f0f0f0; padding: 10px; border-radius: 5px;">
-                                <h3>Debug Logs:</h3>
+            res.send(`
+                <html>
+                    <body style="font-family: system-ui, sans-serif; text-align: center; padding: 20px; max-width: 600px; margin: 0 auto;">
+                        ${statusHtml}
+                        <div style="margin-top: 30px; text-align: left; background: #fafafa; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
+                            <h3 style="margin-top: 0;">System Logs</h3>
+                            <div style="max-height: 300px; overflow-y: auto;">
                                 ${logsHtml}
                             </div>
-                        </body>
-                    </html>
-                `);
-            }
-
-            try {
-                const url = await QRCode.toDataURL(this.currentQR);
-                res.send(`
-                    <html>
-                        <body style="font-family: sans-serif; text-align: center; padding: 20px;">
-                            <h1>📱 Scan with WhatsApp</h1>
-                            <p>Open WhatsApp on your phone -> Linked Devices -> Link a Device</p>
-                            <img src="${url}" style="width: 300px; height: 300px; border: 1px solid #ccc; padding: 10px; border-radius: 10px;" />
-                            <br><br>
-                            <p>Page auto-refreshes...</p>
-                            <script>setTimeout(() => location.reload(), 5000);</script>
-                            <div style="margin-top: 20px; text-align: left; background: #f0f0f0; padding: 10px; border-radius: 5px;">
-                                <h3>Debug Logs:</h3>
-                                ${logsHtml}
-                            </div>
-                        </body>
-                    </html>
-                `);
-            } catch (err) {
-                res.status(500).send('Error generating QR code');
-            }
+                        </div>
+                    </body>
+                </html>
+            `);
         });
 
-        // API Endpoint for Application Trigger
+        // API Endpoint
         app.post('/api/whatsapp/send', async (req: Request, res: Response): Promise<any> => {
-            console.log('📥 Received /send request:', JSON.stringify(req.body));
-
-            if (!this.isReady) {
-                return res.status(503).json({ error: 'WhatsApp client not ready yet.' });
-            }
-
+            if (!this.isReady) return res.status(503).json({ error: 'WhatsApp not ready' });
             const { mobile, message } = req.body;
+            if (!mobile || !message) return res.status(400).json({ error: 'Missing mobile/message' });
 
-            if (!mobile || !message) {
-                return res.status(400).json({ error: 'Missing mobile or message' });
-            }
-
-            try {
-                let sanitizedNumber = mobile.replace(/\D/g, '');
-                if (sanitizedNumber.length === 10) {
-                    sanitizedNumber = '91' + sanitizedNumber;
-                }
-
-                const chatId = `${sanitizedNumber}@c.us`;
-
-                await this.client.sendMessage(chatId, message);
-                console.log(`[SENT] Message sent to ${mobile}`);
-
-                return res.json({ success: true, status: 'Message sent' });
-            } catch (error: any) {
-                console.error(`[ERROR] Failed to send to ${mobile}:`, error);
-                return res.status(500).json({ error: 'Failed to send message', details: error.message });
-            }
+            const success = await this.sendMessage(mobile, message);
+            if (success) return res.json({ success: true });
+            return res.status(500).json({ error: 'Failed to send' });
         });
     }
 }
