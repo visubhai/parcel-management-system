@@ -9,9 +9,10 @@ interface ReportFiltersProps {
     setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
     branches: Branch[];
     isBranchRestricted?: boolean;
+    userBranch?: string;
 }
 
-export function ReportFilters({ filters, setFilters, branches, isBranchRestricted }: ReportFiltersProps) {
+export function ReportFilters({ filters, setFilters, branches, isBranchRestricted, userBranch }: ReportFiltersProps) {
     const { currentUser } = useBranchStore();
 
     // Permission: Only show allowed reports if restricted
@@ -32,7 +33,30 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
     const hasPaymentAccess = currentUser?.role === 'SUPER_ADMIN' || allowedReports.includes('Payment');
 
     const handleChange = (key: keyof FilterState, value: any) => {
-        setFilters(prev => ({ ...prev, [key]: value }));
+        setFilters(prev => {
+            const newFilters = { ...prev, [key]: value };
+
+            // STRICT BRANCH LOCKING LOGIC for Branch Users
+            if (isBranchRestricted && userBranch) {
+                // Case 1: Changing FROM branch
+                if (key === 'fromBranch') {
+                    // If From is NOT my branch (e.g. "All" or "Surat"), To MUST be my branch
+                    if (value !== userBranch) {
+                        newFilters.toBranch = userBranch;
+                    }
+                    // If From IS my branch, To can be anything (keep existing or reset? Keep existing is fine)
+                }
+
+                // Case 2: Changing TO branch
+                if (key === 'toBranch') {
+                    // If To is NOT my branch, From MUST be my branch
+                    if (value !== userBranch) {
+                        newFilters.fromBranch = userBranch;
+                    }
+                }
+            }
+            return newFilters;
+        });
     };
 
     const clearFilters = () => {
@@ -98,7 +122,7 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
                 {/* Branch Selectors */}
                 <select
                     value={filters.fromBranch}
-                    disabled={isBranchRestricted}
+                    // disabled={isBranchRestricted} // REMOVED: Allow selection but enforce logic
                     onChange={(e) => handleChange('fromBranch', e.target.value)}
                     className={cn(
                         "px-3 py-2 rounded-lg text-sm font-medium border outline-none focus:ring-2 focus:ring-blue-500/20",

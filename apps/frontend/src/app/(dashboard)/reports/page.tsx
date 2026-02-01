@@ -99,8 +99,9 @@ export default function ReportsPage() {
             <ReportFilters
                 filters={filters}
                 setFilters={setFilters}
-                branches={availableBranches}
+                branches={allBranches}
                 isBranchRestricted={isBranchRestricted}
+                userBranch={currentUser?.branch}
             />
             <ReportCharts data={allFilteredData} />
 
