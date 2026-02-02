@@ -70,7 +70,7 @@ export function ParcelList({ parcels, onAdd, onRemove, onChange, onNext, disable
 
             <CardContent className="p-6 space-y-4">
                 {parcels.map((parcel, index) => (
-                    <div key={parcel.id} className="grid grid-cols-12 gap-5 items-end bg-slate-50/50 p-4 rounded-2xl border border-transparent hover:border-blue-200 hover:bg-white transition-all group">
+                    <div key={parcel.id || (parcel as any)._id || index} className="grid grid-cols-12 gap-5 items-end bg-slate-50/50 p-4 rounded-2xl border border-transparent hover:border-blue-200 hover:bg-white transition-all group">
                         {/* Quantity */}
                         <div className="col-span-2 space-y-2 text-center">
                             <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Qty</Label>

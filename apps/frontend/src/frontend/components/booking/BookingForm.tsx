@@ -104,9 +104,11 @@ export function BookingForm({
                             onChange={(e) => onBranchChange(e.target.value)}
                             className="bg-transparent text-xs font-bold text-slate-800 outline-none cursor-pointer focus:ring-0 border-none p-0 min-w-[100px]"
                         >
-                            {availableBranches?.length ? availableBranches.map(b => (
-                                <option key={b._id} value={b._id}>{b.name}</option>
-                            )) : (
+                            {availableBranches?.length ? availableBranches.map((b, index) => {
+                                const id = typeof b === 'string' ? b : (b._id || (b as any).id || index);
+                                const name = typeof b === 'string' ? b : b.name;
+                                return <option key={id} value={id}>{name}</option>;
+                            }) : (
                                 <option value="" disabled>Loading...</option>
                             )}
                         </select>

@@ -115,8 +115,8 @@ export function InboundTable() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {incomingParcels.map((parcel) => (
-                            <tr key={parcel.id} className="hover:bg-slate-50/50 transition-colors group">
+                        {incomingParcels.map((parcel, index) => (
+                            <tr key={parcel.id || index} className="hover:bg-slate-50/50 transition-colors group">
                                 <td className="px-4 py-4 text-sm font-mono font-black text-slate-700">{parcel.lrNumber}</td>
                                 <td className="px-4 py-4 text-slate-600 font-bold text-xs uppercase">{parcel.fromBranch}</td>
                                 <td className="px-4 py-4 text-slate-600 font-bold text-xs uppercase">{parcel.toBranch}</td>

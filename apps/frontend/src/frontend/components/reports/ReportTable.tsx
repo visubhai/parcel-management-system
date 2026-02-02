@@ -132,12 +132,12 @@ export function ReportTable({
                                 <TableRowSkeleton key={idx} columns={12} />
                             ))
                         ) : data.length > 0 ? (
-                            data.map((row) => {
+                            data.map((row, index) => {
                                 const dateObj = new Date(row.date);
                                 const isCancelled = row.status === 'CANCELLED';
 
                                 return (
-                                    <tr key={row.id} className={cn(
+                                    <tr key={row.id || (row as any)._id || index} className={cn(
                                         "transition-colors group",
                                         isCancelled ? "bg-red-50/30 hover:bg-red-50/60" : "hover:bg-blue-50/30"
                                     )}>
