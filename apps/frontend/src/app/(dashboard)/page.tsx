@@ -183,8 +183,14 @@ export default function BookingDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 pb-20">
       {/* Shift Summary Bar (Operator Friendly) */}
-      <div className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white p-3 rounded-b-2xl mb-6 flex flex-wrap items-center justify-between shadow-lg -mt-6">
-        <div className="flex items-center gap-4">
+      <div className="bg-slate-900 text-white p-3 rounded-b-2xl mb-6 flex flex-wrap items-center justify-between shadow-xl shadow-slate-900/10 -mt-6 relative overflow-hidden">
+        {/* Abstract Background - Matching Theme */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-blue-600/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-indigo-600/20 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3" />
+        </div>
+
+        <div className="relative z-10 flex items-center gap-4">
           <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs font-bold uppercase tracking-widest border border-white/20">
             <Zap size={14} className="text-yellow-400 fill-yellow-400" />
             Live: {currentUser?.branch || 'Global'}
@@ -193,7 +199,7 @@ export default function BookingDashboard() {
             Operator: <span className="font-bold">{currentUser?.name}</span>
           </div>
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 relative z-10">
           <div className="text-sm">
             <span className="opacity-60 mr-1 italic">Shortcuts:</span>
             <kbd className="px-1.5 py-0.5 bg-black/20 rounded border border-white/10 text-[10px]">Ctrl+S</kbd> Save & Print
