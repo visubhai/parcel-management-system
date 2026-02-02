@@ -28,21 +28,33 @@ export const getBookings = catchAsync(async (req: AuthRequest, res: Response) =>
     }
 
     if (fromBranch) {
-        const branchNames = (fromBranch as string).split(',');
-        const branches = await Branch.find({ name: { $in: branchNames } }).select('_id');
-        const branchIds = branches.map(b => b._id);
+        const items = (fromBranch as string).split(',');
+        const ids = items.filter(item => mongoose.Types.ObjectId.isValid(item));
+        const names = items.filter(item => !mongoose.Types.ObjectId.isValid(item));
+
+        const branchIds = [...ids];
+        if (names.length > 0) {
+            const branches = await Branch.find({ name: { $in: names } }).select('_id');
+            branchIds.push(...branches.map(b => b._id.toString()));
+        }
+
         if (branchIds.length > 0) {
             query.fromBranch = branchIds.length > 1 ? { $in: branchIds } : branchIds[0];
         } else {
-            // Provided names didn't match any branch -> Force empty result (or handle gracefully)
-            // If we don't set this, it might ignore the filter. Setting adummy prevents showing all.
             query.fromBranch = new mongoose.Types.ObjectId();
         }
     }
     if (toBranch) {
-        const branchNames = (toBranch as string).split(',');
-        const branches = await Branch.find({ name: { $in: branchNames } }).select('_id');
-        const branchIds = branches.map(b => b._id);
+        const items = (toBranch as string).split(',');
+        const ids = items.filter(item => mongoose.Types.ObjectId.isValid(item));
+        const names = items.filter(item => !mongoose.Types.ObjectId.isValid(item));
+
+        const branchIds = [...ids];
+        if (names.length > 0) {
+            const branches = await Branch.find({ name: { $in: names } }).select('_id');
+            branchIds.push(...branches.map(b => b._id.toString()));
+        }
+
         if (branchIds.length > 0) {
             query.toBranch = branchIds.length > 1 ? { $in: branchIds } : branchIds[0];
         } else {
