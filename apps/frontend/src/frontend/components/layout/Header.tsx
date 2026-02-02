@@ -12,7 +12,7 @@ import { useDebounce } from "../../hooks/useDebounce";
 import { Booking } from "@/shared/types";
 
 export function Header() {
-    const { currentUser, searchQuery, setSearchQuery, setCurrentUser } = useBranchStore();
+    const { currentUser, searchQuery, setSearchQuery, setCurrentUser, toggleMobileMenu } = useBranchStore();
     const router = useRouter();
 
     // Local state for header clock
@@ -63,7 +63,10 @@ export function Header() {
     return (
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-30">
             <div className="flex items-center gap-4 flex-1">
-                <button className="p-2 hover:bg-slate-100 rounded-lg lg:hidden text-slate-500">
+                <button
+                    onClick={toggleMobileMenu}
+                    className="p-2 hover:bg-slate-100 rounded-lg lg:hidden text-slate-500"
+                >
                     <Menu className="w-6 h-6" />
                 </button>
 

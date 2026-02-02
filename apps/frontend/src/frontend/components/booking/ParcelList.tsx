@@ -70,9 +70,9 @@ export function ParcelList({ parcels, onAdd, onRemove, onChange, onNext, disable
 
             <CardContent className="p-6 space-y-4">
                 {parcels.map((parcel, index) => (
-                    <div key={parcel.id || (parcel as any)._id || index} className="grid grid-cols-12 gap-5 items-end bg-slate-50/50 p-4 rounded-2xl border border-transparent hover:border-blue-200 hover:bg-white transition-all group">
+                    <div key={parcel.id || (parcel as any)._id || index} className="grid grid-cols-12 gap-x-4 gap-y-4 md:gap-5 items-end bg-slate-50/50 p-4 rounded-2xl border border-transparent hover:border-blue-200 hover:bg-white transition-all group">
                         {/* Quantity */}
-                        <div className="col-span-2 space-y-2 text-center">
+                        <div className="col-span-3 md:col-span-2 space-y-2 text-center">
                             <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Qty</Label>
                             <Input
                                 type="number"
@@ -89,7 +89,7 @@ export function ParcelList({ parcels, onAdd, onRemove, onChange, onNext, disable
                         </div>
 
                         {/* Item Type */}
-                        <div className="col-span-5 space-y-2">
+                        <div className="col-span-9 md:col-span-5 space-y-2">
                             <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Item Category</Label>
                             <select
                                 id={`parcel-type-${index}`}
@@ -110,7 +110,7 @@ export function ParcelList({ parcels, onAdd, onRemove, onChange, onNext, disable
                         </div>
 
                         {/* Rate */}
-                        <div className="col-span-3 space-y-2 group/rate">
+                        <div className="col-span-9 md:col-span-3 space-y-2 group/rate">
                             <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 group-focus-within/rate:text-blue-500">Rate (₹)</Label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
@@ -130,7 +130,7 @@ export function ParcelList({ parcels, onAdd, onRemove, onChange, onNext, disable
                         </div>
 
                         {/* Remove Button */}
-                        <div className="col-span-2 flex justify-end pb-1 pr-1">
+                        <div className="col-span-3 md:col-span-2 flex justify-end pb-1 pr-1">
                             {parcels.length > 1 && (
                                 <Button
                                     onClick={() => onRemove(parcel.id)}

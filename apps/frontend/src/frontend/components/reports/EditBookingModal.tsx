@@ -115,6 +115,31 @@ export function EditBookingModal({ booking, isOpen, onClose, onSave, availableBr
 
                             disabled={!isSuperAdmin} // Strictly enforced: Only Super Admin can change Parcel/Qty/Rate
                         />
+
+                        {/* Remarks - Moved to Left Side below Parcel List */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Remarks / Notes</label>
+                                <textarea
+                                    value={remarks}
+                                    onChange={(e) => setRemarks(e.target.value)}
+                                    className="w-full p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+                                    placeholder="Add notes here..."
+                                    rows={2}
+                                />
+                            </div>
+
+                            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Delivery Remark (Collection)</label>
+                                <textarea
+                                    value={deliveredRemark}
+                                    onChange={(e) => setDeliveredRemark(e.target.value)}
+                                    className="w-full p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+                                    placeholder="Add delivery notes here..."
+                                    rows={2}
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="lg:col-span-1 space-y-6">
@@ -148,29 +173,7 @@ export function EditBookingModal({ booking, isOpen, onClose, onSave, availableBr
                             </select>
                         </div>
 
-                        {/* Remarks */}
-                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                            <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Remarks / Notes</label>
-                            <textarea
-                                value={remarks}
-                                onChange={(e) => setRemarks(e.target.value)}
-                                className="w-full p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
-                                placeholder="Add notes here..."
-                                rows={2}
-                            />
-                        </div>
-
-                        {/* Delivery Remarks */}
-                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                            <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Delivery Remark (Collection)</label>
-                            <textarea
-                                value={deliveredRemark}
-                                onChange={(e) => setDeliveredRemark(e.target.value)}
-                                className="w-full p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
-                                placeholder="Add delivery notes here..."
-                                rows={2}
-                            />
-                        </div>
+                        {/* Remarks moved to left side */}
 
                         <button
                             onClick={handleSave}

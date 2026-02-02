@@ -8,12 +8,15 @@ interface BranchState {
     isLoading: boolean;
     isAuthenticated: boolean;
 
-    // 2. UI State (Persist search query across views)
+    // 2. UI State
     searchQuery: string;
+    isMobileMenuOpen: boolean;
 
     // 3. Actions (Delegated to Services where possible)
     setCurrentUser: (user: User | null) => void;
     setSearchQuery: (query: string) => void;
+    toggleMobileMenu: () => void;
+    closeMobileMenu: () => void;
     logout: () => Promise<void>;
     checkSession: () => Promise<void>;
 }
@@ -23,9 +26,12 @@ export const useBranchStore = create<BranchState>((set, get) => ({
     isLoading: false,
     isAuthenticated: false,
     searchQuery: "",
+    isMobileMenuOpen: false,
 
     setCurrentUser: (user) => set({ currentUser: user, isAuthenticated: !!user, isLoading: false }),
     setSearchQuery: (query) => set({ searchQuery: query }),
+    toggleMobileMenu: () => set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
+    closeMobileMenu: () => set({ isMobileMenuOpen: false }),
 
     logout: async () => {
         set({ isLoading: true });
