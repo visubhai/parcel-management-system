@@ -1,0 +1,34 @@
+# Koyeb Deployment Configuration
+# This file automates the backend deployment on Koyeb.com
+
+name: parcel-management-system
+services:
+  - name: backend
+    type: web
+    # We use Node 20 as matches your local environment
+    image: node:20
+    instance_type: eco
+    
+    # Building from the root to ensure @repo/shared is found
+    build:
+      command: npm install && npm run build -w apps/backend
+      
+    run:
+      command: npm start -w apps/backend
+      
+    ports:
+      - port: 3001
+        protocol: http
+        
+    env:
+      - key: PORT
+        value: "3001"
+      - key: NODE_ENV
+        value: "production"
+      # These should be set as Secrets in the Koyeb Dashboard
+      - key: MONGODB_URI
+        secret: MONGODB_URI
+      - key: JWT_SECRET
+        secret: JWT_SECRET
+      - key: FRONTEND_URL
+        secret: FRONTEND_URL
