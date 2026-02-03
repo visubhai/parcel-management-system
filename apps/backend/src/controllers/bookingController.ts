@@ -5,7 +5,7 @@ import Branch from '../models/Branch';
 import Counter from '../models/Counter';
 import Transaction from '../models/Transaction';
 import mongoose from 'mongoose';
-
+import { smsService } from '../services/smsService';
 import { exportService } from '../services/exportService';
 import ReportPermission from '../models/ReportPermission';
 import { catchAsync, AppError } from '../middleware/errorHandler';
@@ -151,7 +151,30 @@ export const createBooking = catchAsync(async (req: AuthRequest, res: Response) 
         });
     }
 
+    // Background SMS Notification
+    (async () => {
+        try {
+            const fromBranchName = fromBranch.name;
+            let toBranchName = "Destination";
+            try {
+                const toBranchObj = await Branch.findById(body.toBranch);
+                if (toBranchObj) toBranchName = toBranchObj.name;
+            } catch (e) { /* ignore */ }
 
+            // Custom Template matching Printed Builty
+            // Template:
+            // Savan Transport
+            // Dear <Receiver>, Parcel booked. LR: <LR>. From <From> to <To>. Pay: <Type>. Amount: Rs <Total>. Thank you.
+            const message = `Savan Transport\n\nDear ${body.receiver.name},\nParcel booked.\nLR: ${lrNumber}\nFrom ${fromBranchName} to ${toBranchName}\nPay: ${body.paymentType}\nAmount: Rs ${body.costs.total}\n\nThank you.`;
+
+            if (body.sender?.mobile) {
+                await smsService.sendSms(body.sender.mobile, message);
+            }
+
+        } catch (bgError) {
+            console.error("Background Notification Error:", bgError);
+        }
+    })();
 
     return res.status(201).json({
         message: "Booking created successfully",

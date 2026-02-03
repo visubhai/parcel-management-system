@@ -10,6 +10,7 @@
     },
     "dependencies": {
         "@repo/shared": "*",
+        "axios": "^1.13.4",
         "bcryptjs": "^3.0.3",
         "body-parser": "^2.2.2",
         "cors": "^2.8.5",
@@ -22,9 +23,6 @@
         "jspdf-autotable": "^5.0.7",
         "mongoose": "^8.3.2",
         "node-cron": "^3.0.0",
-        "qrcode": "^1.5.0",
-        "qrcode-terminal": "^0.12.0",
-        "@whiskeysockets/baileys": "^6.6.0",
         "pino": "^9.0.0",
         "winston": "^3.11.0",
         "zod": "^4.3.6"
