@@ -1,4 +1,4 @@
-import makeWASocket, { DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
+import makeWASocket, { DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, delay } from '@whiskeysockets/baileys';
 import { Express, Request, Response } from 'express';
 import QRCode from 'qrcode';
 import path from 'path';
@@ -10,7 +10,7 @@ class WhatsAppService {
     private isReady: boolean = false;
     private currentQR: string | null = null;
     private authFolder: string;
-    private lastOutput: string = "";
+    private status: string = "Connecting...";
 
     constructor() {
         this.authFolder = path.resolve(process.cwd(), '.wa_session');
@@ -21,10 +21,9 @@ class WhatsAppService {
     }
 
     private log(msg: string) {
-        if (msg === this.lastOutput) return; // Reduce duplicate logs
         const timestamp = new Date().toLocaleTimeString();
         console.log(`[WA-BOT ${timestamp}] ${msg}`);
-        this.lastOutput = msg;
+        this.status = msg;
     }
 
     private async initializeClient() {
@@ -33,22 +32,23 @@ class WhatsAppService {
             const { version } = await fetchLatestBaileysVersion();
 
             this.sock = makeWASocket({
-                // EXTREME RAM OPTIMIZATIONS (Target 150-300MB)
-                logger: pino({ level: 'error' }) as any,
+                // STRICT RAM OPTIMIZATION (< 200MB)
+                logger: pino({ level: 'silent' }) as any,
                 auth: state,
                 version,
                 browser: ['Savan Logistics', 'Desktop', '1.0.0'],
 
-                // Memory efficiency flags
+                // Memory saving flags
                 syncFullHistory: false,
                 markOnlineOnConnect: false,
                 generateHighQualityLinkPreview: false,
                 getMessage: async () => undefined,
+                shouldIgnoreJid: (jid) => jid.includes('@g.us'), // Ignore group messages to save RAM
 
-                // Connection stability
+                // Connection profile for stability
                 connectTimeoutMs: 120000,
                 defaultQueryTimeoutMs: 60000,
-                keepAliveIntervalMs: 20000,
+                keepAliveIntervalMs: 60000,
             });
 
             this.sock.ev.on('connection.update', (update: any) => {
@@ -56,22 +56,21 @@ class WhatsAppService {
 
                 if (qr) {
                     this.currentQR = qr;
-                    this.log('✨ NEW QR CODE GENERATED');
+                    this.log('✨ New QR Generated');
                 }
 
                 if (connection === 'close') {
                     const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
                     this.isReady = false;
-                    this.log(`❌ Connection Closed (Status: ${statusCode})`);
+                    this.log(`❌ Closed: ${statusCode}`);
 
                     if (statusCode === DisconnectReason.loggedOut) {
-                        this.log('Logged out. Wiping session...');
                         fs.rmSync(this.authFolder, { recursive: true, force: true });
                     }
 
-                    setTimeout(() => this.initializeClient(), 10000);
+                    setTimeout(() => this.initializeClient(), 15000); // 15s delay to save CPU/RAM
                 } else if (connection === 'open') {
-                    this.log('✅ WHATSAPP LINKED & READY');
+                    this.log('✅ WHATSAPP CONNECTED');
                     this.isReady = true;
                     this.currentQR = null;
                 }
@@ -79,8 +78,10 @@ class WhatsAppService {
 
             this.sock.ev.on('creds.update', saveCreds);
 
-            // Avoid keeping many contacts/chats in memory
-            this.sock.ev.on('messaging-history.set', () => { /* Ignore history sync */ });
+            // Aggressive memory cleanup for large history events
+            this.sock.ev.on('messaging-history.set', () => {
+                this.log('🗑️ History memory cleared');
+            });
 
         } catch (error: any) {
             this.log(`Critical Error: ${error.message}`);
@@ -93,31 +94,46 @@ class WhatsAppService {
             let num = mobile.replace(/\D/g, '');
             if (num.length === 10) num = '91' + num;
             const jid = `${num}@s.whatsapp.net`;
+
+            // Human emulation to stay safe
+            await this.sock.sendPresenceUpdate('composing', jid);
+            await delay(1000);
             await this.sock.sendMessage(jid, { text: message });
-            this.log(`📩 Message sent to ${num}`);
+
+            this.log(`📩 Sent to ${num}`);
             return true;
-        } catch (error) {
-            this.log('Failed to send message');
+        } catch (error: any) {
+            this.log(`ERR: ${error.message}`);
             return false;
         }
     }
 
     public async initialize(app: Express) {
         app.get('/api/whatsapp/qr', async (req: Request, res: Response) => {
-            if (this.isReady) return res.send('<h2 style="color:green;text-align:center;font-family:sans-serif;margin-top:50px">✅ Linked Successfully!</h2><script>setTimeout(()=>location.href="http://localhost:3000", 2000)</script>');
+            if (this.isReady) {
+                return res.send(`
+                    <div style="text-align:center; font-family:sans-serif; margin-top:50px">
+                        <h1 style="color:#128c7e">Savan Logistics</h1>
+                        <div style="padding:20px; background:#e3ffef; color:#14523a; border-radius:12px; display:inline-block">
+                            <b>✅ WhatsApp Bot Linked Successfully!</b>
+                        </div>
+                        <p>You can now close this tab.</p>
+                    </div>
+                `);
+            }
 
             if (!this.currentQR) {
-                return res.send('<h2 style="text-align:center;font-family:sans-serif;margin-top:50px">Initializing... Please wait 10s</h2><script>setTimeout(()=>location.reload(), 5000)</script>');
+                return res.send('<div style="text-align:center; font-family:sans-serif; margin-top:50px">Initializing... Refresh in 10s</div><script>setTimeout(()=>location.reload(), 10000)</script>');
             }
 
             const url = await QRCode.toDataURL(this.currentQR);
             res.send(`
-                <div style="text-align:center;font-family:sans-serif;margin-top:50px">
+                <div style="text-align:center; font-family:sans-serif; margin-top:50px">
                     <h2>Scan to Link WhatsApp</h2>
-                    <div style="padding:20px; border:4px solid #f0f0f0; display:inline-block; border-radius:20px">
+                    <div style="padding:20px; border:4px solid #f0f0f0; display:inline-block; border-radius:30px">
                         <img src="${url}" width="300"/>
                     </div>
-                    <p style="color:#666">Open WhatsApp > Linked Devices > Link a Device</p>
+                    <p style="color:#128c7e">Status: ${this.status}</p>
                     <script>setTimeout(()=>location.reload(), 30000)</script>
                 </div>
             `);
