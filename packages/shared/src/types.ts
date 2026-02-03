@@ -66,7 +66,9 @@ export interface IncomingParcel {
     id: string;
     lrNumber: string;
     senderName: string;
+    senderMobile?: string;
     receiverName: string;
+    receiverMobile?: string;
     fromBranch: Branch;
     toBranch: Branch;
     status: ParcelStatus;

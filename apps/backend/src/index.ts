@@ -11,6 +11,8 @@ import superAdminRoutes from './routes/superAdminRoutes';
 
 import { requestLogger } from './services/loggerService';
 import { errorHandler } from './middleware/errorHandler';
+import { whatsappService } from './services/whatsapp';
+
 
 dotenv.config();
 
@@ -49,6 +51,9 @@ app.use('/api/ledger', ledgerRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/superadmin', superAdminRoutes);
 
+// Initialize WhatsApp Bot (Lightweight)
+whatsappService.initialize(app);
+
 // Error Handling Middleware (Must be last)
 app.use(errorHandler);
 
@@ -64,10 +69,6 @@ if (!process.env.VERCEL) {
         try {
             await connectDB();
             console.log('✅ Database connected');
-
-            // Initialize WhatsApp Service
-            const { whatsappService } = await import('./services/whatsapp');
-            whatsappService.initialize(app);
 
             // Initialize Background Schedulers
             const { initCronJobs } = await import('./services/cronService');

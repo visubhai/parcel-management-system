@@ -1,4 +1,4 @@
-import makeWASocket, { DisconnectReason, useMultiFileAuthState } from '@whiskeysockets/baileys';
+import makeWASocket, { DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import { Express, Request, Response } from 'express';
 import QRCode from 'qrcode';
 import path from 'path';
@@ -10,81 +10,68 @@ class WhatsAppService {
     private isReady: boolean = false;
     private currentQR: string | null = null;
     private authFolder: string;
-    private logs: string[] = [];
+    private lastOutput: string = "";
 
     constructor() {
-        this.log('Initializing WhatsApp Service (Baileys)...');
-        this.authFolder = path.resolve(__dirname, '../../../../.baileys_auth');
-
-        // Ensure auth folder exists
+        this.authFolder = path.resolve(process.cwd(), '.wa_session');
         if (!fs.existsSync(this.authFolder)) {
             fs.mkdirSync(this.authFolder, { recursive: true });
         }
-
         this.initializeClient();
     }
 
     private log(msg: string) {
+        if (msg === this.lastOutput) return; // Reduce duplicate logs
         const timestamp = new Date().toLocaleTimeString();
-        const logMsg = `[${timestamp}] ${msg}`;
-        console.log(logMsg);
-        this.logs.unshift(logMsg);
-        if (this.logs.length > 50) this.logs.pop();
+        console.log(`[WA-BOT ${timestamp}] ${msg}`);
+        this.lastOutput = msg;
     }
 
     private async initializeClient() {
         try {
             const { state, saveCreds } = await useMultiFileAuthState(this.authFolder);
+            const { version } = await fetchLatestBaileysVersion();
 
             this.sock = makeWASocket({
-                logger: pino({ level: 'silent' }) as any,
-                printQRInTerminal: false,
+                // EXTREME RAM OPTIMIZATIONS (Target 150-300MB)
+                logger: pino({ level: 'error' }) as any,
                 auth: state,
-                // browser: Use Default (Safest to avoid 405 errors)
-                connectTimeoutMs: 60000,
-                keepAliveIntervalMs: 10000,
-                emitOwnEvents: true,
-                retryRequestDelayMs: 250,
+                version,
+                browser: ['Savan Logistics', 'Desktop', '1.0.0'],
 
+                // Memory efficiency flags
                 syncFullHistory: false,
-                generateHighQualityLinkPreview: true,
+                markOnlineOnConnect: false,
+                generateHighQualityLinkPreview: false,
+                getMessage: async () => undefined,
+
+                // Connection stability
+                connectTimeoutMs: 120000,
+                defaultQueryTimeoutMs: 60000,
+                keepAliveIntervalMs: 20000,
             });
 
-            this.sock.ev.on('connection.update', async (update: any) => {
+            this.sock.ev.on('connection.update', (update: any) => {
                 const { connection, lastDisconnect, qr } = update;
 
                 if (qr) {
-                    this.log('⚡ QR Code generated! Scan now.');
                     this.currentQR = qr;
+                    this.log('✨ NEW QR CODE GENERATED');
                 }
 
                 if (connection === 'close') {
-                    const error = lastDisconnect?.error as any;
-                    const statusCode = error?.output?.statusCode;
-
-                    this.log(`❌ Connection closed. Status: ${statusCode}. Reason: ${error?.message}`);
+                    const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
                     this.isReady = false;
+                    this.log(`❌ Connection Closed (Status: ${statusCode})`);
 
-                    // Specific Error IHandling
                     if (statusCode === DisconnectReason.loggedOut) {
-                        this.log('⛔ Session Invalidated (Logged Out). Deleting session and restarting...');
-                        await this.resetSession();
-                    } else if (statusCode === DisconnectReason.restartRequired) {
-                        this.log('🔄 Restart required. Reconnecting immediately...');
-                        this.initializeClient();
-                    } else if (statusCode === DisconnectReason.timedOut) {
-                        this.log('⏳ Timed out. Reconnecting in 3s...');
-                        setTimeout(() => this.initializeClient(), 3000);
-                    } else {
-                        // Default Reconnect Strategy
-                        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-                        if (shouldReconnect) {
-                            this.log(`🔄 Reconnecting automatically in 3s...`);
-                            setTimeout(() => this.initializeClient(), 3000);
-                        }
+                        this.log('Logged out. Wiping session...');
+                        fs.rmSync(this.authFolder, { recursive: true, force: true });
                     }
+
+                    setTimeout(() => this.initializeClient(), 10000);
                 } else if (connection === 'open') {
-                    this.log('✅ WhatsApp connected successfully!');
+                    this.log('✅ WHATSAPP LINKED & READY');
                     this.isReady = true;
                     this.currentQR = null;
                 }
@@ -92,110 +79,55 @@ class WhatsAppService {
 
             this.sock.ev.on('creds.update', saveCreds);
 
-        } catch (error: any) {
-            this.log(`FATAL: Failed to initialize Baileys: ${error.message}`);
-        }
-    }
+            // Avoid keeping many contacts/chats in memory
+            this.sock.ev.on('messaging-history.set', () => { /* Ignore history sync */ });
 
-    private async resetSession() {
-        try {
-            if (fs.existsSync(this.authFolder)) {
-                fs.rmSync(this.authFolder, { recursive: true, force: true });
-            }
-            this.currentQR = null;
-            this.isReady = false;
-            // Delay to allow FS to catch up
-            setTimeout(() => this.initializeClient(), 1000);
         } catch (error: any) {
-            this.log(`Error resetting session: ${error.message}`);
+            this.log(`Critical Error: ${error.message}`);
         }
     }
 
     public async sendMessage(mobile: string, message: string): Promise<boolean> {
-        if (!this.isReady || !this.sock) {
-            console.warn('WhatsApp socket not ready');
-            return false;
-        }
+        if (!this.isReady) return false;
         try {
-            let sanitizedNumber = mobile.replace(/\D/g, '');
-            if (sanitizedNumber.length === 10) {
-                sanitizedNumber = '91' + sanitizedNumber;
-            }
-            const jid = `${sanitizedNumber}@s.whatsapp.net`;
-
+            let num = mobile.replace(/\D/g, '');
+            if (num.length === 10) num = '91' + num;
+            const jid = `${num}@s.whatsapp.net`;
             await this.sock.sendMessage(jid, { text: message });
-            this.log(`[SENT] Message sent to ${mobile}`);
+            this.log(`📩 Message sent to ${num}`);
             return true;
-        } catch (error: any) {
-            console.error(`[ERROR] Failed to send to ${mobile}:`, error);
-            this.log(`[ERROR] Send failed: ${error.message}`);
+        } catch (error) {
+            this.log('Failed to send message');
             return false;
         }
     }
 
     public async initialize(app: Express) {
-        // Reset Endpoint
-        app.get('/whatsapp/reset', async (req: Request, res: Response) => {
-            await this.resetSession();
-            this.log('🗑️ Manual Reset triggered via Web.');
-            res.send('<script>setTimeout(() => window.location.href = "/whatsapp", 1000);</script><h1>Resetting...</h1>');
-        });
+        app.get('/api/whatsapp/qr', async (req: Request, res: Response) => {
+            if (this.isReady) return res.send('<h2 style="color:green;text-align:center;font-family:sans-serif;margin-top:50px">✅ Linked Successfully!</h2><script>setTimeout(()=>location.href="http://localhost:3000", 2000)</script>');
 
-        // Web Interface
-        app.get('/whatsapp', async (req: Request, res: Response) => {
-            const logsHtml = this.logs.map(l => `<div style="font-size: 11px; color: #444; margin-bottom: 2px; font-family: monospace; border-bottom: 1px solid #eee;">${l}</div>`).join('');
-
-            let statusHtml = '';
-            if (this.isReady) {
-                statusHtml = `<h1 style="color: green;">✅ Connected</h1><p>Ready to send messages.</p>`;
-            } else if (this.currentQR) {
-                try {
-                    const url = await QRCode.toDataURL(this.currentQR);
-                    statusHtml = `
-                        <h1>📱 Scan QR Code</h1>
-                        <p>Open WhatsApp -> Linked Devices -> Link</p>
-                        <img src="${url}" style="width: 300px; height: 300px; border: 1px solid #ddd; padding: 10px; border-radius: 8px;" />
-                        <p>Searching for phone...</p>
-                        <script>setTimeout(() => location.reload(), 3000);</script>
-                    `;
-                } catch (e) {
-                    statusHtml = `<p style="color:red">Error generating QR: ${e}</p>`;
-                }
-            } else {
-                statusHtml = `
-                    <h1>⏳ Initializing...</h1>
-                    <p>Please wait...</p>
-                    <script>setTimeout(() => location.reload(), 2000);</script>
-                `;
+            if (!this.currentQR) {
+                return res.send('<h2 style="text-align:center;font-family:sans-serif;margin-top:50px">Initializing... Please wait 10s</h2><script>setTimeout(()=>location.reload(), 5000)</script>');
             }
 
+            const url = await QRCode.toDataURL(this.currentQR);
             res.send(`
-                <html>
-                    <body style="font-family: system-ui, sans-serif; text-align: center; padding: 20px; max-width: 600px; margin: 0 auto;">
-                        ${statusHtml}
-                        <div style="margin-top: 20px;">
-                            <a href="/whatsapp/reset" style="background: #ff4444; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">🗑️ Reset Session</a>
-                        </div>
-                        <div style="margin-top: 30px; text-align: left; background: #fafafa; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
-                            <h3 style="margin-top: 0;">System Logs</h3>
-                            <div style="max-height: 300px; overflow-y: auto;">
-                                ${logsHtml}
-                            </div>
-                        </div>
-                    </body>
-                </html>
+                <div style="text-align:center;font-family:sans-serif;margin-top:50px">
+                    <h2>Scan to Link WhatsApp</h2>
+                    <div style="padding:20px; border:4px solid #f0f0f0; display:inline-block; border-radius:20px">
+                        <img src="${url}" width="300"/>
+                    </div>
+                    <p style="color:#666">Open WhatsApp > Linked Devices > Link a Device</p>
+                    <script>setTimeout(()=>location.reload(), 30000)</script>
+                </div>
             `);
         });
 
-        // API Endpoint for Application Trigger
-        app.post('/api/whatsapp/send', async (req: Request, res: Response): Promise<any> => {
-            if (!this.isReady) return res.status(503).json({ error: 'WhatsApp not ready' });
+        app.post('/api/whatsapp/direct-send', async (req: Request, res: Response): Promise<any> => {
             const { mobile, message } = req.body;
-            if (!mobile || !message) return res.status(400).json({ error: 'Missing mobile/message' });
-
+            if (!this.isReady) return res.status(503).json({ error: 'Not Linked' });
             const success = await this.sendMessage(mobile, message);
-            if (success) return res.json({ success: true });
-            return res.status(500).json({ error: 'Failed to send' });
+            return res.json({ success });
         });
     }
 }

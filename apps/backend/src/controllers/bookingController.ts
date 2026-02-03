@@ -5,7 +5,7 @@ import Branch from '../models/Branch';
 import Counter from '../models/Counter';
 import Transaction from '../models/Transaction';
 import mongoose from 'mongoose';
-import { whatsappService } from '../services/whatsapp';
+
 import { exportService } from '../services/exportService';
 import ReportPermission from '../models/ReportPermission';
 import { catchAsync, AppError } from '../middleware/errorHandler';
@@ -151,29 +151,7 @@ export const createBooking = catchAsync(async (req: AuthRequest, res: Response) 
         });
     }
 
-    // Background WhatsApp Notification
-    (async () => {
-        try {
-            const dateStr = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' });
-            const fromBranchName = fromBranch.name;
 
-            let toBranchName = "Destination";
-            try {
-                const toBranchObj = await Branch.findById(body.toBranch);
-                if (toBranchObj) toBranchName = toBranchObj.name;
-            } catch (e) { /* ignore in background */ }
-
-            const remarksStr = body.remarks ? `\n📝 *Remarks:* ${body.remarks}` : '';
-            const message = `📦 *BOOKING CONFIRMATION*\n*SAVAN LOGISTICS*\n\n📄 *LR No:* ${lrNumber}\n📍 *Route:* ${fromBranchName} ➡️ ${toBranchName}\n📦 *Package:* ${body.parcels.map((p: any) => `${p.quantity} ${p.itemType}`).join(', ')}\n💰 *Total:* ₹${body.costs.total.toFixed(2)}\n📅 *Date:* ${dateStr}${remarksStr}\n\n_Thank you for shipping with us!_`;
-
-            if (body.sender?.mobile) {
-                await whatsappService.sendMessage(body.sender.mobile, message);
-            }
-
-        } catch (bgError) {
-            console.error("Background Notification Error:", bgError);
-        }
-    })();
 
     return res.status(201).json({
         message: "Booking created successfully",

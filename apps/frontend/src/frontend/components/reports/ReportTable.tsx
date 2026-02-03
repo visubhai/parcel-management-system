@@ -1,7 +1,7 @@
 import { Booking } from "@/shared/types";
 import { SortField, SortOrder } from "@/frontend/hooks/useReports";
 import { TableRowSkeleton } from "../ui/Skeleton";
-import { ChevronDown, ChevronUp, ChevronsUpDown, ArrowLeft, ArrowRight, Ban } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronsUpDown, ArrowLeft, ArrowRight, Ban, MessageCircle } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { ConfirmationModal } from "@/frontend/components/common/ConfirmationModal";
 import { EditBookingModal } from "./EditBookingModal";
@@ -26,6 +26,7 @@ interface ReportTableProps {
 import { parcelService } from "@/frontend/services/parcelService";
 
 import { useRouter } from "next/navigation";
+import { openWhatsApp } from "@/frontend/lib/whatsapp";
 
 export function ReportTable({
     data, isLoading, currentPage, totalPages, rowsPerPage, totalItems,
@@ -183,6 +184,22 @@ export function ReportTable({
                                         <td className="px-6 py-4 text-right">
                                             {!isCancelled && (
                                                 <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => openWhatsApp({
+                                                            mobile: row.receiver.mobile || row.sender.mobile,
+                                                            lrNumber: row.lrNumber,
+                                                            status: row.status,
+                                                            fromBranch: row.fromBranch,
+                                                            toBranch: row.toBranch,
+                                                            receiverName: row.receiver.name || row.sender.name,
+                                                            amount: row.costs.total,
+                                                            paymentStatus: row.paymentType
+                                                        }, addToast)}
+                                                        className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors shadow-sm border border-emerald-100"
+                                                        title="Send WhatsApp Notification"
+                                                    >
+                                                        <MessageCircle className="w-3.5 h-3.5" />
+                                                    </button>
                                                     <button
                                                         onClick={(e) => handleEditClick(e, row)}
                                                         className="px-3 py-1.5 rounded-lg text-xs font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-transparent hover:border-blue-100 transition-all"

@@ -6,11 +6,12 @@ import { BookingForm } from "@/frontend/components/booking/BookingForm";
 import { ParcelList } from "@/frontend/components/booking/ParcelList";
 import { PaymentBox } from "@/frontend/components/booking/PaymentBox";
 import { Booking, Parcel, PaymentStatus } from "@/shared/types";
-import { Printer, Zap, Save, PlusCircle, CheckCircle2 } from "lucide-react";
+import { Printer, Zap, Save, PlusCircle, CheckCircle2, MessageCircle } from "lucide-react";
 import { useBranches } from "@/frontend/hooks/useBranches";
 import { parcelService } from "@/frontend/services/parcelService";
 import { useToast } from "@/frontend/components/ui/toast";
 import { mutate } from "swr";
+import { openWhatsApp } from "@/frontend/lib/whatsapp";
 
 // Simple ID generator
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -326,17 +327,18 @@ export default function BookingDashboard() {
               }}
               onSave={handleSave}
               isLocked={isLocked}
+              onWhatsApp={() => openWhatsApp({
+                mobile: receiver.mobile || sender.mobile,
+                lrNumber: lrNumber,
+                status: "Booked",
+                fromBranch: branchObjects.find(b => b._id === fromBranch)?.name || "",
+                toBranch: branchObjects.find(b => b._id === toBranch)?.name || "",
+                receiverName: receiver.name || sender.name,
+                amount: costs.total,
+                paymentStatus: paymentType
+              }, addToast)}
+              onReset={handleReset}
             />
-
-            {isLocked && (
-              <button
-                onClick={handleReset}
-                className="w-full mt-6 py-4 bg-blue-600/10 text-blue-700 hover:bg-blue-600 hover:text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2 border-2 border-dashed border-blue-200"
-              >
-                <PlusCircle size={20} />
-                NEW BOOKING (CTRL+N)
-              </button>
-            )}
 
             {showSuccess && (
               <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm font-medium flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2">

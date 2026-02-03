@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Save, Printer, Lock } from "lucide-react";
+import { Save, Printer, Lock, MessageCircle, PlusCircle } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { PaymentStatus } from "@/shared/types";
 
@@ -16,9 +16,11 @@ interface PaymentBoxProps {
     onChange: (field: string, value: any) => void;
     onSave: () => void;
     isLocked: boolean;
+    onWhatsApp?: () => void;
+    onReset?: () => void;
 }
 
-export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked }: PaymentBoxProps) {
+export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked, onWhatsApp, onReset }: PaymentBoxProps) {
     const freightRef = useRef<HTMLInputElement>(null);
     const saveButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -158,6 +160,26 @@ export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked }: P
                             </>
                         )}
                     </button>
+
+                    {isLocked && (
+                        <div className="space-y-3 mt-4">
+                            <button
+                                onClick={onWhatsApp}
+                                className="w-full py-4 bg-emerald-600 text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 active:scale-[0.98] text-sm uppercase tracking-widest"
+                            >
+                                <MessageCircle size={18} />
+                                Notify on WhatsApp
+                            </button>
+
+                            <button
+                                onClick={onReset}
+                                className="w-full py-4 bg-blue-600/10 text-blue-700 hover:bg-blue-600 hover:text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 border-2 border-dashed border-blue-200 text-sm uppercase tracking-widest"
+                            >
+                                <PlusCircle size={18} />
+                                New Booking
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

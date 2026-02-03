@@ -62,3 +62,4 @@ logs/
 
 # baileys auth
 .baileys_auth/
+.wa_session/

@@ -2,7 +2,7 @@
 
 import { useBranchStore } from "@/frontend/lib/store";
 import { parcelService } from "@/frontend/services/parcelService";
-import { Package, Truck, CheckCircle, AlertCircle } from "lucide-react";
+import { Package, Truck, CheckCircle, MessageCircle } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { useState, useMemo } from "react";
 import useSWR from "swr";
@@ -14,6 +14,7 @@ import { IncomingParcel } from "@/shared/types";
 import { useToast } from "@/frontend/components/ui/toast";
 
 import { BranchSelect } from "@/frontend/components/common/BranchSelect";
+import { openWhatsApp } from "@/frontend/lib/whatsapp";
 
 export function InboundTable() {
     const { currentUser } = useBranchStore();
@@ -153,18 +154,38 @@ export function InboundTable() {
                                     </div>
                                 </td>
                                 <td className="px-4 py-4 text-right">
-                                    {parcel.status !== "DELIVERED" ? (
-                                        <button
-                                            onClick={() => handleActionClick(parcel)}
-                                            className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700"
-                                        >
-                                            Deliver
-                                        </button>
-                                    ) : (
-                                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">
-                                            Success
-                                        </span>
-                                    )}
+                                    <div className="flex items-center justify-end gap-2">
+                                        {(parcel.receiverMobile || parcel.senderMobile) && (
+                                            <button
+                                                onClick={() => openWhatsApp({
+                                                    mobile: parcel.receiverMobile || parcel.senderMobile || "",
+                                                    lrNumber: parcel.lrNumber,
+                                                    status: parcel.status,
+                                                    fromBranch: parcel.fromBranch,
+                                                    toBranch: parcel.toBranch,
+                                                    receiverName: parcel.receiverName || parcel.senderName,
+                                                    amount: parcel.totalAmount,
+                                                    paymentStatus: parcel.paymentStatus
+                                                }, addToast)}
+                                                className="p-2 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors shadow-sm border border-emerald-100"
+                                                title="Send WhatsApp Notification"
+                                            >
+                                                <MessageCircle className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        {parcel.status !== "DELIVERED" ? (
+                                            <button
+                                                onClick={() => handleActionClick(parcel)}
+                                                className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700"
+                                            >
+                                                Deliver
+                                            </button>
+                                        ) : (
+                                            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">
+                                                Success
+                                            </span>
+                                        )}
+                                    </div>
                                 </td>
                             </tr>
                         ))}
