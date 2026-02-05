@@ -13,11 +13,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
             async authorize(credentials) {
                 try {
-                    // Ensure API_URL is absolute for server-side fetch
-                    let API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-                    if (API_URL.startsWith('/')) {
-                        API_URL = `http://localhost:3001${API_URL}`;
-                    }
+                    // Resolve absolute API URL for server-side fetch in NextAuth
+                    const base = process.env.INTERNAL_API_URL || process.env.BACKEND_URL || 'http://localhost:3001';
+                    const API_URL = base.endsWith('/api') ? base : `${base}/api`;
+
+                    console.log("Auth attempting login at:", `${API_URL}/auth/login`);
                     const res = await fetch(`${API_URL}/auth/login`, {
                         method: 'POST',
                         body: JSON.stringify({

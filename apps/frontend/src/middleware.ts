@@ -18,10 +18,17 @@ export async function middleware(req: NextRequest) {
     // Referrer Policy
     res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
     // Content Security Policy (Basic starter)
-    res.headers.set(
-        'Content-Security-Policy',
-        "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://parcel-backend-died.onrender.com; font-src 'self' data:; connect-src 'self' http://localhost:3001 http://127.0.0.1:3001 https://parcel-backend-died.onrender.com;"
-    )
+    // Content Security Policy (Updated to allow Koyeb and local development)
+    const cspHeader = `
+        default-src 'self';
+        script-src 'self' 'unsafe-eval' 'unsafe-inline';
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' blob: data: https://*.koyeb.app https://res.cloudinary.com;
+        font-src 'self' data:;
+        connect-src 'self' http://localhost:3001 http://127.0.0.1:3001 https://*.koyeb.app https://*.vercel.app;
+    `.replace(/\s{2,}/g, ' ').trim();
+
+    res.headers.set('Content-Security-Policy', cspHeader);
 
     // 2. AUTHENTICATION CHECK
     const token = await getToken({ req: req, secret: process.env.AUTH_SECRET });
