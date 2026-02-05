@@ -13,8 +13,9 @@ COPY apps/backend ./apps/backend
 # We do NOT copy apps/frontend to keep the image light
 
 # Install dependencies
-# We use npm ci for deterministic builds
-RUN npm ci
+# We use npm install because we are building a partial monorepo (no frontend)
+# so the lockfile won't match perfectly.
+RUN npm install
 
 # Build backend
 # This will also build shared if it's referenced
