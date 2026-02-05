@@ -5,7 +5,7 @@ import Branch from '../models/Branch';
 import Counter from '../models/Counter';
 import Transaction from '../models/Transaction';
 import mongoose from 'mongoose';
-import { smsService } from '../services/smsService';
+import { whatsappService } from '../services/whatsapp';
 import { exportService } from '../services/exportService';
 import ReportPermission from '../models/ReportPermission';
 import { catchAsync, AppError } from '../middleware/errorHandler';
@@ -168,7 +168,7 @@ export const createBooking = catchAsync(async (req: AuthRequest, res: Response) 
             const message = `Savan Transport\n\nDear ${body.receiver.name},\nParcel booked.\nLR: ${lrNumber}\nFrom ${fromBranchName} to ${toBranchName}\nPay: ${body.paymentType}\nAmount: Rs ${body.costs.total}\n\nThank you.`;
 
             if (body.sender?.mobile) {
-                await smsService.sendSms(body.sender.mobile, message);
+                await whatsappService.sendMessage(body.sender.mobile, message);
             }
 
         } catch (bgError) {
