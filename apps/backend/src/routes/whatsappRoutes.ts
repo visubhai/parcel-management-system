@@ -82,6 +82,15 @@ router.get('/test', async (req: Request, res: Response) => {
     }
 });
 
+router.get('/logout', async (req: Request, res: Response) => {
+    try {
+        await whatsappService.logout();
+        res.json({ success: true, message: 'Logged out and session cleared. Service is restarting...' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Logout failed', error: (error as any).message });
+    }
+});
+
 router.get('/status', (req, res) => {
     res.json({
         ready: whatsappService.isReady(),

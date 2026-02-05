@@ -24,8 +24,14 @@ RUN npm run build -w apps/backend
 # Production Runner Stage
 FROM node:20-alpine AS runner
 
-# Install Chromium for Puppeteer/WhatsApp
-RUN apk add --no-cache chromium
+# Install Chromium and dependencies for Puppeteer/WhatsApp
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
 
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true

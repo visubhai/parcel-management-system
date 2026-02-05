@@ -96,6 +96,50 @@ class WhatsappService {
         }
     }
 
+    public async logout(): Promise<void> {
+        console.log('🔄 Logging out and clearing session...');
+        try {
+            this.status = 'LOGGING_OUT';
+            if (this.client) {
+                await this.client.destroy();
+            }
+
+            const authPath = path.join(process.cwd(), '.wwebjs_auth');
+            if (fs.existsSync(authPath)) {
+                fs.rmSync(authPath, { recursive: true, force: true });
+                console.log('🗑️ Auth folder cleared.');
+            }
+
+            this.ready = false;
+            this.qrCode = null;
+
+            // Re-initialize
+            this.client = new Client({
+                authStrategy: new LocalAuth({
+                    clientId: 'client-one',
+                    dataPath: './.wwebjs_auth'
+                }),
+                puppeteer: {
+                    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+                    args: [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-gpu',
+                        '--no-first-run',
+                        '--no-zygote',
+                        '--single-process'
+                    ],
+                    headless: true
+                }
+            });
+            this.initialize();
+        } catch (error) {
+            console.error('❌ Logout failed:', error);
+            throw error;
+        }
+    }
+
     public isReady(): boolean {
         return this.ready;
     }
