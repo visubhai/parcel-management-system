@@ -32,7 +32,12 @@ class WhatsappService {
             }
         });
 
-        this.initialize();
+        if (process.env.WHATSAPP_ENABLED === 'true') {
+            this.initialize();
+        } else {
+            console.log('⏸️ WhatsApp Service is PAUSED (WHATSAPP_ENABLED is not true)');
+            this.status = 'PAUSED';
+        }
     }
 
     private initialize() {

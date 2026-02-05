@@ -55,7 +55,7 @@ app.use('/api', apiRateLimiter);
 // Logging Middleware
 app.use(requestLogger);
 
-import whatsappRoutes from './routes/whatsappRoutes';
+// import whatsappRoutes from './routes/whatsappRoutes';
 
 // Routes
 app.get('/', (req, res) => {
@@ -68,7 +68,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/ledger', ledgerRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/superadmin', superAdminRoutes);
-app.use('/api/whatsapp', whatsappRoutes);
+// app.use('/api/whatsapp', whatsappRoutes);
 
 
 
