@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path((?!auth).*)',
-        destination: 'http://localhost:3001/api/:path*', // Proxy to Backend, excluding /api/auth
+        destination: `${process.env.BACKEND_URL || 'http://localhost:3001'}/api/:path*`, // Dynamic proxy
       },
     ]
   },
