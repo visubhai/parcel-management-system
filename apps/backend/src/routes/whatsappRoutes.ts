@@ -25,7 +25,6 @@ router.get('/qr', async (req: Request, res: Response) => {
                     <body style="font-family: sans-serif; text-align: center; padding: 50px;">
                         <h1>⏳ Initializing...</h1>
                         <p>Please wait a moment and refresh this page to see the QR code.</p>
-                        <script>setTimeout(() => window.location.reload(), 3000);</script>
                     </body>
                 </html>
             `);
@@ -43,7 +42,6 @@ router.get('/qr', async (req: Request, res: Response) => {
                     <img src="${qrImage}" style="width: 300px; height: 300px; border: 1px solid #ccc;" />
                     <br/><br/>
                     <p><i>Refresh if code expires</i></p>
-                    <script>setTimeout(() => window.location.reload(), 15000);</script>
                 </body>
             </html>
         `);
