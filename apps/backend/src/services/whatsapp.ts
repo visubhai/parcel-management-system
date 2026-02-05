@@ -8,6 +8,7 @@ class WhatsappService {
     private client: Client;
     private ready: boolean = false;
     private qrCode: string | null = null;
+    private status: string = 'Starting...';
 
     constructor() {
         console.log('🔄 Initializing WhatsApp Service...');
@@ -18,7 +19,15 @@ class WhatsappService {
             }),
             puppeteer: {
                 executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--single-process'
+                ],
                 headless: true
             }
         });
@@ -29,6 +38,7 @@ class WhatsappService {
     private initialize() {
         this.client.on('qr', (qr) => {
             this.qrCode = qr;
+            this.status = 'QR_READY';
             console.log('📱 QR Code Generated! Scan this to login:');
             qrcode.generate(qr, { small: true });
         });
@@ -37,24 +47,29 @@ class WhatsappService {
             console.log('✅ ✅ ✅ WhatsApp Client is FULLY Ready!');
             this.ready = true;
             this.qrCode = null;
+            this.status = 'CONNECTED';
         });
 
         this.client.on('authenticated', () => {
             console.log('🔐 WhatsApp Authenticated Successfully! Preparing session...');
+            this.status = 'AUTHENTICATING';
         });
 
         this.client.on('auth_failure', (msg) => {
             console.error('❌ WhatsApp Authentication Failed:', msg);
+            this.status = 'AUTH_FAILURE';
         });
 
         this.client.on('disconnected', (reason) => {
             console.log('⚠️ WhatsApp Disconnected:', reason);
             this.ready = false;
+            this.status = 'DISCONNECTED';
         });
 
         // Start the client
         this.client.initialize().catch(err => {
             console.error('❌ Failed to initialize WhatsApp client:', err);
+            this.status = 'ERROR';
         });
     }
 
@@ -87,6 +102,10 @@ class WhatsappService {
 
     public getQrCode(): string | null {
         return this.qrCode;
+    }
+
+    public getStatus(): string {
+        return this.status;
     }
 }
 

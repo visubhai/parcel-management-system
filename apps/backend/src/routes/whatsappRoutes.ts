@@ -18,13 +18,28 @@ router.get('/qr', async (req: Request, res: Response) => {
             `);
         }
 
+        const status = whatsappService.getStatus();
         const qrCode = whatsappService.getQrCode();
+
+        if (status === 'AUTHENTICATING') {
+            return res.send(`
+                <html>
+                    <body style="font-family: sans-serif; text-align: center; padding: 50px;">
+                        <h1>🔐 Authenticating...</h1>
+                        <p>WhatsApp is verifying your session. Please wait a few seconds...</p>
+                        <p>Status: <b>${status}</b></p>
+                    </body>
+                </html>
+            `);
+        }
+
         if (!qrCode) {
             return res.send(`
                 <html>
                     <body style="font-family: sans-serif; text-align: center; padding: 50px;">
                         <h1>⏳ Initializing...</h1>
                         <p>Please wait a moment and refresh this page to see the QR code.</p>
+                        <p>Status: <b>${status}</b></p>
                     </body>
                 </html>
             `);
@@ -41,7 +56,8 @@ router.get('/qr', async (req: Request, res: Response) => {
                     <br/>
                     <img src="${qrImage}" style="width: 300px; height: 300px; border: 1px solid #ccc;" />
                     <br/><br/>
-                    <p><i>Refresh if code expires</i></p>
+                    <p>Status: <b>${status}</b></p>
+                    <p><i>Refresh if code expires or after scanning to check status</i></p>
                 </body>
             </html>
         `);
