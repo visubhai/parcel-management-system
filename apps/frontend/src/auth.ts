@@ -18,6 +18,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     const API_URL = base.endsWith('/api') ? base : `${base}/api`;
 
                     console.log("Auth attempting login at:", `${API_URL}/auth/login`);
+
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
                     const res = await fetch(`${API_URL}/auth/login`, {
                         method: 'POST',
                         body: JSON.stringify({
@@ -25,8 +29,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                             password: credentials.password,
                             branchId: credentials.branchId,
                         }),
-                        headers: { "Content-Type": "application/json" }
+                        headers: { "Content-Type": "application/json" },
+                        signal: controller.signal
                     });
+
+                    clearTimeout(timeoutId);
 
                     const data = await res.json();
 
