@@ -31,12 +31,18 @@ export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
         headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const res = await fetch(url, {
-        ...options,
-        headers,
-        cache: 'no-store'
-    });
-    return res;
+    try {
+        const res = await fetch(url, {
+            ...options,
+            headers,
+            credentials: 'include',
+            cache: 'no-store'
+        });
+        return res;
+    } catch (err: any) {
+        console.error(`🌐 Fetch Error at ${url}:`, err.message);
+        throw err;
+    }
 };
 
 export const parseError = (data: any): string => {

@@ -1,5 +1,9 @@
 import type { NextConfig } from "next";
 
+if (!process.env.BACKEND_URL && process.env.NODE_ENV === 'production') {
+  console.warn('⚠️ WARNING: BACKEND_URL environment variable is missing during build!');
+}
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
