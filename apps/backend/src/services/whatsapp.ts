@@ -34,13 +34,13 @@ class WhatsappService {
         });
 
         this.client.on('ready', () => {
-            console.log('✅ WhatsApp Client is Ready!');
+            console.log('✅ ✅ ✅ WhatsApp Client is FULLY Ready!');
             this.ready = true;
             this.qrCode = null;
         });
 
         this.client.on('authenticated', () => {
-            console.log('🔐 WhatsApp Authenticated');
+            console.log('🔐 WhatsApp Authenticated Successfully! Preparing session...');
         });
 
         this.client.on('auth_failure', (msg) => {

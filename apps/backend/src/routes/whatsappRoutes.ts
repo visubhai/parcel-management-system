@@ -52,6 +52,20 @@ router.get('/qr', async (req: Request, res: Response) => {
     }
 });
 
+router.get('/test', async (req: Request, res: Response) => {
+    const { mobile, message } = req.query;
+    if (!mobile || !message) {
+        return res.status(400).json({ error: 'mobile and message query params are required' });
+    }
+
+    const success = await whatsappService.sendMessage(mobile as string, message as string);
+    if (success) {
+        res.json({ success: true, message: 'Test message sent' });
+    } else {
+        res.status(500).json({ success: false, message: 'Failed to send message. WhatsApp might not be ready.' });
+    }
+});
+
 router.get('/status', (req, res) => {
     res.json({
         ready: whatsappService.isReady(),
