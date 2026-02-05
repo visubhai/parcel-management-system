@@ -16,6 +16,8 @@ interface ParcelListProps {
     disabled?: boolean;
 }
 
+import { SingleSelect } from "@/frontend/components/ui/single-select-dropdown";
+
 const ITEM_CATEGORIES = [
     "BLACK PARCEL", "WHITE PARCEL", "RED PARCEL", "GREEN PARCEL", "KHAKHI PARCEL", "COLORING PARCEL", "YELLOW PARCEL",
     "KHAKHI BOX", "WHITE BOX", "BLACK BOX", "WHITE KANTAN BOX", "GREEN KANTAN BOX", "COLORING BOX",
@@ -25,6 +27,8 @@ const ITEM_CATEGORIES = [
     "ROLL", "DABBA", "PETI", "ACTIVA", "BIKE", "PAIPE", "OTHER"
 ];
 
+const ITEM_CATEGORY_OPTIONS = ITEM_CATEGORIES.map(cat => ({ label: cat, value: cat }));
+
 export function ParcelList({ parcels, onAdd, onRemove, onChange, onNext, disabled }: ParcelListProps) {
     const handleKeyDown = (e: React.KeyboardEvent, field: keyof Parcel, index: number) => {
         if (e.key === "Enter") {
@@ -33,8 +37,8 @@ export function ParcelList({ parcels, onAdd, onRemove, onChange, onNext, disable
             if (!row) return;
 
             if (field === "quantity") {
-                const select = row.querySelector('select') as HTMLSelectElement;
-                select?.focus();
+                const itemSelectBtn = document.getElementById(`parcel-type-${index}`);
+                itemSelectBtn?.focus();
             } else if (field === "itemType") {
                 const rateInput = row.querySelector('input[type="number"]:not([min="1"])') as HTMLInputElement;
                 rateInput?.focus();
@@ -52,8 +56,8 @@ export function ParcelList({ parcels, onAdd, onRemove, onChange, onNext, disable
     };
 
     return (
-        <Card className="hover:shadow-xl transition-all border-slate-100 shadow-sm rounded-[24px] overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between py-5 bg-slate-50/50 px-6 border-b border-slate-100">
+        <Card className="hover:shadow-xl transition-all border-slate-100 shadow-sm rounded-[24px]">
+            <CardHeader className="flex flex-row items-center justify-between py-5 bg-slate-50/50 px-6 border-b border-slate-100 rounded-t-[24px]">
                 <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
                     <Package className="w-4 h-4 text-blue-500" /> Parcel Details
                 </CardTitle>
@@ -91,22 +95,23 @@ export function ParcelList({ parcels, onAdd, onRemove, onChange, onNext, disable
                         {/* Item Type */}
                         <div className="col-span-9 md:col-span-5 space-y-2">
                             <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Item Category</Label>
-                            <select
+                            <SingleSelect
                                 id={`parcel-type-${index}`}
-                                data-focus="parcel-type"
                                 value={parcel.itemType}
+                                options={ITEM_CATEGORY_OPTIONS}
+                                onChange={(val) => {
+                                    onChange(parcel.id, "itemType", val);
+                                    // Auto-focus rate after selection for speed
+                                    setTimeout(() => {
+                                        const rateInput = document.getElementById(`parcel-rate-${index}`) as HTMLInputElement;
+                                        rateInput?.focus();
+                                        rateInput?.select();
+                                    }, 10);
+                                }}
                                 disabled={disabled}
-                                onKeyDown={(e) => handleKeyDown(e, "itemType", index)}
-                                onChange={(e) => onChange(parcel.id, "itemType", e.target.value as ItemType)}
-                                className="flex h-12 w-full rounded-xl border border-transparent bg-white px-3 py-2 text-sm shadow-sm ring-offset-background focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/5 disabled:cursor-not-allowed disabled:opacity-50 font-bold transition-all appearance-none"
-                            >
-                                <option value="" disabled>Select Item</option>
-                                {ITEM_CATEGORIES.map((cat) => (
-                                    <option key={cat} value={cat}>
-                                        {cat}
-                                    </option>
-                                ))}
-                            </select>
+                                placeholder="Select Item"
+                                className="h-12 border-transparent bg-white shadow-sm font-black text-lg"
+                            />
                         </div>
 
                         {/* Rate */}

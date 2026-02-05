@@ -2,9 +2,21 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ['localhost', 'railway.app', 'render.com'], // Allow images from backend domains
+    remotePatterns: [
+      { protocol: 'http', hostname: 'localhost' },
+      { protocol: 'https', hostname: 'railway.app' },
+      { protocol: 'https', hostname: 'render.com' },
+      { protocol: 'https', hostname: '**' } // Allow external images during dev
+    ],
   },
-  // Ensure we don't rewrite API routes here, we use environment variable NEXT_PUBLIC_API_URL
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path((?!auth).*)',
+        destination: 'http://localhost:3001/api/:path*', // Proxy to Backend, excluding /api/auth
+      },
+    ]
+  },
 };
 
 export default nextConfig;

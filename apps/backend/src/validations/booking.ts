@@ -20,6 +20,8 @@ export const updateBookingStatusSchema = z.object({
     body: z.object({
         status: z.enum(["INCOMING", "PENDING", "DELIVERED", "CANCELLED", "ARRIVED", "IN_TRANSIT"]),
         deliveredRemark: z.string().optional(),
+        collectedBy: z.string().optional(),
+        collectedByMobile: z.string().optional(),
     })
 });
 
@@ -28,7 +30,21 @@ export const updateBookingSchema = z.object({
         id: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid booking ID"),
     }),
     body: z.object({
-        remarks: z.string().optional(),
+        remarks: z.string().optional().nullable(),
+        deliveredRemark: z.string().optional().nullable(),
+        collectedBy: z.string().optional().nullable(),
+        collectedByMobile: z.string().optional().nullable(),
+        status: z.enum(["INCOMING", "PENDING", "DELIVERED", "CANCELLED", "ARRIVED", "IN_TRANSIT", "Booked", "In Transit", "Arrived", "Delivered", "Cancelled", "Pending"]).optional(),
+        sender: personalInfoSchema.optional(),
+        receiver: personalInfoSchema.optional(),
+        parcels: z.array(parcelSchema).optional(),
+        costs: z.object({
+            freight: z.number().min(0),
+            handling: z.number().min(0),
+            hamali: z.number().min(0),
+            total: z.number().min(0),
+        }).optional(),
+        paymentType: z.enum(["Paid", "To Pay"]).optional(),
     })
 });
 

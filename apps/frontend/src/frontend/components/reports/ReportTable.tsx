@@ -73,7 +73,21 @@ export function ReportTable({
 
     const handleSaveEdit = async (updated: Booking) => {
         if (selectedBooking) {
-            const { error } = await parcelService.updateBooking(selectedBooking.id, updated);
+            // Sanitize payload to avoid sending populated objects or immutable fields that cause backend errors
+            const payload = {
+                sender: updated.sender,
+                receiver: updated.receiver,
+                parcels: updated.parcels,
+                costs: updated.costs,
+                paymentType: updated.paymentType,
+                remarks: updated.remarks,
+                deliveredRemark: updated.deliveredRemark,
+                collectedBy: updated.collectedBy,
+                collectedByMobile: updated.collectedByMobile,
+                status: updated.status
+            };
+
+            const { error } = await parcelService.updateBooking(selectedBooking.id, payload as any);
             if (error) {
                 addToast(`Failed to update booking: ${error.message}`, "error");
                 return;

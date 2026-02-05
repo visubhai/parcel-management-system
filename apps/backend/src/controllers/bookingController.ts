@@ -184,7 +184,8 @@ export const createBooking = catchAsync(async (req: AuthRequest, res: Response) 
 
 export const updateStatus = catchAsync(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
-    const { status, deliveredRemark } = req.body;
+    const { status, deliveredRemark, collectedBy, collectedByMobile } = req.body;
+    // Debug: Ensure collectedBy fields are present in body
     const user = req.user;
 
     const updateData: any = { status };
@@ -195,6 +196,8 @@ export const updateStatus = catchAsync(async (req: AuthRequest, res: Response) =
             throw new AppError("Remarks are required for delivery collection.", 400);
         }
         updateData.deliveredRemark = deliveredRemark;
+        if (collectedBy) updateData.collectedBy = collectedBy;
+        if (collectedByMobile) updateData.collectedByMobile = collectedByMobile;
         updateData.deliveredAt = new Date();
         updateData.deliveredBy = user._id;
     }
@@ -215,7 +218,7 @@ export const updateStatus = catchAsync(async (req: AuthRequest, res: Response) =
         entityType: 'Booking',
         entityId: id,
         oldValue: { status: booking.status },
-        newValue: { status, deliveredRemark },
+        newValue: { status, deliveredRemark, collectedBy, collectedByMobile },
         req
     });
 
@@ -250,6 +253,12 @@ export const updateBooking = catchAsync(async (req: AuthRequest, res: Response) 
         });
     }
 
+    // Robustness: If status changes to DELIVERED via Edit Modal, ensure timestamps are set
+    if (body.status === 'DELIVERED' && oldBooking.status !== 'DELIVERED') {
+        if (!body.deliveredAt) body.deliveredAt = new Date();
+        if (!body.deliveredBy) body.deliveredBy = user._id;
+    }
+
     const updatedBooking = await Booking.findByIdAndUpdate(
         id,
         { ...body, editHistory },
@@ -261,8 +270,18 @@ export const updateBooking = catchAsync(async (req: AuthRequest, res: Response) 
         action: 'UPDATE_BOOKING',
         entityType: 'Booking',
         entityId: id,
-        oldValue: { remarks: oldBooking.remarks },
-        newValue: { remarks: body.remarks },
+        oldValue: {
+            remarks: oldBooking.remarks,
+            deliveredRemark: oldBooking.deliveredRemark,
+            collectedBy: oldBooking.collectedBy,
+            collectedByMobile: oldBooking.collectedByMobile
+        },
+        newValue: {
+            remarks: body.remarks,
+            deliveredRemark: body.deliveredRemark,
+            collectedBy: body.collectedBy,
+            collectedByMobile: body.collectedByMobile
+        },
         req
     });
 
@@ -270,4 +289,30 @@ export const updateBooking = catchAsync(async (req: AuthRequest, res: Response) 
         message: "Booking updated successfully",
         booking: updatedBooking
     });
+});
+
+export const getNextLR = catchAsync(async (req: AuthRequest, res: Response) => {
+    const { branchId } = req.query;
+
+    if (!branchId) {
+        throw new AppError("Branch ID is required", 400);
+    }
+
+    const branch = await Branch.findById(branchId);
+    if (!branch) {
+        throw new AppError("Branch not found", 404);
+    }
+
+    const counter = await Counter.findOne({
+        branchId: branch._id,
+        entity: 'Booking',
+        field: 'lrNumber'
+    });
+
+    const currentCount = counter ? counter.count : 0;
+    const nextCount = currentCount + 1;
+    const sequenceStr = nextCount.toString().padStart(4, '0');
+    const nextLR = `${branch.branchCode}/${sequenceStr}`;
+
+    return res.json({ nextLR });
 });

@@ -31,6 +31,8 @@ export interface IBooking extends Document {
     paymentType: 'Paid' | 'To Pay';
     remarks?: string;
     deliveredRemark?: string;
+    collectedBy?: string;
+    collectedByMobile?: string;
     deliveredAt?: Date;
     deliveredBy?: mongoose.Types.ObjectId;
     status: 'INCOMING' | 'PENDING' | 'DELIVERED' | 'CANCELLED' | 'Booked' | 'In Transit' | 'Arrived';
@@ -75,6 +77,8 @@ const BookingSchema = new Schema<IBooking>({
     paymentType: { type: String, enum: ['Paid', 'To Pay'], required: true },
     remarks: { type: String, required: false },
     deliveredRemark: { type: String, required: false },
+    collectedBy: { type: String, required: false },
+    collectedByMobile: { type: String, required: false },
     deliveredAt: { type: Date },
     deliveredBy: { type: Schema.Types.ObjectId, ref: 'User' },
     status: {
@@ -90,4 +94,8 @@ const BookingSchema = new Schema<IBooking>({
     }]
 }, { timestamps: true });
 
-export default mongoose.models.Booking || mongoose.model<IBooking>('Booking', BookingSchema);
+// Prevent Mongoose OverwriteModelError in HMR environment, but force schema update
+if (mongoose.models.Booking) {
+    delete mongoose.models.Booking;
+}
+export default mongoose.model<IBooking>('Booking', BookingSchema);

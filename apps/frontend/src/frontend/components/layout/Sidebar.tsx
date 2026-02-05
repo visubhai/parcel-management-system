@@ -42,7 +42,7 @@ export function Sidebar() {
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
                 className={cn(
-                    "h-screen bg-slate-900 text-white flex flex-col border-r border-slate-800 shadow-2xl relative overflow-hidden transition-all duration-300 ease-in-out z-50",
+                    "h-screen bg-slate-900 text-white flex flex-col border-r border-slate-800 shadow-2xl relative overflow-hidden transition-all duration-300 ease-in-out z-50 print:hidden",
                     "fixed lg:relative inset-y-0 left-0", // Mobile Positioning
                     isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0", // Mobile Toggle
                     // Width Logic: Mobile always 64 (full), Desktop varies

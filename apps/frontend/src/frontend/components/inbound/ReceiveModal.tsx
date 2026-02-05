@@ -8,11 +8,13 @@ interface ReceiveModalProps {
     parcel: IncomingParcel;
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (remark?: string) => void;
+    onConfirm: (remark?: string, collectedBy?: string, collectedByMobile?: string) => void;
 }
 
 export function ReceiveModal({ parcel, isOpen, onClose, onConfirm }: ReceiveModalProps) {
     const [remark, setRemark] = useState("");
+    const [collectedBy, setCollectedBy] = useState("");
+    const [collectedByMobile, setCollectedByMobile] = useState("");
 
     if (!isOpen) return null;
 
@@ -87,6 +89,29 @@ export function ReceiveModal({ parcel, isOpen, onClose, onConfirm }: ReceiveModa
                                     className="w-full h-24 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none"
                                 />
                             </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Collected By (Name)</label>
+                                    <input
+                                        type="text"
+                                        value={collectedBy}
+                                        onChange={(e) => setCollectedBy(e.target.value)}
+                                        placeholder="Name of person"
+                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Mobile Number</label>
+                                    <input
+                                        type="tel"
+                                        value={collectedByMobile}
+                                        onChange={(e) => setCollectedByMobile(e.target.value)}
+                                        placeholder="Mobile Number"
+                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     ) : (
                         // Receive Context (In Transit -> Arrived)
@@ -107,7 +132,7 @@ export function ReceiveModal({ parcel, isOpen, onClose, onConfirm }: ReceiveModa
                         Cancel
                     </button>
                     <button
-                        onClick={() => onConfirm(remark)}
+                        onClick={() => onConfirm(remark, collectedBy, collectedByMobile)}
                         className={cn(
                             "flex-1 py-2.5 rounded-lg text-sm font-bold text-primary-foreground shadow-lg hover:scale-[1.02] transition-all",
                             (isDeliverAction && isToPay) ? "bg-destructive hover:bg-destructive/90" : "bg-primary hover:bg-primary/90"

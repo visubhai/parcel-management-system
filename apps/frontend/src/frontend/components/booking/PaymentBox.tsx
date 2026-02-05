@@ -18,9 +18,10 @@ interface PaymentBoxProps {
     isLocked: boolean;
     onWhatsApp?: () => void;
     onReset?: () => void;
+    saveLabel?: string;
 }
 
-export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked, onWhatsApp, onReset }: PaymentBoxProps) {
+export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked, onWhatsApp, onReset, saveLabel }: PaymentBoxProps) {
     const freightRef = useRef<HTMLInputElement>(null);
     const saveButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -156,7 +157,7 @@ export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked, onW
                             </>
                         ) : (
                             <>
-                                <Save size={18} /> Confirm LR (Enter)
+                                <Save size={18} /> {saveLabel || "Confirm LR (Enter)"}
                             </>
                         )}
                     </button>

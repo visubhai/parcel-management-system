@@ -61,7 +61,7 @@ export function Header() {
     const displayBranch = currentUser?.branch || "All Branches";
 
     return (
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-30">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-30 print:hidden">
             <div className="flex items-center gap-4 flex-1">
                 <button
                     onClick={toggleMobileMenu}

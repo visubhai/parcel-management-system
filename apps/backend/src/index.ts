@@ -11,7 +11,7 @@ import superAdminRoutes from './routes/superAdminRoutes';
 
 import { requestLogger } from './services/loggerService';
 import { errorHandler } from './middleware/errorHandler';
-import { whatsappService } from './services/whatsapp';
+
 
 
 dotenv.config();
@@ -21,12 +21,25 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors({
-    origin: [
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        'https://savan-travels-transport-byvisu.vercel.app', // Production Frontend
-        process.env.FRONTEND_URL || '' // Flexible Env Var
-    ],
+    origin: (origin, callback) => {
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+            'https://savan-travels-transport-byvisu.vercel.app',
+            process.env.FRONTEND_URL || ''
+        ];
+
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes(origin) || origin.endsWith('.ngrok-free.app')) {
+            return callback(null, true);
+        }
+
+        // Optional: Log blocked origins for debugging
+        // console.log('Blocked by CORS:', origin);
+        return callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -51,8 +64,7 @@ app.use('/api/ledger', ledgerRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/superadmin', superAdminRoutes);
 
-// Initialize WhatsApp Bot (Lightweight)
-whatsappService.initialize(app);
+
 
 // Error Handling Middleware (Must be last)
 app.use(errorHandler);

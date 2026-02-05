@@ -18,6 +18,7 @@ interface ContactFormProps {
     branchLabel?: string;
     availableBranches?: BranchObj[];
     inputRef?: React.Ref<HTMLInputElement>;
+    variant?: 'default' | 'minimal';
 }
 
 const MOCK_SUGGESTIONS = [
@@ -39,7 +40,8 @@ export function BookingForm({
     onBranchChange,
     branchLabel,
     availableBranches,
-    inputRef
+    inputRef,
+    variant = 'default'
 }: ContactFormProps) {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const isFrequent = MOCK_SUGGESTIONS.includes(values.name);
@@ -57,9 +59,12 @@ export function BookingForm({
     const handleMobileChange = (val: string) => {
         // Only allow numbers
         const numericVal = val.replace(/\D/g, "");
-        // Limit to 10 digits
-        if (numericVal.length <= 10) {
+        // Limit to 15 digits (matching backend)
+        if (numericVal.length <= 15) {
             onChange("mobile", numericVal);
+        } else {
+            // If pasted > 15, take first 15
+            onChange("mobile", numericVal.slice(0, 15));
         }
     };
 
@@ -75,8 +80,12 @@ export function BookingForm({
         }
     };
 
+    const containerClasses = variant === 'minimal'
+        ? "bg-transparent border-0 p-0 shadow-none hover:shadow-none"
+        : `bg-card text-card-foreground p-5 rounded-[24px] border-2 ${isFrequent ? 'border-green-500/30 bg-green-50/10' : 'border-slate-100'} shadow-sm relative hover:shadow-xl transition-all focus-within:border-blue-500/50 focus-within:ring-4 focus-within:ring-blue-500/5`;
+
     return (
-        <div className={`bg-card text-card-foreground p-5 rounded-[24px] border-2 ${isFrequent ? 'border-green-500/30 bg-green-50/10' : 'border-slate-100'} shadow-sm relative hover:shadow-xl transition-all flex flex-col group focus-within:border-blue-500/50 focus-within:ring-4 focus-within:ring-blue-500/5`}>
+        <div className={`flex flex-col group ${containerClasses}`}>
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg ${isFrequent ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-500'}`}>
@@ -131,7 +140,7 @@ export function BookingForm({
                             onChange={(e) => handleNameChange(e.target.value)}
                             onKeyDown={(e) => handleKeyDown(e, "name")}
                             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                            className="h-12 text-base font-bold bg-slate-50 border-transparent focus:bg-white transition-all rounded-xl"
+                            className="h-12 text-base font-bold bg-slate-50 border-transparent focus:bg-white transition-all rounded-xl w-full"
                             placeholder="Type name..."
                         />
                         {showSuggestions && !disabled && (
@@ -154,8 +163,8 @@ export function BookingForm({
                 {/* Mobile */}
                 <div className="space-y-2">
                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mobile Contact</Label>
-                    <div className="relative group/input">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-blue-500 transition-colors">
+                    <div className="relative group/input w-full">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-blue-500 transition-colors pointer-events-none">
                             <Phone size={16} />
                         </div>
                         <Input
@@ -166,7 +175,7 @@ export function BookingForm({
                             disabled={disabled}
                             onKeyDown={(e) => handleKeyDown(e, "mobile")}
                             onChange={(e) => handleMobileChange(e.target.value)}
-                            className="h-12 pl-12 text-base font-mono font-bold bg-slate-50 border-transparent focus:bg-white transition-all rounded-xl"
+                            className="h-12 pl-12 text-base font-bold bg-slate-50 border-transparent focus:bg-white transition-all rounded-xl w-full"
                             placeholder="00000 00000"
                         />
                     </div>

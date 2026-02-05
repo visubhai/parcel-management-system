@@ -42,7 +42,8 @@ export const parcelService = {
                     status: p.status,
                     paymentStatus: p.paymentType,
                     totalAmount: p.costs?.total || 0,
-                    remarks: p.remarks || ''
+                    remarks: p.remarks || '',
+                    date: p.createdAt
                 }));
 
             return { data: parcels, error: null };
@@ -67,11 +68,11 @@ export const parcelService = {
         }
     },
 
-    async updateParcelStatus(parcelId: string, status: ParcelStatus, deliveredRemark?: string): Promise<ServiceResponse<null>> {
+    async updateParcelStatus(parcelId: string, status: ParcelStatus, deliveredRemark?: string, collectedBy?: string, collectedByMobile?: string): Promise<ServiceResponse<null>> {
         try {
             const res = await fetchApi(`/bookings/${parcelId}/status`, {
                 method: 'PATCH',
-                body: JSON.stringify({ status, deliveredRemark }),
+                body: JSON.stringify({ status, deliveredRemark, collectedBy, collectedByMobile }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(parseError(data));
@@ -109,6 +110,17 @@ export const parcelService = {
             const data = await res.json();
             if (!res.ok) throw new Error(parseError(data));
             return { data: data.booking, error: null };
+        } catch (error: any) {
+            return { data: null as any, error: new Error(error.message) };
+        }
+    },
+
+    async getNextLR(branchId: string): Promise<ServiceResponse<{ nextLR: string }>> {
+        try {
+            const res = await fetchApi(`/bookings/next-lr?branchId=${branchId}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(parseError(data));
+            return { data, error: null };
         } catch (error: any) {
             return { data: null as any, error: new Error(error.message) };
         }

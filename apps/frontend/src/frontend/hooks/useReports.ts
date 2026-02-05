@@ -80,7 +80,11 @@ export function useReports() {
                         total: Number(p.costs?.total || 0)
                     },
                     paymentType: p.paymentType,
-                    status: p.status
+                    status: p.status,
+                    deliveredRemark: p.deliveredRemark,
+                    collectedBy: p.collectedBy,
+                    collectedByMobile: p.collectedByMobile,
+                    deliveredAt: p.deliveredAt
                 };
             });
             return mappedBookings;
@@ -204,7 +208,12 @@ export function useReports() {
             totalBookings: processedData.length,
             paidAmount: processedData.filter(i => i.paymentType === 'Paid' && normalizeStatus(i.status) !== 'CANCELLED').reduce((sum, i) => sum + i.costs.total, 0),
             toPayAmount: processedData.filter(i => i.paymentType === 'To Pay' && normalizeStatus(i.status) !== 'CANCELLED').reduce((sum, i) => sum + i.costs.total, 0),
-            cancelledCount: processedData.filter(i => normalizeStatus(i.status) === 'CANCELLED').length
+            cancelledCount: processedData.filter(i => normalizeStatus(i.status) === 'CANCELLED').length,
+            totalParcels: processedData.reduce((sum, item) => {
+                if (normalizeStatus(item.status) === 'CANCELLED') return sum;
+                const bookingParcels = item.parcels.reduce((pSum, p) => pSum + (p.quantity || 0), 0);
+                return sum + bookingParcels;
+            }, 0)
         };
     }, [processedData]);
 

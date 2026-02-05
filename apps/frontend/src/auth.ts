@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+    trustHost: true,
     secret: process.env.AUTH_SECRET,
     providers: [
         Credentials({
@@ -12,7 +13,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
             async authorize(credentials) {
                 try {
-                    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+                    // Ensure API_URL is absolute for server-side fetch
+                    let API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+                    if (API_URL.startsWith('/')) {
+                        API_URL = `http://localhost:3001${API_URL}`;
+                    }
                     const res = await fetch(`${API_URL}/auth/login`, {
                         method: 'POST',
                         body: JSON.stringify({

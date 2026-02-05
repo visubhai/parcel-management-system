@@ -25,7 +25,7 @@ export default function BookingDashboard() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   // Local State
-  const [lrNumber, setLrNumber] = useState("PENDING");
+  const [lrNumber, setLrNumber] = useState("Loading...");
   const [isLocked, setIsLocked] = useState(false);
 
   // Initialize with sensible defaults.
@@ -34,6 +34,21 @@ export default function BookingDashboard() {
 
   // Refs for focusing
   const senderNameRef = useRef<HTMLInputElement>(null);
+
+  // Fetch Next LR
+  const fetchNextLR = async () => {
+    if (fromBranch && !isLocked) {
+      const { data } = await parcelService.getNextLR(fromBranch);
+      if (data?.nextLR) {
+        setLrNumber(data.nextLR);
+      }
+    }
+  };
+
+  // Sync Next LR when branch changes or unlocked
+  useEffect(() => {
+    fetchNextLR();
+  }, [fromBranch, isLocked]);
 
   // Sync From Branch with Current User
   useEffect(() => {
@@ -71,8 +86,23 @@ export default function BookingDashboard() {
   });
 
   const [paymentType, setPaymentType] = useState<PaymentStatus>("Paid");
-
   const [remarks, setRemarks] = useState("");
+
+  // Recent Bookings
+  const [recentBookings, setRecentBookings] = useState<any[]>([]);
+
+  const fetchRecent = async () => {
+    if (currentUser?.branchId) {
+      const { data } = await parcelService.getOutgoingParcels(currentUser.branchId);
+      if (data) {
+        setRecentBookings(data.slice(0, 5));
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchRecent();
+  }, [currentUser?.branchId]);
 
   // Auto-calculate Freight (Forward Sync: Parcels -> Total)
   useEffect(() => {
@@ -158,6 +188,7 @@ export default function BookingDashboard() {
       setShowSuccess(true);
       addToast("Booking Created Successfully!", "success");
 
+      fetchRecent(); // Refresh recent list
       mutate(key => Array.isArray(key) && (key[0] === 'reports' || key[0] === 'ledger'));
 
       setTimeout(() => {
@@ -175,7 +206,7 @@ export default function BookingDashboard() {
     setParcels([{ id: generateId(), quantity: 1, itemType: "White Sack", weight: 0, rate: 0 }]);
     setCosts({ freight: 0, handling: 10, hamali: 0, total: 10 });
     setPaymentType("Paid");
-    setLrNumber("PENDING");
+    setLrNumber("Loading...");
     setRemarks("");
     // Focus back to sender name for next entry
     setTimeout(() => senderNameRef.current?.focus(), 100);
@@ -218,7 +249,7 @@ export default function BookingDashboard() {
 
         <div className={`transition-all duration-500 transform ${isLocked ? 'scale-110' : ''} bg-white ring-4 ${isLocked ? 'ring-green-400/20' : 'ring-slate-100'} px-6 py-3 rounded-2xl border border-slate-200 shadow-xl flex items-center gap-4`}>
           <div className="flex flex-col">
-            <span className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-black">Serial Number</span>
+            <span className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-black">LR Number</span>
             <span className={`text-2xl font-mono font-black ${isLocked ? 'text-green-600' : 'text-blue-600'}`}>
               {lrNumber}
             </span>
@@ -347,6 +378,32 @@ export default function BookingDashboard() {
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="mt-8">
+        <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Recent Bookings</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {recentBookings.length > 0 ? (
+            recentBookings.map((booking) => (
+              <div key={booking.id || booking._id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md">{booking.lrNumber}</span>
+                  <span className="text-[10px] font-bold text-slate-400">{new Date(booking.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <div className="text-sm font-bold text-slate-700 truncate">{booking.receiver?.name}</div>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-xs font-medium text-slate-500">{booking.parcels?.length} Items</span>
+                  <span className="text-xs font-black text-slate-800">₹{booking.costs?.total}</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full py-8 text-center text-slate-400 text-sm italic border-2 border-dashed border-slate-200 rounded-xl">
+              No recent bookings found today.
+            </div>
+          )}
         </div>
       </div>
 

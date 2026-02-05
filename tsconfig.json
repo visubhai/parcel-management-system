@@ -1,4 +1,19 @@
 {
+    "files": [],
+    "include": [
+        "scripts/**/*"
+    ],
+    "references": [
+        {
+            "path": "./apps/frontend"
+        },
+        {
+            "path": "./apps/backend"
+        },
+        {
+            "path": "./packages/shared"
+        }
+    ],
     "compilerOptions": {
         "target": "es2017",
         "lib": [
@@ -23,7 +38,6 @@
             ]
         }
     },
-    "include": [],
     "exclude": [
         "node_modules",
         "dist"

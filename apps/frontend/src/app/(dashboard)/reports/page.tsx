@@ -10,7 +10,7 @@ import { ExportButtons } from "@/frontend/components/reports/ExportButtons";
 import { Branch } from "@/shared/types";
 
 const ReportSummary = ({ stats }: { stats: any }) => (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+    <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
             <p className="text-xs font-bold text-slate-400 uppercase">Revenue</p>
             <p className="text-xl font-black text-slate-800 mt-1">₹{(stats.totalRevenue || 0).toLocaleString()}</p>
@@ -28,6 +28,10 @@ const ReportSummary = ({ stats }: { stats: any }) => (
             <p className="text-xl font-black text-blue-600 mt-1">{stats.totalBookings || 0}</p>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <p className="text-xs font-bold text-slate-400 uppercase">Parcels</p>
+            <p className="text-xl font-black text-purple-600 mt-1">{stats.totalParcels || 0}</p>
+        </div>
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
             <p className="text-xs font-bold text-slate-400 uppercase">Cancelled</p>
             <p className="text-xl font-black text-slate-400 mt-1">{stats.cancelledCount || 0}</p>
         </div>
@@ -35,6 +39,8 @@ const ReportSummary = ({ stats }: { stats: any }) => (
 );
 
 import { useBranches } from "@/frontend/hooks/useBranches";
+
+import { PrintReportTable } from "@/frontend/components/reports/PrintReportTable";
 
 export default function ReportsPage() {
     const { currentUser } = useBranchStore();
@@ -82,11 +88,30 @@ export default function ReportsPage() {
         // Avoid setFilters during render.
     }
 
+    const formatDate = (d: string | Date | undefined) => {
+        if (!d) return new Date().toLocaleDateString('en-GB');
+        return new Date(d).toLocaleDateString('en-GB');
+    };
+
+    const dateRangeStr = `${formatDate(filters.startDate)} - ${formatDate(filters.endDate)}`;
+
     return (
         <div className="max-w-[1600px] mx-auto p-6 space-y-6 pb-20">
 
-            {/* Header */}
-            <div className="mb-8">
+            {/* Print View - Specific Layout */}
+            <div className="hidden print:block">
+                {/* Reusing existing print header or Custom one? The PrintReportTable usually renders below header. */}
+                {/* Existing header at line 89 matches somewhat, but let's just use PrintReportTable mostly. */}
+                {/* I will keep line 89 header but maybe adjust? No, line 89 has "Savan Transport". */}
+                <div className="mb-4">
+                    <h1 className="text-2xl font-black text-black uppercase">Savan Transport</h1>
+                    <p className="text-xs font-bold text-gray-500 uppercase">Daily Manifest Report</p>
+                </div>
+                <PrintReportTable data={allFilteredData} dateRange={dateRangeStr} />
+            </div>
+
+            {/* Header - Screen Only */}
+            <div className="mb-8 print:hidden">
                 <div className="flex items-center justify-between mb-2">
                     <div>
                         <h1 className="text-2xl font-black text-slate-800 tracking-tight">Enterprise Reports</h1>
@@ -96,27 +121,24 @@ export default function ReportsPage() {
                 </div>
             </div>
 
-            <ReportFilters
-                filters={filters}
-                setFilters={setFilters}
-                branches={allBranches}
-                isBranchRestricted={isBranchRestricted}
-                userBranch={currentUser?.branch}
-            />
-            <ReportCharts data={allFilteredData} />
+            <div className="print:hidden space-y-6">
+                <ReportFilters
+                    filters={filters}
+                    setFilters={setFilters}
+                    branches={allBranches}
+                    isBranchRestricted={isBranchRestricted}
+                    userBranch={currentUser?.branch}
+                />
+                <ReportCharts data={allFilteredData} />
+            </div>
 
-            {/* Summary Stats */}
-            <ReportSummary stats={stats} />
+            {/* Summary Stats - Screen Only */}
+            <div className="print:hidden">
+                <ReportSummary stats={stats} />
+            </div>
 
-            {/* Data Table */}
-            {/* Manager View might hide table? Prompt said "Manager -> summary only". */}
-            {/* Assuming "MANAGER" is a role we don't strictly have in Types yet (only BRANCH_USER, SUPER_ADMIN). 
-                If User is a Manager, hide interaction? 
-                Let's assume BRANCH_USER = Manager for this context or just show table for everyone as it's useful.
-                The prompt said "Branch user -> only own branch reports". 
-                I will show table for everyone.
-            */}
-            <div className="space-y-2">
+            {/* Data Table - Screen Only */}
+            <div className="space-y-2 print:hidden">
                 <div className="flex items-center justify-between px-1">
                     <h3 className="text-lg font-bold text-slate-700">Detailed Transaction Log</h3>
                     <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">

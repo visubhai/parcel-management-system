@@ -39,6 +39,9 @@ export interface Booking {
     paymentType: PaymentStatus;
     remarks?: string;
     deliveredRemark?: string;
+    collectedBy?: string;
+    collectedByMobile?: string;
+    deliveredAt?: string;
     status: ParcelStatus;
     editHistory?: EditHistoryEntry[];
 }
@@ -75,6 +78,7 @@ export interface IncomingParcel {
     paymentStatus: PaymentStatus;
     totalAmount: number;
     remarks?: string;
+    date?: string;
 }
 
 export interface ReportPermission {

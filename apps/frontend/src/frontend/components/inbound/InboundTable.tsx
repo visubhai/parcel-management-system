@@ -47,7 +47,7 @@ export function InboundTable() {
         setSelectedParcel(parcel);
     };
 
-    const handleConfirmAction = async (deliveredRemark?: string) => {
+    const handleConfirmAction = async (deliveredRemark?: string, collectedBy?: string, collectedByMobile?: string) => {
         if (!selectedParcel) return;
 
         try {
@@ -67,7 +67,7 @@ export function InboundTable() {
 
                 // 2. Mark DELIVERED with Remark (Backend requires non-empty remark)
                 const finalRemark = deliveredRemark?.trim() || "Delivered at counter";
-                const statusRes = await parcelService.updateParcelStatus(selectedParcel.id, 'DELIVERED', finalRemark);
+                const statusRes = await parcelService.updateParcelStatus(selectedParcel.id, 'DELIVERED', finalRemark, collectedBy, collectedByMobile);
                 if (statusRes.error) throw statusRes.error;
             }
 
@@ -105,6 +105,7 @@ export function InboundTable() {
                     <thead>
                         <tr className="bg-slate-50 text-slate-500 border-b border-slate-100">
                             <th className="px-4 py-4 font-bold uppercase tracking-wider text-[10px] w-[140px]">LR Number</th>
+                            <th className="px-4 py-4 font-bold uppercase tracking-wider text-[10px] w-[120px]">Date & Time</th>
                             <th className="px-4 py-4 font-bold uppercase tracking-wider text-[10px] w-[120px]">From</th>
                             <th className="px-4 py-4 font-bold uppercase tracking-wider text-[10px] w-[120px]">To</th>
                             <th className="px-4 py-4 font-bold uppercase tracking-wider text-[10px] w-[150px]">Sender</th>
@@ -119,6 +120,12 @@ export function InboundTable() {
                         {incomingParcels.map((parcel, index) => (
                             <tr key={parcel.id || index} className="hover:bg-slate-50/50 transition-colors group">
                                 <td className="px-4 py-4 text-sm font-mono font-black text-slate-700">{parcel.lrNumber}</td>
+                                <td className="px-4 py-4 text-slate-600 font-bold text-xs">
+                                    {parcel.date ? <>
+                                        <div>{new Date(parcel.date).toLocaleDateString()}</div>
+                                        <div className="text-[10px] text-slate-400 font-normal">{new Date(parcel.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                    </> : "-"}
+                                </td>
                                 <td className="px-4 py-4 text-slate-600 font-bold text-xs uppercase">{parcel.fromBranch}</td>
                                 <td className="px-4 py-4 text-slate-600 font-bold text-xs uppercase">{parcel.toBranch}</td>
                                 <td className="px-4 py-4 text-slate-600 font-medium">{parcel.senderName}</td>

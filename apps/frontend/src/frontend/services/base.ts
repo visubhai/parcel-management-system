@@ -5,7 +5,16 @@ export type ServiceResponse<T> = {
     error: Error | null;
 };
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const getBaseUrl = () => {
+    // If on server, use internal absolute URL
+    if (typeof window === 'undefined') {
+        return process.env.INTERNAL_API_URL || 'http://localhost:3001/api';
+    }
+    // If on client, use relative URL (proxied by Next.js) or env var
+    return process.env.NEXT_PUBLIC_API_URL || '/api';
+};
+
+export const API_URL = getBaseUrl();
 
 export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
     const session = await getSession();
