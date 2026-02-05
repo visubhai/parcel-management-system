@@ -38,6 +38,7 @@ app.use(cors({
         // Normalize origin by removing trailing slash
         const normalizedOrigin = origin.replace(/\/$/, '');
         const isAllowed = allowedOrigins.some(o => o.replace(/\/$/, '') === normalizedOrigin) ||
+            origin.endsWith('.vercel.app') ||
             origin.endsWith('.ngrok-free.app');
 
         if (isAllowed) {
