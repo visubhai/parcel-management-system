@@ -17,7 +17,8 @@ class WhatsappService {
                 dataPath: './.wwebjs_auth'
             }),
             puppeteer: {
-                args: ['--no-sandbox', '--disable-setuid-sandbox'],
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
                 headless: true
             }
         });

@@ -19,6 +19,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust Proxy (Required for Rate Limiting behind Load Balancers like Koyeb/Heroku)
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(cors({
     origin: (origin, callback) => {
