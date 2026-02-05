@@ -62,15 +62,19 @@ export default function LoginPage() {
                 branchId: formData.branchId,
             });
 
+            console.log("Login result:", res);
+
             if (res?.error) {
                 setError(res.error);
                 setSubmitting(false);
             } else {
-                router.push("/");
-                router.refresh();
+                // Successful login
+                // Using window.location.href for a full page reload to ensure 
+                // all session state and stores are properly hydrated.
+                window.location.href = "/";
             }
         } catch (err) {
-            console.error(err);
+            console.error("Login catch error:", err);
             setError("An unexpected error occurred");
             setSubmitting(false);
         }
