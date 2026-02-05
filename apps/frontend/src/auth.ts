@@ -49,14 +49,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     const data = await res.json();
 
                     if (!res.ok) {
-                        // Extract message from new format
-                        let errorMsg = 'Authentication failed';
-                        if (data.message) {
-                            errorMsg = Array.isArray(data.message)
-                                ? data.message.map((m: any) => m.message).join(', ')
-                                : data.message;
-                        }
-                        throw new Error(errorMsg);
+                        console.error("🚀 AUTH SERVICE: Login failed with status:", res.status);
+                        return null; // Returning null informs NextAuth that credentials are invalid
                     }
 
                     // Backend returns { token, user: { ... } }
@@ -67,12 +61,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     };
 
                 } catch (error: any) {
-                    console.error("Auth Error:", error.message);
-                    throw new Error(error.message);
+                    console.error("Auth Authorize Error:", error.message);
+                    return null; // Return null on network or system errors during auth
                 }
             }
         })
     ],
+    debug: process.env.NODE_ENV === 'development' || true, // Keep enabled for now to debug production bounce
     callbacks: {
         async jwt({ token, user }) {
             if (user) {

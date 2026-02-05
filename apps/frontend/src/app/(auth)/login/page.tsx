@@ -65,17 +65,25 @@ export default function LoginPage() {
             console.log("Login result:", res);
 
             if (res?.error) {
-                setError(res.error);
+                // Map NextAuth generic errors to user-friendly messages
+                if (res.error === "CredentialsSignin" || res.error.includes("invalid")) {
+                    setError("Invalid username or password");
+                } else if (res.error === "Configuration") {
+                    setError("Server configuration error. Please contact admin.");
+                } else {
+                    setError(res.error);
+                }
                 setSubmitting(false);
             } else {
                 // Successful login
-                // Using window.location.href for a full page reload to ensure 
-                // all session state and stores are properly hydrated.
-                window.location.href = "/";
+                // Wait a tiny bit for cookies to propagate before redirecting
+                setTimeout(() => {
+                    window.location.href = "/";
+                }, 100);
             }
         } catch (err) {
             console.error("Login catch error:", err);
-            setError("An unexpected error occurred");
+            setError("Connection error. Please try again.");
             setSubmitting(false);
         }
     };

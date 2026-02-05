@@ -31,16 +31,28 @@ export async function middleware(req: NextRequest) {
     res.headers.set('Content-Security-Policy', cspHeader);
 
     // 2. AUTHENTICATION CHECK
-    const token = await getToken({ req: req, secret: process.env.AUTH_SECRET });
+    // Use AUTH_SECRET or NEXTAUTH_SECRET for token verification
+    const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+    const token = await getToken({
+        req,
+        secret,
+        // In some environments, getToken needs explicit salt or secureCookie flag
+        secureCookie: process.env.NODE_ENV === 'production' || req.url.startsWith('https://')
+    });
+
     const isLoginPage = req.nextUrl.pathname.startsWith('/login');
+
+    console.log(`🛡️ Middleware: ${req.nextUrl.pathname} | Token: ${!!token} | Secret: ${!!secret}`);
 
     // If NOT logged in and trying to access protected route (Home), redirect to Login
     if (!token && !isLoginPage) {
+        console.log("🛡️ Redirecting to login (No token)");
         return NextResponse.redirect(new URL('/login', req.url));
     }
 
     // If Logged in and trying to access Login, redirect to key (Dashboard)
     if (token && isLoginPage) {
+        console.log("🛡️ Redirecting to dashboard (Logged in)");
         return NextResponse.redirect(new URL('/', req.url));
     }
 
