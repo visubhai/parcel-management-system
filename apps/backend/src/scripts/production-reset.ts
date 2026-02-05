@@ -33,7 +33,7 @@ async function cleanup() {
                 console.warn('⚠️ Connection not ready, waiting...');
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
-            await model.deleteMany({});
+            await (model as any).deleteMany({});
         }
 
         console.log('✅ All data cleared.');
