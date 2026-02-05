@@ -29,18 +29,22 @@ app.use(cors({
             'http://localhost:3000',
             'http://127.0.0.1:3000',
             'https://savan-travels-transport-byvisu.vercel.app',
-            process.env.FRONTEND_URL || ''
+            process.env.FRONTEND_URL || '*' // Use * as fallback for debugging OR specific URL
         ];
 
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
 
-        if (allowedOrigins.includes(origin) || origin.endsWith('.ngrok-free.app')) {
+        // Normalize origin by removing trailing slash
+        const normalizedOrigin = origin.replace(/\/$/, '');
+        const isAllowed = allowedOrigins.some(o => o.replace(/\/$/, '') === normalizedOrigin) ||
+            origin.endsWith('.ngrok-free.app');
+
+        if (isAllowed) {
             return callback(null, true);
         }
 
-        // Optional: Log blocked origins for debugging
-        // console.log('Blocked by CORS:', origin);
+        console.warn(`🛑 CORS Blocked origin: ${origin}`);
         return callback(new Error('Not allowed by CORS'), false);
     },
     credentials: true
