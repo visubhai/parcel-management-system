@@ -4,18 +4,10 @@
 name: parcel-management-system
 services:
   - name: backend
-    type: web
-    # We use Node 20 as matches your local environment
-    image: node:20
+    type: docker
+    dockerfile: Dockerfile
     instance_type: eco
     
-    # Building from the root to ensure @repo/shared is found
-    build:
-      command: npm install && npm run build -w apps/backend
-      
-    run:
-      command: npm start -w apps/backend
-      
     ports:
       - port: 3001
         protocol: http
