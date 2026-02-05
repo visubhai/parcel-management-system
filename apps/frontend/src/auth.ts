@@ -14,10 +14,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             async authorize(credentials) {
                 try {
                     // Resolve absolute API URL for server-side fetch in NextAuth
-                    const base = process.env.INTERNAL_API_URL || process.env.BACKEND_URL || 'http://localhost:3001';
-                    const API_URL = base.endsWith('/api') ? base : `${base}/api`;
+                    const base = process.env.BACKEND_URL ||
+                        process.env.INTERNAL_API_URL ||
+                        process.env.NEXT_PUBLIC_API_URL ||
+                        'http://localhost:3001';
 
-                    console.log("Auth attempting login at:", `${API_URL}/auth/login`);
+                    // Ensure it's absolute and points to /api
+                    let API_URL = base;
+                    if (API_URL.startsWith('/')) {
+                        // If it's relative, we are in trouble on server, but let's try to infer
+                        API_URL = `https://${process.env.VERCEL_URL}${base}`;
+                    }
+                    if (!API_URL.endsWith('/api')) API_URL = `${API_URL}/api`;
+
+                    console.log("🚀 AUTH SERVICE: Attempting login at:", `${API_URL}/auth/login`);
+                    console.log("📦 AUTH DATA:", { username: credentials.email, branchId: credentials.branchId });
 
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
