@@ -51,6 +51,9 @@ export function Header() {
     }, [debouncedSearch]);
 
     const handleLogout = async () => {
+        // Clear session gate cookie
+        document.cookie = "login-gate-passed=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; sameSite=lax";
+
         await authService.logout();
         setCurrentUser(null);
         router.refresh();
@@ -102,7 +105,7 @@ export function Header() {
                                             key={booking.id}
                                             onClick={() => {
                                                 setShowSearchResults(false);
-                                                router.push(`/reports?lrNumber=${booking.lrNumber}`);
+                                                router.push(`/reports?lrNumber=${booking.lrNumber}&edit=true`);
                                             }}
                                             className="w-full p-3 hover:bg-slate-50 flex items-start gap-3 transition-colors text-left border-b border-slate-50/50 last:border-0"
                                         >

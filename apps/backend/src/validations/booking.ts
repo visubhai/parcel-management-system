@@ -21,7 +21,7 @@ export const updateBookingStatusSchema = z.object({
         status: z.enum(["INCOMING", "PENDING", "DELIVERED", "CANCELLED", "ARRIVED", "IN_TRANSIT"]),
         deliveredRemark: z.string().optional(),
         collectedBy: z.string().optional(),
-        collectedByMobile: z.string().optional(),
+        collectedByMobile: z.string().regex(/^\d{10}$/, "Mobile number must be 10 digits").optional().or(z.literal('')),
     })
 });
 
@@ -33,7 +33,7 @@ export const updateBookingSchema = z.object({
         remarks: z.string().optional().nullable(),
         deliveredRemark: z.string().optional().nullable(),
         collectedBy: z.string().optional().nullable(),
-        collectedByMobile: z.string().optional().nullable(),
+        collectedByMobile: z.string().regex(/^\d{10}$/, "Mobile number must be 10 digits").optional().nullable().or(z.literal('')),
         status: z.enum(["INCOMING", "PENDING", "DELIVERED", "CANCELLED", "ARRIVED", "IN_TRANSIT", "Booked", "In Transit", "Arrived", "Delivered", "Cancelled", "Pending"]).optional(),
         sender: personalInfoSchema.optional(),
         receiver: personalInfoSchema.optional(),

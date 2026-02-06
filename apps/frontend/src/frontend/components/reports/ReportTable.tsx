@@ -7,7 +7,7 @@ import { ConfirmationModal } from "@/frontend/components/common/ConfirmationModa
 import { EditBookingModal } from "./EditBookingModal";
 import { useBranches } from "@/frontend/hooks/useBranches";
 import { useToast } from "@/frontend/components/ui/toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface ReportTableProps {
     data: Booking[];
@@ -21,6 +21,7 @@ interface ReportTableProps {
     onPageChange: (page: number) => void;
     onRowsPerPageChange: (rows: number) => void;
     mutate: () => void;
+    autoOpenLr?: string | null;
 }
 
 import { parcelService } from "@/frontend/services/parcelService";
@@ -30,7 +31,7 @@ import { openWhatsApp } from "@/frontend/lib/whatsapp";
 
 export function ReportTable({
     data, isLoading, currentPage, totalPages, rowsPerPage, totalItems,
-    sortConfig, onSort, onPageChange, onRowsPerPageChange, mutate
+    sortConfig, onSort, onPageChange, onRowsPerPageChange, mutate, autoOpenLr
 }: ReportTableProps) {
     // const { cancelBooking } = useBranchStore(); // Removed
     const router = useRouter();
@@ -40,6 +41,18 @@ export function ReportTable({
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+    const [hasAutoOpened, setHasAutoOpened] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (autoOpenLr && data.length > 0 && hasAutoOpened !== autoOpenLr && !isLoading) {
+            const match = data.find(b => b.lrNumber === autoOpenLr);
+            if (match) {
+                setSelectedBooking(match);
+                setEditModalOpen(true);
+                setHasAutoOpened(autoOpenLr);
+            }
+        }
+    }, [autoOpenLr, data, hasAutoOpened, isLoading]);
 
     const handleCancelClick = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
@@ -156,7 +169,15 @@ export function ReportTable({
                                         "transition-colors group",
                                         isCancelled ? "bg-red-50/30 hover:bg-red-50/60" : "hover:bg-blue-50/30"
                                     )}>
-                                        <td className="px-6 py-4 text-sm font-mono font-bold text-slate-700">{row.lrNumber}</td>
+                                        <td className="px-6 py-4 text-sm font-mono font-bold text-slate-700">
+                                            <button
+                                                onClick={(e) => handleEditClick(e, row)}
+                                                className="hover:text-blue-600 hover:underline transition-colors text-left"
+                                                title="Click to edit booking"
+                                            >
+                                                {row.lrNumber}
+                                            </button>
+                                        </td>
                                         <td className="px-6 py-4 text-sm text-slate-600">
                                             <div className="font-medium">{dateObj.toLocaleDateString('en-CA')}</div>
                                             <div className="text-xs text-slate-400">{dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
@@ -187,12 +208,12 @@ export function ReportTable({
                                         <td className="px-6 py-4 text-center">
                                             <span className={cn(
                                                 "px-2.5 py-1 rounded-full text-[11px] font-semibold border shadow-sm",
-                                                row.status === 'DELIVERED' && "bg-slate-100 text-slate-600 border-slate-200",
-                                                row.status === 'ARRIVED' && "bg-teal-50 text-teal-700 border-teal-200",
-                                                row.status === 'IN_TRANSIT' && "bg-blue-50 text-blue-700 border-blue-200",
+                                                row.status === 'DELIVERED' && "bg-emerald-50 text-emerald-700 border-emerald-200",
+                                                row.status === 'PENDING' && "bg-blue-50 text-blue-700 border-blue-200",
+                                                row.status === 'BOOKED' && "bg-teal-50 text-teal-700 border-teal-200",
                                                 row.status === 'CANCELLED' && "bg-red-50 text-red-700 border-red-200"
                                             )}>
-                                                {row.status.replace('_', ' ')}
+                                                {row.status.toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">

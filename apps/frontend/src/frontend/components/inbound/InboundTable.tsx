@@ -51,9 +51,9 @@ export function InboundTable() {
         if (!selectedParcel) return;
 
         try {
-            // If PENDING or INCOMING, we are Delivering
-            if (selectedParcel.status === "PENDING" || selectedParcel.status === "INCOMING") {
-                // 1. Payment Collection (if needed)
+            // Requirement: "Confirmation" moves it to DELIVERED
+            if (selectedParcel.status === "PENDING" || selectedParcel.status === "BOOKED" || (selectedParcel as any).status === "INCOMING") {
+                // ... same logic for payment ...
                 if (selectedParcel.paymentStatus === "To Pay") {
                     const ledgerRes = await ledgerService.addTransaction({
                         referenceId: selectedParcel.id,
@@ -146,18 +146,16 @@ export function InboundTable() {
                                 <td className="px-4 py-4">
                                     <div className={cn(
                                         "flex items-center gap-1.5 font-black text-[10px] uppercase tracking-wider",
-                                        parcel.status === "PENDING" ? "text-blue-600" : (
-                                            parcel.status === "DELIVERED" ? "text-emerald-600" : "text-orange-500"
+                                        parcel.status === "DELIVERED" ? "text-emerald-600" : (
+                                            parcel.status === "PENDING" ? "text-blue-600" : "text-teal-600"
                                         )
                                     )}>
-                                        {parcel.status === "PENDING" ? (
-                                            <Package className="w-3.5 h-3.5" />
-                                        ) : parcel.status === "DELIVERED" ? (
+                                        {parcel.status === "DELIVERED" ? (
                                             <CheckCircle className="w-3.5 h-3.5" />
                                         ) : (
-                                            <Truck className="w-3.5 h-3.5" />
+                                            <Package className="w-3.5 h-3.5" />
                                         )}
-                                        {parcel.status}
+                                        {parcel.status.toLowerCase()}
                                     </div>
                                 </td>
                                 <td className="px-4 py-4 text-right">
@@ -185,7 +183,7 @@ export function InboundTable() {
                                                 onClick={() => handleActionClick(parcel)}
                                                 className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700"
                                             >
-                                                Deliver
+                                                Confirm Delivery
                                             </button>
                                         ) : (
                                             <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">

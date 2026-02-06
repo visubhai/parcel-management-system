@@ -9,7 +9,7 @@ export interface BranchObj {
     branchCode: string;
 }
 
-export function useBranches() {
+export function useBranches(scope?: string) {
     const [branches, setBranches] = useState<string[]>([]);
     const [branchObjects, setBranchObjects] = useState<BranchObj[]>([]);
     const [loading, setLoading] = useState(true);
@@ -18,7 +18,7 @@ export function useBranches() {
     const fetchBranches = async () => {
         setLoading(true);
         try {
-            const { data, error: apiError } = await adminService.getAllBranches();
+            const { data, error: apiError } = await adminService.getAllBranches(scope);
 
             if (apiError || !data) throw new Error(apiError?.message || 'Failed to fetch branches');
 
@@ -40,7 +40,7 @@ export function useBranches() {
 
     useEffect(() => {
         fetchBranches();
-    }, []);
+    }, [scope]);
 
     return {
         branches, // Names for UI

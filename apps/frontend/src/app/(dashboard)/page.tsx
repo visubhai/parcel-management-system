@@ -12,6 +12,8 @@ import { parcelService } from "@/frontend/services/parcelService";
 import { useToast } from "@/frontend/components/ui/toast";
 import { mutate } from "swr";
 import { openWhatsApp } from "@/frontend/lib/whatsapp";
+import { PrintBuilty } from "@/frontend/components/booking/PrintBuilty";
+import { useRouter } from "next/navigation";
 
 // Simple ID generator
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -21,6 +23,7 @@ export default function BookingDashboard() {
   const { currentUser } = useBranchStore();
   const { branchObjects } = useBranches();
   const { addToast } = useToast();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -170,7 +173,7 @@ export default function BookingDashboard() {
       costs,
       paymentType,
       remarks,
-      status: "INCOMING"
+      status: "PENDING"
     };
 
     const { data: createdParcel, error } = await parcelService.createBooking(bookingData, currentUser?.id || '') as { data: any, error?: any };
@@ -213,7 +216,7 @@ export default function BookingDashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 pb-20">
+    <div className="max-w-7xl mx-auto px-4 pb-20 print:hidden">
       {/* Shift Summary Bar (Operator Friendly) */}
       <div className="bg-slate-900 text-white p-3 rounded-b-2xl mb-6 flex flex-wrap items-center justify-between shadow-xl shadow-slate-900/10 -mt-6 relative overflow-hidden">
         {/* Abstract Background - Matching Theme */}
@@ -387,17 +390,21 @@ export default function BookingDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {recentBookings.length > 0 ? (
             recentBookings.map((booking) => (
-              <div key={booking.id || booking._id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+              <button
+                key={booking.id || booking._id}
+                onClick={() => router.push(`/reports?lrNumber=${booking.lrNumber}&edit=true`)}
+                className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all text-left w-full group"
+              >
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md">{booking.lrNumber}</span>
+                  <span className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md group-hover:bg-blue-600 group-hover:text-white transition-colors">{booking.lrNumber}</span>
                   <span className="text-[10px] font-bold text-slate-400">{new Date(booking.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
-                <div className="text-sm font-bold text-slate-700 truncate">{booking.receiver?.name}</div>
+                <div className="text-sm font-bold text-slate-700 truncate capitalize">{booking.receiver?.name}</div>
                 <div className="flex justify-between items-center mt-2">
                   <span className="text-xs font-medium text-slate-500">{booking.parcels?.length} Items</span>
                   <span className="text-xs font-black text-slate-800">₹{booking.costs?.total}</span>
                 </div>
-              </div>
+              </button>
             ))
           ) : (
             <div className="col-span-full py-8 text-center text-slate-400 text-sm italic border-2 border-dashed border-slate-200 rounded-xl">
@@ -407,104 +414,24 @@ export default function BookingDashboard() {
         </div>
       </div>
 
-      {/* Hidden Print Receipt for Pre-printed Stationery */}
-      {/* Target area: Middle 3 inches. Header ~2in already printed. Footer also printed. */}
-      {/* Using absolute positioning and inch units for precision */}
-      <div className="hidden print:block fixed inset-0 bg-white z-[9999] overflow-hidden text-black font-sans leading-tight">
-        {/* Spacer for pre-printed header */}
-        <div style={{ height: "1in" }}></div>
-
-        {/* Printable Area Container (height reduced by ~10%, width increased by reducing padding) */}
-        <div className="px-2 relative h-[2.5in]" style={{ fontFamily: "Arial, sans-serif", width: "100%" }}>
-
-          {/* Top Row: LR and Date */}
-          <div className="flex justify-between items-end mb-4 border-b-2 border-black pb-1">
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase font-bold text-gray-500">L.R. Number</span>
-              <span className="text-2xl font-black tracking-widest">{lrNumber}</span>
-            </div>
-            <div className="flex flex-col items-center mx-auto">
-              <span className="text-xl font-bold uppercase border-2 border-black px-4 py-0.5 rounded-md">{paymentType}</span>
-            </div>
-            <div className="flex flex-col text-right">
-              <span className="text-[10px] uppercase font-bold text-gray-500">Booking Date</span>
-              <span className="text-sm font-bold">{new Date().toLocaleString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-            </div>
-          </div>
-
-          {/* From / To Branch Row */}
-          <div className="flex mb-3 text-xs">
-            <div className="w-1/2 pr-2 border-r border-gray-300">
-              <p className="font-bold uppercase text-gray-500 text-[10px]">From Branch</p>
-              <p className="font-bold text-base">{branchObjects.find(b => b._id === fromBranch)?.name?.replace("Branch", "").trim() || 'Head Office'}</p>
-            </div>
-            <div className="w-1/2 pl-2">
-              <p className="font-bold uppercase text-gray-500 text-[10px]">To Branch</p>
-              <p className="font-bold text-base">{branchObjects.find(b => b._id === toBranch)?.name?.replace("Branch", "").trim()}</p>
-            </div>
-          </div>
-
-          {/* Sender / Receiver Row (Grid) */}
-          <div className="grid grid-cols-2 gap-4 mb-3 border border-black rounded-lg">
-            {/* Sender */}
-            <div className="p-2 border-r border-black">
-              <div className="flex justify-between items-baseline mb-1">
-                <span className="text-[10px] font-bold uppercase opacity-60">Sender</span>
-                <span className="text-[10px] font-mono">{sender.mobile}</span>
-              </div>
-              <p className="font-bold text-sm truncate uppercase">{sender.name}</p>
-            </div>
-            {/* Receiver */}
-            <div className="p-2">
-              <div className="flex justify-between items-baseline mb-1">
-                <span className="text-[10px] font-bold uppercase opacity-60">Receiver</span>
-                <span className="text-[10px] font-mono">{receiver.mobile}</span>
-              </div>
-              <p className="font-bold text-sm truncate uppercase">{receiver.name}</p>
-            </div>
-          </div>
-
-          {/* Parcel & Payment Details (Side by Side) */}
-          <div className="flex gap-2 h-[1.2in]">
-            {/* Parcel Table */}
-            <div className="w-[60%] border border-black rounded-lg overflow-hidden flex flex-col">
-              <div className="flex bg-gray-100 border-b border-black text-[10px] font-bold uppercase py-1">
-                <div className="w-12 text-center border-r border-black">Qty</div>
-                <div className="flex-1 px-2 border-r border-black">Description</div>
-                <div className="w-16 text-center">Weight</div>
-              </div>
-              <div className="flex-1 overflow-visible">
-                {parcels.slice(0, 3).map((p, i) => (
-                  <div key={i} className="flex text-xs py-1 border-b border-gray-200 last:border-0">
-                    <div className="w-12 text-center border-r border-gray-200 font-bold">{p.quantity}</div>
-                    <div className="flex-1 px-2 border-r border-gray-200 truncate">{p.itemType}</div>
-                    <div className="w-16 text-center">{p.weight || '-'}</div>
-                  </div>
-                ))}
-                {remarks && (
-                  <div className="text-[10px] italic p-1 border-t border-gray-200 mt-auto bg-gray-50 truncate">
-                    Note: {remarks}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Payment Summary */}
-            <div className="w-[40%] border border-black rounded-lg p-2 flex flex-col justify-between">
-              <div className="space-y-0.5 text-xs">
-                <div className="flex justify-between"><span className="opacity-60">Freight</span> <span className="font-mono">{costs.freight}</span></div>
-                <div className="flex justify-between"><span className="opacity-60">Handling</span> <span className="font-mono">{costs.handling}</span></div>
-                <div className="flex justify-between"><span className="opacity-60">Hamali</span> <span className="font-mono">{costs.hamali}</span></div>
-              </div>
-              <div className="border-t border-black pt-1 flex justify-between items-end">
-                <span className="text-[10px] font-bold uppercase">Total</span>
-                <span className="text-xl font-black">₹{costs.total}</span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
+      {/* Hidden Print Receipt Component */}
+      <PrintBuilty
+        booking={{
+          id: '',
+          lrNumber: lrNumber,
+          fromBranch: fromBranch,
+          toBranch: toBranch,
+          date: new Date().toISOString(),
+          sender: sender,
+          receiver: receiver,
+          parcels: parcels,
+          costs: costs,
+          paymentType: paymentType as any,
+          status: 'Booked',
+          remarks: remarks
+        } as any}
+        branches={branchObjects}
+      />
     </div>
   );
 }

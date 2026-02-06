@@ -59,12 +59,9 @@ export function BookingForm({
     const handleMobileChange = (val: string) => {
         // Only allow numbers
         const numericVal = val.replace(/\D/g, "");
-        // Limit to 15 digits (matching backend)
-        if (numericVal.length <= 15) {
+        // Limit to exactly 10 digits
+        if (numericVal.length <= 10) {
             onChange("mobile", numericVal);
-        } else {
-            // If pasted > 15, take first 15
-            onChange("mobile", numericVal.slice(0, 15));
         }
     };
 

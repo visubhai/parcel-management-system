@@ -75,11 +75,16 @@ export default function LoginPage() {
                 }
                 setSubmitting(false);
             } else {
-                // Successful login
-                // Wait a tiny bit for cookies to propagate before redirecting
+                // Successful login - Set session gate cookie (Session only, will expire on browser close)
+                // Use a more robust cookie string
+                const cookieStr = "login-gate-passed=true; path=/; sameSite=lax" + (window.location.protocol === 'https:' ? '; secure' : '');
+                document.cookie = cookieStr;
+                console.log("🛡️ Login gate cookie set:", cookieStr);
+
+                // Small delay to ensure browser registers the cookie before the hard redirect
                 setTimeout(() => {
                     window.location.href = "/";
-                }, 100);
+                }, 50);
             }
         } catch (err) {
             console.error("Login catch error:", err);
@@ -122,7 +127,12 @@ export default function LoginPage() {
                         <p className="text-green-100/60 text-sm">Manage your shipments efficiently</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="space-y-5"
+                        autoComplete="off"
+                        autoCorrect="off"
+                    >
                         {error && (
                             <div className="p-3 text-center rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-xs animate-in fade-in slide-in-from-top-1">
                                 {error}
@@ -199,12 +209,8 @@ export default function LoginPage() {
                             </button>
                         </div>
 
-                        {/* Extra Options */}
-                        <div className="flex items-center justify-between text-xs px-1">
-                            <label className="flex items-center gap-2 text-white/60 cursor-pointer hover:text-white transition-colors">
-                                <input type="checkbox" className="w-4 h-4 rounded border-white/10 bg-white/5 checked:bg-green-500 transition-all cursor-pointer" />
-                                Remember me
-                            </label>
+                        {/* Forgot Password Link only */}
+                        <div className="flex justify-end text-xs px-1">
                             <a href="#" className="text-green-400 hover:text-green-300 transition-colors font-medium">Forgot password?</a>
                         </div>
 

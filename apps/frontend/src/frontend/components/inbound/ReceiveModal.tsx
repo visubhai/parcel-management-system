@@ -19,7 +19,7 @@ export function ReceiveModal({ parcel, isOpen, onClose, onConfirm }: ReceiveModa
     if (!isOpen) return null;
 
     const isToPay = parcel.paymentStatus === "To Pay";
-    const isDeliverAction = parcel.status === "PENDING" || parcel.status === "INCOMING"; // If PENDING or INCOMING, we are Delivering
+    const isDeliverAction = true; // Simplified flow: always delivering from inbound
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
@@ -63,64 +63,58 @@ export function ReceiveModal({ parcel, isOpen, onClose, onConfirm }: ReceiveModa
                         </div>
                     </div>
 
-                    {isDeliverAction ? (
-                        // Delivery Context
-                        <div className="space-y-4">
-                            {isToPay ? (
-                                <div className="bg-red-50 border border-red-100 rounded-lg p-4">
-                                    <p className="text-sm text-red-800 font-bold flex items-center gap-2">
-                                        ⚠️ Collect ₹{parcel.totalAmount} cash from customer.
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4">
-                                    <p className="text-sm text-emerald-800 font-medium flex items-center gap-2">
-                                        <Check className="w-4 h-4" /> Payment Pre-paid. Safe to deliver.
-                                    </p>
-                                </div>
-                            )}
+                    {/* Delivery Context */}
+                    <div className="space-y-4">
+                        {isToPay ? (
+                            <div className="bg-red-50 border border-red-100 rounded-lg p-4">
+                                <p className="text-sm text-red-800 font-bold flex items-center gap-2">
+                                    ⚠️ Collect ₹{parcel.totalAmount} cash from customer.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4">
+                                <p className="text-sm text-emerald-800 font-medium flex items-center gap-2">
+                                    <Check className="w-4 h-4" /> Payment Pre-paid. Safe to deliver.
+                                </p>
+                            </div>
+                        )}
 
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 uppercase">Delivery Remarks</label>
+                            <textarea
+                                value={remark}
+                                onChange={(e) => setRemark(e.target.value)}
+                                placeholder="Enter delivery details (e.g., person name, ID, etc.)"
+                                className="w-full h-24 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase">Delivery Remarks</label>
-                                <textarea
-                                    value={remark}
-                                    onChange={(e) => setRemark(e.target.value)}
-                                    placeholder="Enter delivery details (e.g., person name, ID, etc.)"
-                                    className="w-full h-24 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                                <label className="text-xs font-bold text-slate-500 uppercase">Collected By (Name)</label>
+                                <input
+                                    type="text"
+                                    value={collectedBy}
+                                    onChange={(e) => setCollectedBy(e.target.value)}
+                                    placeholder="Name of person"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                                 />
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase">Collected By (Name)</label>
-                                    <input
-                                        type="text"
-                                        value={collectedBy}
-                                        onChange={(e) => setCollectedBy(e.target.value)}
-                                        placeholder="Name of person"
-                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase">Mobile Number</label>
-                                    <input
-                                        type="tel"
-                                        value={collectedByMobile}
-                                        onChange={(e) => setCollectedByMobile(e.target.value)}
-                                        placeholder="Mobile Number"
-                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                                    />
-                                </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase">Mobile Number</label>
+                                <input
+                                    type="tel"
+                                    value={collectedByMobile}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                                        setCollectedByMobile(val);
+                                    }}
+                                    placeholder="Mobile Number"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                />
                             </div>
                         </div>
-                    ) : (
-                        // Receive Context (In Transit -> Arrived)
-                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-                            <p className="text-sm text-blue-800 font-medium font-bold">
-                                Confirm physical receipt of goods at branch.
-                            </p>
-                        </div>
-                    )}
+                    </div>
                 </div>
 
                 {/* Footer */}
@@ -135,13 +129,10 @@ export function ReceiveModal({ parcel, isOpen, onClose, onConfirm }: ReceiveModa
                         onClick={() => onConfirm(remark, collectedBy, collectedByMobile)}
                         className={cn(
                             "flex-1 py-2.5 rounded-lg text-sm font-bold text-primary-foreground shadow-lg hover:scale-[1.02] transition-all",
-                            (isDeliverAction && isToPay) ? "bg-destructive hover:bg-destructive/90" : "bg-primary hover:bg-primary/90"
+                            isToPay ? "bg-destructive hover:bg-destructive/90" : "bg-primary hover:bg-primary/90"
                         )}
                     >
-                        {isDeliverAction
-                            ? (isToPay ? "Collect & Deliver" : "Confirm Delivery")
-                            : "Confirm Receipt"
-                        }
+                        {isToPay ? "Collect & Deliver" : "Confirm Delivery"}
                     </button>
                 </div>
             </div>

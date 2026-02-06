@@ -35,7 +35,7 @@ export interface IBooking extends Document {
     collectedByMobile?: string;
     deliveredAt?: Date;
     deliveredBy?: mongoose.Types.ObjectId;
-    status: 'INCOMING' | 'PENDING' | 'DELIVERED' | 'CANCELLED' | 'Booked' | 'In Transit' | 'Arrived';
+    status: 'BOOKED' | 'PENDING' | 'DELIVERED' | 'CANCELLED';
     editHistory: Array<{
         oldRemark?: string;
         newRemark: string;
@@ -54,12 +54,12 @@ const BookingSchema = new Schema<IBooking>({
     receiverBranchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
     sender: {
         name: { type: String, required: true },
-        mobile: { type: String, required: true },
+        mobile: { type: String, required: true, match: /^\d{10}$/ },
         email: { type: String }
     },
     receiver: {
         name: { type: String, required: true },
-        mobile: { type: String, required: true },
+        mobile: { type: String, required: true, match: /^\d{10}$/ },
         email: { type: String }
     },
     parcels: [{
@@ -78,13 +78,13 @@ const BookingSchema = new Schema<IBooking>({
     remarks: { type: String, required: false },
     deliveredRemark: { type: String, required: false },
     collectedBy: { type: String, required: false },
-    collectedByMobile: { type: String, required: false },
+    collectedByMobile: { type: String, required: false, match: /^\d{10}$/ },
     deliveredAt: { type: Date },
     deliveredBy: { type: Schema.Types.ObjectId, ref: 'User' },
     status: {
         type: String,
-        enum: ['INCOMING', 'PENDING', 'DELIVERED', 'CANCELLED', 'Booked', 'In Transit', 'Arrived'],
-        default: 'INCOMING'
+        enum: ['BOOKED', 'PENDING', 'DELIVERED', 'CANCELLED'],
+        default: 'PENDING'
     },
     editHistory: [{
         oldRemark: String,

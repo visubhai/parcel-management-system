@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt';
 
 export async function middleware(req: NextRequest) {
+    console.log(`\n🔍 NEXT_MW: ${req.method} ${req.nextUrl.pathname}`);
     const res = NextResponse.next()
 
     // 1. ADD SECURITY HEADERS
@@ -41,19 +42,24 @@ export async function middleware(req: NextRequest) {
     });
 
     const isLoginPage = req.nextUrl.pathname.startsWith('/login');
+    const gateCookie = req.cookies.get('login-gate-passed');
+    const hasPassedGate = gateCookie?.value === 'true';
+    const referer = req.headers.get('referer') || 'no-referer';
 
-    console.log(`🛡️ Middleware: ${req.nextUrl.pathname} | Token: ${!!token} | Secret: ${!!secret}`);
+    console.log(`\n🛡️  LOGGING PATH: ${req.nextUrl.pathname}`);
+    console.log(`🛡️  GATE: ${hasPassedGate} | TOKEN: ${!!token}`);
 
-    // If NOT logged in and trying to access protected route (Home), redirect to Login
-    if (!token && !isLoginPage) {
-        console.log("🛡️ Redirecting to login (No token)");
+    // STRICT SESSION GATE
+    // If not on login page and haven't passed the session gate -> Redirect to /login
+    if (!isLoginPage && !hasPassedGate) {
+        console.log("🛡️ BLOCKING: Missing Session Gate. Redirecting to /login.");
         return NextResponse.redirect(new URL('/login', req.url));
     }
 
-    // If Logged in and trying to access Login, redirect to key (Dashboard)
-    if (token && isLoginPage) {
-        console.log("🛡️ Redirecting to dashboard (Logged in)");
-        return NextResponse.redirect(new URL('/', req.url));
+    // Standard Auth check: If not login page and no token -> Redirect to /login
+    if (!isLoginPage && !token) {
+        console.log("🛡️ BLOCKING: No valid session token. Redirecting to /login.");
+        return NextResponse.redirect(new URL('/login', req.url));
     }
 
     return res
@@ -66,9 +72,16 @@ export const config = {
          * - api (API routes)
          * - _next/static (static files)
          * - _next/image (image optimization files)
-         * - images (public images folder) - ADDED THIS
+         * - images (public images folder)
          * - favicon.ico (favicon file)
          */
-        '/((?!api|_next/static|_next/image|images|favicon.ico).*)',
+        '/',
+        '/dashboard/:path*',
+        '/reports/:path*',
+        '/inbound/:path*',
+        '/admin/:path*',
+        '/settings/:path*',
+        '/login',
+        '/print/:path*'
     ],
 }

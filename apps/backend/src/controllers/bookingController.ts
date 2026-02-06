@@ -17,14 +17,32 @@ export const getBookings = catchAsync(async (req: AuthRequest, res: Response) =>
 
     const query: any = {};
 
-    // Requirement 3: Strong Branch Data Isolation
-    // Branch users can only see parcels where they are the sender or receiver.
-    // This is automatic and does not require extra permissions.
+    // Requirement Update: Multi-branch visibility for specific branches in Reports
     if (user.role === 'BRANCH') {
-        query.$or = [
-            { senderBranchId: user.branchId },
-            { receiverBranchId: user.branchId }
-        ];
+        const userBranch = await Branch.findById(user.branchId);
+        const branchName = userBranch?.name?.toLowerCase();
+
+        if (branchName === 'hirabagh') {
+            // Global Access: No query restriction
+        } else if (branchName === 'bapunagar') {
+            // Special Case: Bapunagar sees 4 specific branches
+            const allowedNames = ['bapunagar', 'amdavad-ctm', 'paldi', 'setelite'];
+            const allowedBranches = await Branch.find({
+                name: { $in: allowedNames.map(n => new RegExp(`^${n}$`, 'i')) }
+            }).select('_id');
+            const allowedIds = allowedBranches.map(b => b._id);
+
+            query.$or = [
+                { senderBranchId: { $in: allowedIds } },
+                { receiverBranchId: { $in: allowedIds } }
+            ];
+        } else {
+            // Standard Case: Only own branch
+            query.$or = [
+                { senderBranchId: user.branchId },
+                { receiverBranchId: user.branchId }
+            ];
+        }
     }
 
     if (fromBranch) {
@@ -138,7 +156,7 @@ export const createBooking = catchAsync(async (req: AuthRequest, res: Response) 
         lrNumber,
         senderBranchId: body.fromBranch,
         receiverBranchId: body.toBranch,
-        status: 'INCOMING' // Requirement 2: Initial status
+        status: 'PENDING' // Requirement: must go to pending initially
     });
 
     if (body.paymentType === 'Paid') {
@@ -232,6 +250,14 @@ export const updateBooking = catchAsync(async (req: AuthRequest, res: Response) 
 
     const oldBooking = await Booking.findById(id);
     if (!oldBooking) throw new AppError("Booking not found", 404);
+
+    // Requirement: Price and Parcel details must remain same after booking.
+    delete body.costs;
+    delete body.parcels;
+    delete body.paymentType;
+    delete body.lrNumber;
+    delete body.fromBranch;
+    delete body.toBranch;
 
     // track history if remarks or deliveredRemark changed
     const editHistory = [...(oldBooking.editHistory || [])];

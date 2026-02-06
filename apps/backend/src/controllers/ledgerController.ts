@@ -1,6 +1,8 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import Transaction from '../models/Transaction';
+import Branch from '../models/Branch';
+import mongoose from 'mongoose';
 import { catchAsync, AppError } from '../middleware/errorHandler';
 
 export const addTransaction = catchAsync(async (req: AuthRequest, res: Response) => {
@@ -24,18 +26,41 @@ export const getTransactions = catchAsync(async (req: AuthRequest, res: Response
     const { branchId, date } = req.query;
     const user = req.user;
 
-    let targetBranchId = branchId;
+    const userBranch = await Branch.findById(user.branchId);
+    const branchName = userBranch?.name?.toLowerCase();
 
-    // Restriction: Branch users can ONLY see their own branch data
+    // Determine Allowed Branch IDs for filter validation
+    let allowedBranchIds: string[] = [];
     if (user.role === 'BRANCH') {
-        targetBranchId = user.branchId.toString();
+        if (branchName === 'hirabagh') {
+            // All branches allowed
+        } else if (branchName === 'bapunagar') {
+            const allowedNames = ['bapunagar', 'amdavad-ctm', 'paldi', 'setelite'];
+            const branches = await Branch.find({
+                name: { $in: allowedNames.map(n => new RegExp(`^${n}$`, 'i')) }
+            }).select('_id');
+            allowedBranchIds = branches.map(b => b._id.toString());
+        } else {
+            allowedBranchIds = [user.branchId.toString()];
+        }
     }
 
-    if (!targetBranchId) {
+    let targetBranchId = branchId as string;
+
+    // Enforce Restriction
+    if (user.role === 'BRANCH' && branchName !== 'hirabagh') {
+        if (!targetBranchId || !allowedBranchIds.includes(targetBranchId)) {
+            // If invalid or missing, default to their primary branch
+            targetBranchId = user.branchId.toString();
+        }
+    }
+
+    if (!targetBranchId && user.role === 'BRANCH' && branchName !== 'hirabagh') {
         throw new AppError("Branch ID required", 400);
     }
 
-    const query: any = { branchId: targetBranchId };
+    const query: any = {};
+    if (targetBranchId) query.branchId = targetBranchId;
 
     if (date) {
         const startOfDay = new Date(date as string);

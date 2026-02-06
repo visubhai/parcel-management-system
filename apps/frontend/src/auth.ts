@@ -14,17 +14,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             async authorize(credentials) {
                 try {
                     // Resolve absolute API URL for server-side fetch in NextAuth
-                    const base = process.env.BACKEND_URL ||
-                        process.env.INTERNAL_API_URL ||
-                        process.env.NEXT_PUBLIC_API_URL ||
-                        'http://localhost:3001';
+                    let API_URL = process.env.BACKEND_URL ||
+                        process.env.INTERNAL_API_URL;
 
-                    // Ensure it's absolute and points to /api
-                    let API_URL = base;
-                    if (API_URL.startsWith('/')) {
-                        // If it's relative, we are in trouble on server, but let's try to infer
-                        API_URL = `https://${process.env.VERCEL_URL}${base}`;
+                    if (!API_URL) {
+                        const nextPublicApi = process.env.NEXT_PUBLIC_API_URL;
+                        if (nextPublicApi && !nextPublicApi.startsWith('/')) {
+                            API_URL = nextPublicApi;
+                        } else if (process.env.VERCEL_URL) {
+                            API_URL = `https://${process.env.VERCEL_URL}/api`;
+                        } else {
+                            API_URL = 'http://localhost:3001/api';
+                        }
                     }
+
                     if (!API_URL.endsWith('/api')) API_URL = `${API_URL}/api`;
 
                     console.log("🚀 AUTH SERVICE: Attempting login at:", `${API_URL}/auth/login`);
@@ -104,6 +107,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }
             return session;
         }
+    },
+    cookies: {
+        sessionToken: {
+            name: `next-auth.session-token`,
+            options: {
+                httpOnly: true,
+                sameSite: "lax",
+                path: "/",
+                secure: process.env.NODE_ENV === "production",
+            },
+        },
     },
     pages: {
         signIn: '/login',

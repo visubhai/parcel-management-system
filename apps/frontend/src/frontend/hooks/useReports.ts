@@ -32,7 +32,7 @@ export function useReports() {
     };
 
     const [filters, setFilters] = useState<FilterState>({
-        startDate: getLocalDateString(new Date(new Date().getFullYear(), new Date().getMonth(), 1)), // First day of month
+        startDate: getLocalDateString(new Date()), // Default to Today
         endDate: getLocalDateString(new Date()),
         fromBranch: 'All',
         toBranch: 'All',
@@ -107,11 +107,23 @@ export function useReports() {
     const processedData = useMemo(() => {
         let data = [...bookings];
 
-        // 1. RBAC Filtering: If not SUPER_ADMIN, user can only see data related to their branch
-        if (currentUser && currentUser.role !== 'SUPER_ADMIN' && currentUser.branch) {
-            data = data.filter(item =>
-                item.fromBranch === currentUser.branch || item.toBranch === currentUser.branch
-            );
+        // 1. RBAC Filtering: Re-introduce branch restriction but allow exceptions
+        if (currentUser && currentUser.role === 'BRANCH' && currentUser.branch) {
+            const bName = currentUser.branch.toLowerCase();
+            const allowedForBapunagar = ['bapunagar', 'amdavad-ctm', 'paldi', 'setelite'];
+
+            if (bName === 'hirabagh') {
+                // No filters for Hirabagh
+            } else if (bName === 'bapunagar') {
+                data = data.filter(item =>
+                    allowedForBapunagar.includes(item.fromBranch.toLowerCase()) ||
+                    allowedForBapunagar.includes(item.toBranch.toLowerCase())
+                );
+            } else {
+                data = data.filter(item =>
+                    item.fromBranch === currentUser.branch || item.toBranch === currentUser.branch
+                );
+            }
         }
 
         // 1. Filtering (Client side refinement on fetched chunk)
@@ -129,31 +141,20 @@ export function useReports() {
                 if (!branches.includes(item.toBranch)) return false;
             }
 
-            // Payment Type
-            if (filters.paymentType !== 'All' && item.paymentType !== filters.paymentType) return false;
+            // Payment Type - Optional if we want to keep logic but we removed UI
+            // Status - Optional if we want to keep logic but we removed UI
 
-            // Status
-            if (filters.status !== 'All') {
-                if (normalizeStatus(item.status) !== normalizeStatus(filters.status)) return false;
-            }
-
-            // Advanced Filters
-            if (filters.itemType !== 'All') {
-                const hasItem = item.parcels.some((p: any) => p.itemType === filters.itemType);
-                if (!hasItem) return false;
-            }
-
-            if (filters.minAmount && item.costs.total < Number(filters.minAmount)) return false;
-            if (filters.maxAmount && item.costs.total > Number(filters.maxAmount)) return false;
-
-            // Search (Case insensitive text search)
+            // Search Query Filter (on the fetched range)
             if (filters.searchQuery) {
                 const query = filters.searchQuery.toLowerCase();
-                const match =
+                const matches =
                     item.lrNumber.toLowerCase().includes(query) ||
                     item.sender.name.toLowerCase().includes(query) ||
-                    item.receiver.name.toLowerCase().includes(query);
-                if (!match) return false;
+                    item.receiver.name.toLowerCase().includes(query) ||
+                    item.sender.mobile.includes(query) ||
+                    item.receiver.mobile.includes(query);
+
+                if (!matches) return false;
             }
 
             return true;

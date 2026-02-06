@@ -27,10 +27,11 @@ export const adminService = {
         }
     },
 
-    async getAllBranches(): Promise<ServiceResponse<any[]>> {
+    async getAllBranches(scope?: string): Promise<ServiceResponse<any[]>> {
         try {
-            console.log("Fetching branches from:", `${API_URL}/branches`);
-            const res = await fetchApi('/branches');
+            const url = scope ? `/branches?scope=${scope}` : '/branches';
+            console.log("Fetching branches from:", `${API_URL}${url}`);
+            const res = await fetchApi(url);
             if (!res.ok) {
                 const errorData = await res.json().catch(() => ({}));
                 throw new Error(parseError(errorData) || `HTTP Error ${res.status}`);

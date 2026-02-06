@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Save, Printer, Lock, MessageCircle, PlusCircle } from "lucide-react";
+import { Save, Printer, Lock, MessageCircle, PlusCircle, X } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { PaymentStatus } from "@/shared/types";
 
@@ -19,9 +19,11 @@ interface PaymentBoxProps {
     onWhatsApp?: () => void;
     onReset?: () => void;
     saveLabel?: string;
+    onPrint?: () => void;
+    currentStatus?: string;
 }
 
-export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked, onWhatsApp, onReset, saveLabel }: PaymentBoxProps) {
+export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked, onWhatsApp, onReset, saveLabel, onPrint, currentStatus }: PaymentBoxProps) {
     const freightRef = useRef<HTMLInputElement>(null);
     const saveButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -50,18 +52,25 @@ export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked, onW
         }
     };
 
+    // Helper to format status for display
+    const formatStatus = (s: string) => s.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+
     return (
         <div className={cn(
-            "p-6 rounded-[24px] border-2 shadow-xl shadow-slate-200/50 sticky top-6 backdrop-blur-md transition-all",
-            isLocked ? "border-green-200 bg-green-50/80" : "bg-white/90 border-slate-100"
+            "p-6 rounded-[32px] border-2 shadow-xl shadow-slate-200/50 sticky top-6 backdrop-blur-md transition-all",
+            isLocked ? "border-emerald-100 bg-emerald-50/50" : "bg-white border-slate-100 shadow-slate-100/50"
         )}>
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
                 <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
                     Payment Gateway
                 </h3>
                 {isLocked && (
-                    <span className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase tracking-wide">
-                        <Lock className="w-3.5 h-3.5" /> Booked
+                    <span className={cn(
+                        "flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide",
+                        currentStatus?.toUpperCase() === 'CANCELLED' ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-700"
+                    )}>
+                        {currentStatus?.toUpperCase() === 'CANCELLED' ? <X className="w-3 h-3" /> : <Lock className="w-3.5 h-3.5" />}
+                        {formatStatus(currentStatus || "Booked")}
                     </span>
                 )}
             </div>
@@ -143,15 +152,15 @@ export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked, onW
                     <button
                         ref={saveButtonRef}
                         onClick={onSave}
-                        disabled={isLocked || costs.total <= 0}
+                        disabled={(!saveLabel && isLocked) || costs.total <= 0}
                         className={cn(
                             "w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-white transition-all shadow-xl text-sm uppercase tracking-widest h-14",
-                            isLocked
+                            (!saveLabel && isLocked)
                                 ? "bg-slate-800 cursor-not-allowed shadow-none"
                                 : "bg-slate-900 hover:bg-black active:scale-[0.98]"
                         )}
                     >
-                        {isLocked ? (
+                        {(!saveLabel && isLocked) ? (
                             <>
                                 <Printer size={18} /> Print LR
                             </>
@@ -179,6 +188,16 @@ export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked, onW
                                 <PlusCircle size={18} />
                                 New Booking
                             </button>
+
+                            {onPrint && (
+                                <button
+                                    onClick={onPrint}
+                                    className="w-full py-4 bg-slate-100 text-slate-800 font-black rounded-2xl transition-all flex items-center justify-center gap-2 border-2 border-slate-200 hover:bg-slate-200 active:scale-[0.98] text-sm uppercase tracking-widest mt-2"
+                                >
+                                    <Printer size={18} />
+                                    Re-print Builty
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>

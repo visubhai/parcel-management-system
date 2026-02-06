@@ -15,7 +15,7 @@ export function ReportCharts({ data }: ReportChartsProps) {
     const revenueData = useMemo(() => {
         const map = new Map();
         data.forEach(item => {
-            if (item.status === 'CANCELLED' || item.status === 'Cancelled') return;
+            if (item.status === 'CANCELLED') return;
             const date = new Date(item.date);
             const key = `${date.toLocaleString('default', { month: 'short' })} ${date.getDate()}`; // Showing Daily trend for filtered range
             map.set(key, (map.get(key) || 0) + item.costs.total);
@@ -28,16 +28,19 @@ export function ReportCharts({ data }: ReportChartsProps) {
     // 2. Status Counts
     const statusData = useMemo(() => {
         const counts: Record<string, number> = {
-            'Booked': 0, 'In Transit': 0, 'Arrived': 0, 'Delivered': 0, 'Cancelled': 0,
-            'INCOMING': 0, 'PENDING': 0, 'DELIVERED': 0, 'CANCELLED': 0, 'ARRIVED': 0, 'IN_TRANSIT': 0
+            'BOOKED': 0, 'PENDING': 0, 'DELIVERED': 0, 'CANCELLED': 0
         };
         data.forEach(item => {
-            if (counts[item.status] !== undefined) counts[item.status]++;
-            // Map legacy/title case to display if needed? 
-            // For now, charts will show whatever key is incremented.
+            const s = item.status?.toUpperCase();
+            if (s && counts[s] !== undefined) counts[s]++;
+            // Map legacy for chart compatibility
+            else if (s === 'INCOMING' || s === 'ARRIVED' || s === 'IN_TRANSIT') counts['PENDING']++;
         });
         // Filter out zero counts to keep chart clean
-        return Object.entries(counts).filter(([, val]) => val > 0).map(([name, value]) => ({ name, value }));
+        return Object.entries(counts).filter(([, val]) => val > 0).map(([name, value]) => ({
+            name: name.charAt(0) + name.slice(1).toLowerCase(),
+            value
+        }));
     }, [data]);
 
     return (

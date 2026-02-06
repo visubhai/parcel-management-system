@@ -55,26 +55,18 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
                         return { ...prev, fromBranch: userBranch, toBranch: 'All' };
                     }
                     if (key === 'toBranch') {
-                        // User cleared "To" -> Reset to "All" (Outgoing mode)
-                        // But verifying consistency: if From is Foreign, To CANNOT be All.
-                        const currentFrom = prev.fromBranch; // Use previous state since we haven't changed From
-                        // Actually, if we are changing To, From is stable.
+                        const currentFrom = prev.fromBranch;
                         const fromArr = toArray(currentFrom);
                         const isFromForeign = fromArr.length !== 1 || fromArr[0] !== userBranch;
 
                         if (isFromForeign) {
-                            // If From is Foreign, To must remain Home. Can't set to All.
-                            // So we force it to Home.
                             return { ...prev, toBranch: userBranch };
                         }
-                        // Else (From is Home), we can set To to All.
                         return { ...prev, toBranch: 'All' };
                     }
                 }
 
                 const newFilters = { ...prev, [key]: newVal };
-
-                // Determine Foreign-ness based on proposed values
                 const currentFrom = key === 'fromBranch' ? newVal : prev.fromBranch;
                 const currentTo = key === 'toBranch' ? newVal : prev.toBranch;
 
@@ -84,25 +76,15 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
                 const toArr = toArray(currentTo);
                 const isToForeign = toArr.length !== 1 || toArr[0] !== userBranch;
 
-                // Case 1: Changing FROM branch
-                if (key === 'fromBranch') {
-                    if (isFromForeign) {
-                        // If From is Foreign, To MUST be My Branch
-                        newFilters.toBranch = userBranch;
-                    }
+                if (key === 'fromBranch' && isFromForeign) {
+                    newFilters.toBranch = userBranch;
                 }
-
-                // Case 2: Changing TO branch
-                if (key === 'toBranch') {
-                    if (isToForeign) {
-                        // If To is Foreign, From MUST be My Branch
-                        newFilters.fromBranch = userBranch;
-                    }
+                if (key === 'toBranch' && isToForeign) {
+                    newFilters.fromBranch = userBranch;
                 }
                 return newFilters;
             }
 
-            // Non-restricted behavior
             return { ...prev, [key]: newVal };
         });
     };
@@ -113,25 +95,26 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
 
             // STRICT BRANCH LOCKING LOGIC for Branch Users
             if (isBranchRestricted && userBranch) {
-                // Case 1: Changing FROM branch
-                if (key === 'fromBranch') {
-                    // If From is NOT my branch (e.g. "All" or "Surat"), To MUST be my branch
-                    if (value !== userBranch) {
-                        newFilters.toBranch = userBranch;
-                    }
-                    // If From IS my branch, To can be anything (keep existing or reset? Keep existing is fine)
+                if (key === 'fromBranch' && value !== userBranch) {
+                    newFilters.toBranch = userBranch;
                 }
-
-                // Case 2: Changing TO branch
-                if (key === 'toBranch') {
-                    // If To is NOT my branch, From MUST be my branch
-                    if (value !== userBranch) {
-                        newFilters.fromBranch = userBranch;
-                    }
+                if (key === 'toBranch' && value !== userBranch) {
+                    newFilters.fromBranch = userBranch;
                 }
             }
             return newFilters;
         });
+    };
+
+    const handleQuickDate = (daysAgo: number) => {
+        const date = new Date();
+        date.setDate(date.getDate() - daysAgo);
+        const dateStr = date.toISOString().split('T')[0];
+        setFilters(prev => ({
+            ...prev,
+            startDate: dateStr,
+            endDate: dateStr
+        }));
     };
 
     const clearFilters = () => {
@@ -143,59 +126,107 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
             itemType: 'All',
             minAmount: '',
             maxAmount: '',
+            startDate: new Date().toISOString().split('T')[0],
+            endDate: new Date().toISOString().split('T')[0],
             // Don't reset branch if restricted
-            fromBranch: isBranchRestricted ? prev.fromBranch : 'All',
+            fromBranch: isBranchRestricted ? (userBranch || 'All') : 'All',
             toBranch: 'All'
         }));
     };
 
     return (
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4 sticky top-0 z-10">
-            <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-end">
 
                 {/* Search Bar */}
                 <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Search by LR No, Sender, Receiver..."
-                        value={filters.searchQuery}
-                        onChange={(e) => handleChange('searchQuery', e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
-                    />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Search Record</span>
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Search by LR No, Sender, Receiver..."
+                            value={filters.searchQuery}
+                            onChange={(e) => handleChange('searchQuery', e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
+                        />
+                    </div>
+                </div>
+
+                {/* Quick Date Menu */}
+                <div className="flex flex-col gap-1 min-w-[320px]">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Quick Reports</span>
+                    <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-lg border border-slate-200">
+                        <button
+                            onClick={() => handleQuickDate(0)}
+                            className={cn(
+                                "flex-1 px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-md transition-all",
+                                (filters.startDate === filters.endDate && filters.startDate === new Date().toISOString().split('T')[0])
+                                    ? "bg-white text-blue-600 shadow-sm"
+                                    : "text-slate-500 hover:text-slate-700"
+                            )}
+                        >
+                            Today
+                        </button>
+                        <button
+                            onClick={() => handleQuickDate(1)}
+                            className={cn(
+                                "flex-1 px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-md transition-all",
+                                (filters.startDate === filters.endDate && filters.startDate === new Date(Date.now() - 86400000).toISOString().split('T')[0])
+                                    ? "bg-white text-blue-600 shadow-sm"
+                                    : "text-slate-500 hover:text-slate-700"
+                            )}
+                        >
+                            Yesterday
+                        </button>
+                        <button
+                            onClick={() => handleQuickDate(2)}
+                            className={cn(
+                                "flex-1 px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-md transition-all",
+                                (filters.startDate === filters.endDate && filters.startDate === new Date(Date.now() - 172800000).toISOString().split('T')[0])
+                                    ? "bg-white text-blue-600 shadow-sm"
+                                    : "text-slate-500 hover:text-slate-700"
+                            )}
+                        >
+                            Ereyesterday
+                        </button>
+                    </div>
                 </div>
 
                 {/* Date Range */}
-                <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
-                    <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase">From</span>
-                        <input
-                            type="date"
-                            value={filters.startDate}
-                            onChange={(e) => handleChange('startDate', e.target.value)}
-                            max={filters.endDate}
-                            className="pl-12 pr-2 py-1.5 bg-transparent text-sm font-bold text-slate-700 outline-none w-36"
-                        />
-                    </div>
-                    <span className="text-slate-300">|</span>
-                    <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase">To</span>
-                        <input
-                            type="date"
-                            value={filters.endDate}
-                            onChange={(e) => handleChange('endDate', e.target.value)}
-                            min={filters.startDate}
-                            className="pl-8 pr-2 py-1.5 bg-transparent text-sm font-bold text-slate-700 outline-none w-32"
-                        />
+                <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Custom Period</span>
+                    <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase">From</span>
+                            <input
+                                type="date"
+                                value={filters.startDate}
+                                onChange={(e) => handleChange('startDate', e.target.value)}
+                                max={filters.endDate}
+                                className="pl-12 pr-2 py-1.5 bg-transparent text-sm font-bold text-slate-700 outline-none w-36"
+                            />
+                        </div>
+                        <span className="text-slate-300">|</span>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase">To</span>
+                            <input
+                                type="date"
+                                value={filters.endDate}
+                                onChange={(e) => handleChange('endDate', e.target.value)}
+                                min={filters.startDate}
+                                className="pl-8 pr-2 py-1.5 bg-transparent text-sm font-bold text-slate-700 outline-none w-32"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Advanced Filters Row */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-4">
 
                 {/* Branch Selectors */}
-                <div className="w-64">
+                <div className="w-72">
                     <span className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Origin (From)</span>
                     <MultiSelect
                         options={branchOptions}
@@ -205,7 +236,7 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
                     />
                 </div>
 
-                <div className="w-64">
+                <div className="w-72">
                     <span className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Destination (To)</span>
                     <MultiSelect
                         options={branchOptions}
@@ -215,73 +246,13 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
                     />
                 </div>
 
-                {/* Status & Payment */}
-                {hasPaymentAccess && (
-                    <select
-                        value={filters.paymentType}
-                        onChange={(e) => handleChange('paymentType', e.target.value)}
-                        className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 hover:border-slate-300"
-                    >
-                        <option value="All">All Payments</option>
-                        <option value="Paid">Paid</option>
-                        <option value="To Pay">To Pay</option>
-                    </select>
-                )}
-
-                <select
-                    value={filters.status}
-                    onChange={(e) => handleChange('status', e.target.value)}
-                    className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 hover:border-slate-300"
-                >
-                    <option value="All">All Statuses</option>
-                    <option value="In Transit">In Transit</option>
-                    <option value="Arrived">Arrived</option>
-                    <option value="Delivered">Delivered</option>
-                    <option value="Cancelled">Cancelled</option>
-                </select>
-
-                {/* Advanced: Item Type */}
-                <select
-                    value={filters.itemType}
-                    onChange={(e) => handleChange('itemType', e.target.value)}
-                    className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 hover:border-slate-300"
-                >
-                    <option value="All">All Item Types</option>
-                    <option value="White Sack">White Sack</option>
-                    <option value="Box">Box</option>
-                    <option value="Packet">Packet</option>
-                    <option value="Industrial Part">Industrial Part</option>
-                    <option value="Electronics">Electronics</option>
-                </select>
-
-                {/* Advanced: Amount Range */}
-                <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-slate-200">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">Min ₹</span>
-                    <input
-                        type="number"
-                        value={filters.minAmount}
-                        onChange={(e) => handleChange('minAmount', e.target.value)}
-                        placeholder="0"
-                        className="w-16 text-sm font-bold text-slate-700 outline-none"
-                    />
-                    <span className="text-slate-300 px-1">-</span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">Max ₹</span>
-                    <input
-                        type="number"
-                        value={filters.maxAmount}
-                        onChange={(e) => handleChange('maxAmount', e.target.value)}
-                        placeholder="10000"
-                        className="w-20 text-sm font-bold text-slate-700 outline-none"
-                    />
-                </div>
-
                 {/* Reset Button */}
                 <button
                     onClick={clearFilters}
-                    className="ml-auto flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="ml-auto flex items-center gap-1.5 px-3 py-2 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border-2 border-dashed border-transparent hover:border-red-100"
                 >
                     <X className="w-3.5 h-3.5" />
-                    Clear Filters
+                    Reset All
                 </button>
             </div>
         </div>

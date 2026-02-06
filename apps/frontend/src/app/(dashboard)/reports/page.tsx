@@ -8,6 +8,7 @@ import { ReportTable } from "@/frontend/components/reports/ReportTable";
 import { ReportCharts } from "@/frontend/components/reports/ReportCharts";
 import { ExportButtons } from "@/frontend/components/reports/ExportButtons";
 import { Branch } from "@/shared/types";
+import { useSearchParams } from "next/navigation";
 
 const ReportSummary = ({ stats }: { stats: any }) => (
     <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
@@ -44,12 +45,12 @@ import { PrintReportTable } from "@/frontend/components/reports/PrintReportTable
 
 export default function ReportsPage() {
     const { currentUser } = useBranchStore();
-    const { branches: allBranches } = useBranches();
+    const { branches: availableBranches } = useBranches('reports');
+    const searchParams = useSearchParams();
+    const lrFromUrl = searchParams.get('lrNumber');
+    const autoEdit = searchParams.get('edit') === 'true';
 
     // Data loaded by useReports internal SWR
-
-
-    // Restore useReports hook
     const {
         data,
         allFilteredData,
@@ -60,33 +61,30 @@ export default function ReportsPage() {
         sortConfig, handleSort, mutate, isLoading
     } = useReports();
 
-    // Determine available branches based on Role
-    const availableBranches = currentUser?.role === 'SUPER_ADMIN'
-        ? allBranches
-        : (currentUser?.allowedBranches || []);
-
-    // Auto-select branch for restricted users
+    // Sync search from URL
     useEffect(() => {
-        if (currentUser?.role !== 'SUPER_ADMIN' && availableBranches.length > 0) {
-            // If filters.fromBranch is "All" or is not in the allowed list
+        if (lrFromUrl && filters.searchQuery !== lrFromUrl) {
+            setFilters(prev => ({ ...prev, searchQuery: lrFromUrl }));
+        }
+    }, [lrFromUrl, setFilters, filters.searchQuery]);
+
+    // Permission check
+    const isHirabagh = currentUser?.branch === 'hirabagh';
+    const isBapunagar = currentUser?.branch === 'bapunagar';
+
+    // Auto-select branch for restricted users if "All" is selected but they are restricted to a subset
+    useEffect(() => {
+        if (currentUser?.role !== 'SUPER_ADMIN' && !isHirabagh && !isBapunagar && availableBranches.length > 0) {
             const currentFrom = filters.fromBranch;
-            // Branch is string now, so we check inclusion directly
             if (currentFrom === "All" || !availableBranches.includes(currentFrom)) {
                 setFilters(prev => ({ ...prev, fromBranch: availableBranches[0] }));
             }
         }
-    }, [currentUser, availableBranches, filters.fromBranch, setFilters]);
+    }, [currentUser, isHirabagh, isBapunagar, availableBranches, filters.fromBranch, setFilters]);
 
-    // Permission check
-    const isBranchRestricted = currentUser?.role !== 'SUPER_ADMIN';
-    const restrictedBranch = isBranchRestricted && currentUser?.branch ? currentUser.branch : undefined;
-
-    // Force strict restriction if needed (double safety)
-    if (isBranchRestricted && availableBranches.length > 0 &&
-        (filters.fromBranch === 'All' || !availableBranches.includes(filters.fromBranch as Branch))) {
-        // This sync is handled by effect, but for render safety we can rely on effect.
-        // Avoid setFilters during render.
-    }
+    // UI flags
+    const isBranchRestricted = currentUser?.role !== 'SUPER_ADMIN' && !isHirabagh && !isBapunagar;
+    const userBranch = isBranchRestricted && currentUser?.branch ? currentUser.branch : undefined;
 
     const formatDate = (d: string | Date | undefined) => {
         if (!d) return new Date().toLocaleDateString('en-GB');
@@ -97,9 +95,8 @@ export default function ReportsPage() {
 
     return (
         <div className="max-w-[1600px] mx-auto p-6 space-y-6 pb-20">
-
             {/* Print View - Specific Layout */}
-            <div className="hidden print:block">
+            <div className="hidden print:block daily-report-print">
                 {/* Reusing existing print header or Custom one? The PrintReportTable usually renders below header. */}
                 {/* Existing header at line 89 matches somewhat, but let's just use PrintReportTable mostly. */}
                 {/* I will keep line 89 header but maybe adjust? No, line 89 has "Savan Transport". */}
@@ -125,7 +122,7 @@ export default function ReportsPage() {
                 <ReportFilters
                     filters={filters}
                     setFilters={setFilters}
-                    branches={allBranches}
+                    branches={availableBranches as any}
                     isBranchRestricted={isBranchRestricted}
                     userBranch={currentUser?.branch}
                 />
@@ -157,6 +154,7 @@ export default function ReportsPage() {
                     onPageChange={setCurrentPage}
                     onRowsPerPageChange={setRowsPerPage}
                     mutate={mutate}
+                    autoOpenLr={autoEdit ? lrFromUrl : null}
                 />
             </div>
 
