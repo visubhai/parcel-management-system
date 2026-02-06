@@ -75,9 +75,9 @@ export default function LoginPage() {
                 }
                 setSubmitting(false);
             } else {
-                // Successful login - Set session gate cookie (Session only, will expire on browser close)
-                // Use a more robust cookie string
-                const cookieStr = "login-gate-passed=true; path=/; sameSite=lax" + (window.location.protocol === 'https:' ? '; secure' : '');
+                // Successful login - Set session gate cookie
+                const isProd = window.location.protocol === 'https:';
+                const cookieStr = `login-gate-passed=true; path=/; sameSite=lax${isProd ? '; secure' : ''}; max-age=86400`; // 24 hours
                 document.cookie = cookieStr;
                 console.log("🛡️ Login gate cookie set:", cookieStr);
 

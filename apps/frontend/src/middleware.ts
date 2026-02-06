@@ -32,13 +32,15 @@ export async function middleware(req: NextRequest) {
     res.headers.set('Content-Security-Policy', cspHeader);
 
     // 2. AUTHENTICATION CHECK
-    // Use AUTH_SECRET or NEXTAUTH_SECRET for token verification
     const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+
+    // In Vercel PRODUCTION, protocol is https. next-auth adds __Secure- prefix.
+    const isSecure = req.nextUrl.protocol === 'https:' || process.env.NODE_ENV === 'production';
+
     const token = await getToken({
         req,
         secret,
-        // In some environments, getToken needs explicit salt or secureCookie flag
-        secureCookie: process.env.NODE_ENV === 'production' || req.url.startsWith('https://')
+        secureCookie: isSecure
     });
 
     const isLoginPage = req.nextUrl.pathname.startsWith('/login');
