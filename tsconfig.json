@@ -5,13 +5,10 @@
     ],
     "references": [
         {
-            "path": "./apps/frontend"
+            "path": "./frontend"
         },
         {
-            "path": "./apps/backend"
-        },
-        {
-            "path": "./packages/shared"
+            "path": "./backend"
         }
     ],
     "compilerOptions": {
@@ -31,12 +28,7 @@
         "resolveJsonModule": true,
         "isolatedModules": true,
         "jsx": "preserve",
-        "incremental": true,
-        "paths": {
-            "@repo/shared/*": [
-                "./packages/shared/src/*"
-            ]
-        }
+        "incremental": true
     },
     "exclude": [
         "node_modules",

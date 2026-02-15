@@ -4,7 +4,7 @@ services:
     env: docker
     plan: free # Optional: Remove if upgrading
     dockerContext: .
-    dockerfilePath: apps/backend/Dockerfile
+    dockerfilePath: Dockerfile
     envVars:
       - key: MONGO_URI
         sync: false # You will be prompted to enter this

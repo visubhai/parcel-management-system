@@ -2,17 +2,17 @@
   "name": "parcel-management-system-root",
   "private": true,
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "frontend",
+    "backend"
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:frontend": "npm run dev -w apps/frontend",
-    "dev:backend": "npm run dev -w apps/backend",
-    "build:frontend": "npm run build -w apps/frontend",
-    "build:backend": "npm run build -w apps/backend",
-    "start:frontend": "npm run start -w apps/frontend",
-    "start:backend": "npm run start -w apps/backend",
+    "dev:frontend": "npm run dev -w frontend",
+    "dev:backend": "npm run dev -w backend",
+    "build:frontend": "npm run build -w frontend",
+    "build:backend": "npm run build -w backend",
+    "start:frontend": "npm run start -w frontend",
+    "start:backend": "npm run start -w backend",
     "db:reset": "tsx scripts/production-reset.ts"
   },
   "devDependencies": {

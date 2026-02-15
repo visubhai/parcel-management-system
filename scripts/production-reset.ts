@@ -29,7 +29,7 @@ async function cleanup() {
         const models = [User, Branch, Booking, Transaction, Counter, ReportPermission, AuditLog];
         for (const model of models) {
             console.log(`   - Clearing ${model.modelName}...`);
-            await model.deleteMany({});
+            await (model as any).deleteMany({});
         }
         console.log('✅ All data cleared.');
 

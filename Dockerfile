@@ -5,21 +5,18 @@ WORKDIR /app
 # Copy root configuration files
 COPY package.json package-lock.json tsconfig.json ./
 
-# Copy packages and apps structure (skeletons only if possible, but for simplicity copy sources)
-# We need shared package for backend
-COPY packages/shared ./packages/shared
-COPY apps/backend ./apps/backend
-
-# We do NOT copy apps/frontend to keep the image light
+# Copy package.json files for workspaces to ensure npm ci works
+COPY backend/package.json ./backend/
+COPY frontend/package.json ./frontend/
 
 # Install dependencies
-# We use npm install because we are building a partial monorepo (no frontend)
-# so the lockfile won't match perfectly.
-RUN npm install
+RUN npm ci
+
+# Copy backend source
+COPY backend ./backend
 
 # Build backend
-# This will also build shared if it's referenced
-RUN npm run build -w apps/backend
+RUN npm run build -w backend
 
 # Production Runner Stage
 FROM node:20-alpine AS runner
@@ -42,12 +39,12 @@ ENV NODE_ENV=production
 
 # Copy necessary files from builder
 COPY --from=builder /app/package.json ./
+# Copy prod dependencies (simplify by copying all for now to avoid missing workspace deps)
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/apps/backend ./apps/backend
+COPY --from=builder /app/backend ./backend
 
 # Expose port
 EXPOSE 3001
 
 # Start the backend
-CMD ["npm", "start", "-w", "apps/backend"]
+CMD ["npm", "start", "-w", "backend"]
