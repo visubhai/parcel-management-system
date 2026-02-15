@@ -12,7 +12,8 @@ const getBaseUrl = () => {
         return base.endsWith('/api') ? base : `${base}/api`;
     }
     // If on client, use relative URL (proxied by Next.js) or env var
-    return process.env.NEXT_PUBLIC_API_URL || '/api';
+    const clientBase = process.env.NEXT_PUBLIC_API_URL || '/api';
+    return clientBase.endsWith('/api') ? clientBase : `${clientBase}/api`;
 };
 
 export const API_URL = getBaseUrl();
