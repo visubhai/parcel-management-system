@@ -10,7 +10,8 @@ COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 
 # Install dependencies
-RUN npm ci
+# Using npm install instead of npm ci because package-lock.json might be stale (referencing apps/backend)
+RUN npm install
 
 # Copy backend source
 COPY backend ./backend
