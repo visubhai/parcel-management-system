@@ -12,7 +12,10 @@ const getBaseUrl = () => {
         return base.endsWith('/api') ? base : `${base}/api`;
     }
     // If on client, use relative URL (proxied by Next.js) or env var
-    const clientBase = process.env.NEXT_PUBLIC_API_URL || '/api';
+    let clientBase = process.env.NEXT_PUBLIC_API_URL || '/api';
+    // Remove trailing slash if present
+    if (clientBase.endsWith('/')) clientBase = clientBase.slice(0, -1);
+
     return clientBase.endsWith('/api') ? clientBase : `${clientBase}/api`;
 };
 

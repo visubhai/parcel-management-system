@@ -24,9 +24,9 @@ export async function middleware(req: NextRequest) {
         default-src 'self';
         script-src 'self' 'unsafe-eval' 'unsafe-inline';
         style-src 'self' 'unsafe-inline';
-        img-src 'self' blob: data: https://*.koyeb.app https://res.cloudinary.com;
+        img-src 'self' blob: data: https://*.koyeb.app https://res.cloudinary.com https://*.onrender.com;
         font-src 'self' data:;
-        connect-src 'self' http://localhost:3001 http://127.0.0.1:3001 https://*.koyeb.app https://*.vercel.app;
+        connect-src 'self' http://localhost:3001 http://127.0.0.1:3001 https://*.koyeb.app https://*.vercel.app https://*.onrender.com;
     `.replace(/\s{2,}/g, ' ').trim();
 
     res.headers.set('Content-Security-Policy', cspHeader);
