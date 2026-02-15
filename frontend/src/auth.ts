@@ -28,6 +28,7 @@ export const { handlers, signIn, signOut, auth }: any = NextAuth({
                         }
                     }
 
+                    if (API_URL.endsWith('/')) API_URL = API_URL.slice(0, -1);
                     if (!API_URL.endsWith('/api')) API_URL = `${API_URL}/api`;
 
                     console.log("🚀 AUTH SERVICE: Attempting login at:", `${API_URL}/auth/login`);
