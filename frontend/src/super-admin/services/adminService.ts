@@ -1,4 +1,4 @@
-import { ServiceResponse, fetchApi, API_URL, parseError } from '../../services/base';
+import { ServiceResponse, fetchApi, API_URL, parseError } from '@/frontend/services/base';
 import { User } from '@/shared/types';
 
 export const adminService = {
