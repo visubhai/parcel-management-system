@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useBranchStore } from "@/frontend/lib/store";
 import { useUsers } from "@/frontend/hooks/useUsers";
-import { adminService } from "@/frontend/super-admin/services/adminService";
+import { adminService } from "@/super-admin/services/adminService";
 import { User, Shield, Trash2, Edit2, CheckCircle, XCircle } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 

@@ -3,7 +3,7 @@ import { useBranches } from "@/frontend/hooks/useBranches";
 import { User, Role, ReportType, Branch } from "@/shared/types";
 import { X, Check } from "lucide-react";
 import { useToast } from "@/frontend/components/ui/toast";
-import { adminService } from "@/frontend/super-admin/services/adminService";
+import { adminService } from "@/super-admin/services/adminService";
 import { useUsers } from "@/frontend/hooks/useUsers";
 
 interface PermissionEditorProps {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { adminService } from "@/frontend/super-admin/services/adminService";
+import { adminService } from "@/super-admin/services/adminService";
 import { History, Search, Filter, Calendar, User as UserIcon, Tag } from "lucide-react";
 import { format } from "date-fns";
 

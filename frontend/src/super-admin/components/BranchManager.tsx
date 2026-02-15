@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useBranches } from "@/frontend/hooks/useBranches";
-import { adminService } from "@/frontend/super-admin/services/adminService";
+import { adminService } from "@/super-admin/services/adminService";
 import { useToast } from "@/frontend/components/ui/toast";
 import { Plus, Edit2, MapPin, Building2, CheckCircle, XCircle, X } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";

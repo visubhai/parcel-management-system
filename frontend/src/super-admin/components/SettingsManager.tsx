@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { adminService } from "@/frontend/super-admin/services/adminService";
+import { adminService } from "@/super-admin/services/adminService";
 import { useToast } from "@/frontend/components/ui/toast";
 import { RefreshCcw, Save, AlertTriangle, Hash } from "lucide-react";
 
