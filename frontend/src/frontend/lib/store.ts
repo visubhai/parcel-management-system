@@ -19,6 +19,10 @@ interface BranchState {
     closeMobileMenu: () => void;
     logout: () => Promise<void>;
     checkSession: () => Promise<void>;
+
+    // 4. Booking Context (Global)
+    currentLR: string | null;
+    setLR: (lr: string | null) => void;
 }
 
 export const useBranchStore = create<BranchState>((set, get) => ({
@@ -48,6 +52,9 @@ export const useBranchStore = create<BranchState>((set, get) => ({
         } else {
             set({ currentUser: null, isAuthenticated: false, isLoading: false });
         }
-    }
+    },
+
+    currentLR: null,
+    setLR: (lr) => set({ currentLR: lr }),
 }));
 

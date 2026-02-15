@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Save, Printer, Lock, MessageCircle, PlusCircle, X } from "lucide-react";
+import { Save, Printer, Lock, MessageCircle, PlusCircle, X, Receipt } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { PaymentStatus } from "@/shared/types";
 
@@ -44,12 +44,6 @@ export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked, onW
                 saveButtonRef.current?.focus();
             }
         }
-
-        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-            // Optional: Toggle payment type on arrows if focused on the section
-            const newType = paymentType === "Paid" ? "To Pay" : "Paid";
-            onChange("paymentType", newType);
-        }
     };
 
     // Helper to format status for display
@@ -57,150 +51,135 @@ export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked, onW
 
     return (
         <div className={cn(
-            "p-6 rounded-[32px] border-2 shadow-xl shadow-slate-200/50 sticky top-6 backdrop-blur-md transition-all",
-            isLocked ? "border-emerald-100 bg-emerald-50/50" : "bg-white border-slate-100 shadow-slate-100/50"
+            "rounded-xl border shadow-sm sticky top-6 transition-all overflow-hidden flex flex-col h-full",
+            isLocked ? "border-emerald-100 bg-emerald-50/20" : "bg-white border-slate-200 shadow-slate-100"
         )}>
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                    Payment Gateway
-                </h3>
-                {isLocked && (
-                    <span className={cn(
-                        "flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide",
-                        currentStatus?.toUpperCase() === 'CANCELLED' ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-700"
-                    )}>
-                        {currentStatus?.toUpperCase() === 'CANCELLED' ? <X className="w-3 h-3" /> : <Lock className="w-3.5 h-3.5" />}
-                        {formatStatus(currentStatus || "Booked")}
-                    </span>
-                )}
+            {/* Header */}
+            <div className="bg-slate-50/80 px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Receipt size={16} className="text-slate-400" />
+                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                        Payment Summary
+                    </h3>
+                </div>
+
+                <span className={cn(
+                    "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border",
+                    paymentType === 'Paid'
+                        ? "bg-green-100 text-green-700 border-green-200"
+                        : "bg-red-100 text-red-700 border-red-200"
+                )}>
+                    {paymentType}
+                </span>
             </div>
 
-            <div className="space-y-5">
-                {/* Inputs */}
-                {[
-                    { label: "Freight Charge", field: "freight", ref: freightRef },
-                    { label: "Builty Charge", field: "handling" },
-                    { label: "Hamali", field: "hamali" }
-                ].map((item) => (
-                    <div key={item.field}>
-                        <label className="flex items-center justify-between text-[10px] font-black text-slate-400 mb-1.5 uppercase tracking-wide ml-1">
-                            {item.label}
-                        </label>
-                        <div className="relative group/input">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 font-bold">₹</span>
-                            <input
-                                type="number"
-                                id="freight-input"
-                                ref={item.ref as any}
-                                value={costs[item.field as keyof typeof costs]}
-                                disabled={isLocked || item.field === "handling" || item.field === "hamali"}
-                                onFocus={(e) => e.target.select()}
-                                onKeyDown={handleKeyDown}
-                                onChange={(e) => onChange(item.field, parseFloat(e.target.value) || 0)}
-                                className={cn(
-                                    "w-full pl-8 pr-4 py-3 rounded-xl border border-transparent text-right font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/5 disabled:bg-slate-50 disabled:text-slate-400 transition-all bg-slate-50/50 focus:bg-white text-lg",
-                                    (isLocked || item.field === "handling" || item.field === "hamali") && "opacity-60"
-                                )}
-                            />
-                        </div>
-                    </div>
-                ))}
-
-                <div className="pt-6 border-t border-slate-100">
-                    <div className="flex items-end justify-between mb-6">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Final Amount</span>
-                        <div className="text-right">
-                            <span className="text-4xl font-black text-slate-900 tracking-tighter">
-                                <span className="text-2xl text-slate-300 font-medium align-top mr-1">₹</span>
-                                {costs.total.toFixed(0)}
-                                <span className="text-lg text-slate-400 font-bold">.{costs.total.toFixed(2).split('.')[1]}</span>
-                            </span>
+            <div className="p-5 space-y-4 flex-1 flex flex-col justify-center">
+                {/* Line Items */}
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between group">
+                        <span className="text-sm font-bold text-slate-500">Freight Charges</span>
+                        <div className="flex-1 border-b-2 border-dotted border-slate-200 mx-3 relative top-1 opacity-50" />
+                        <div className="relative w-24 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                                <span className="text-slate-400 text-xs font-bold">₹</span>
+                                <input
+                                    type="number"
+                                    ref={freightRef}
+                                    value={costs.freight}
+                                    disabled={isLocked}
+                                    onFocus={(e) => e.target.select()}
+                                    onKeyDown={handleKeyDown}
+                                    onChange={(e) => onChange("freight", parseFloat(e.target.value) || 0)}
+                                    className="w-16 text-right bg-transparent border-b border-transparent focus:border-blue-500 outline-none font-bold text-slate-800 text-sm py-0.5 transition-all focus:bg-blue-50/50 p-0"
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 mb-6">
-                        <button
-                            type="button"
-                            onClick={() => onChange("paymentType", "Paid")}
-                            onKeyDown={handleKeyDown}
-                            disabled={isLocked}
-                            className={cn(
-                                "py-3 text-xs font-black rounded-xl transition-all border-2 tracking-widest uppercase",
-                                paymentType === "Paid"
-                                    ? "bg-green-500 border-green-500 text-white shadow-lg shadow-green-200"
-                                    : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
-                            )}
-                        >
-                            PAID
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => onChange("paymentType", "To Pay")}
-                            onKeyDown={handleKeyDown}
-                            disabled={isLocked}
-                            className={cn(
-                                "py-3 text-xs font-black rounded-xl transition-all border-2 tracking-widest uppercase",
-                                paymentType === "To Pay"
-                                    ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-200"
-                                    : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
-                            )}
-                        >
-                            TO PAY
-                        </button>
+                    <div className="flex items-center justify-between group">
+                        <span className="text-sm font-bold text-slate-500">LR / Admin Charge</span>
+                        <div className="flex-1 border-b-2 border-dotted border-slate-200 mx-3 relative top-1 opacity-50" />
+                        <div className="relative w-24 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                                <span className="text-slate-400 text-xs font-bold">₹</span>
+                                <span className="w-16 text-right font-bold text-slate-500 text-sm py-0.5">
+                                    {costs.handling}
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
+                    <div className="flex items-center justify-between group">
+                        <span className="text-sm font-bold text-slate-500">Hamali / Labor</span>
+                        <div className="flex-1 border-b-2 border-dotted border-slate-200 mx-3 relative top-1 opacity-50" />
+                        <div className="relative w-24 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                                <span className="text-slate-400 text-xs font-bold">₹</span>
+                                <input
+                                    type="number"
+                                    value={costs.hamali}
+                                    disabled={isLocked}
+                                    onKeyDown={handleKeyDown}
+                                    onChange={(e) => onChange("hamali", parseFloat(e.target.value) || 0)}
+                                    className="w-16 text-right bg-transparent border-b border-transparent focus:border-blue-500 outline-none font-bold text-slate-800 text-sm py-0.5 transition-all focus:bg-blue-50/50 p-0"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Total */}
+                <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 flex items-center justify-between mt-4">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Grand Total</span>
+                    <span className="text-2xl font-black text-blue-600 tracking-tighter">
+                        ₹{costs.total.toFixed(0)}
+                    </span>
+                </div>
+            </div>
+
+            {/* Actions */}
+            <div className="p-4 bg-slate-50/50 border-t border-slate-100">
+                {!isLocked ? (
                     <button
                         ref={saveButtonRef}
                         onClick={onSave}
                         disabled={(!saveLabel && isLocked) || costs.total <= 0}
-                        className={cn(
-                            "w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-white transition-all shadow-xl text-sm uppercase tracking-widest h-14",
-                            (!saveLabel && isLocked)
-                                ? "bg-slate-800 cursor-not-allowed shadow-none"
-                                : "bg-slate-900 hover:bg-black active:scale-[0.98]"
-                        )}
+                        className="w-full h-12 flex items-center justify-center gap-2 rounded-xl font-black text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-600/20 text-xs uppercase tracking-widest"
                     >
-                        {(!saveLabel && isLocked) ? (
+                        {saveLabel ? (
                             <>
-                                <Printer size={18} /> Print LR
+                                <Printer size={16} /> {saveLabel}
                             </>
                         ) : (
                             <>
-                                <Save size={18} /> {saveLabel || "Confirm LR (Enter)"}
+                                <Save size={16} /> CONFIRM & PRINT
                             </>
                         )}
                     </button>
-
-                    {isLocked && (
-                        <div className="space-y-3 mt-4">
+                ) : (
+                    <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
                             <button
                                 onClick={onWhatsApp}
-                                className="w-full py-4 bg-emerald-600 text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 active:scale-[0.98] text-sm uppercase tracking-widest"
+                                className="h-10 bg-[#25D366] text-white font-bold rounded-lg hover:bg-[#128C7E] transition-all flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-wider shadow-md shadow-green-500/20"
                             >
-                                <MessageCircle size={18} />
-                                Notify on WhatsApp
+                                <MessageCircle size={14} /> WhatsApp
                             </button>
-
                             <button
-                                onClick={onReset}
-                                className="w-full py-4 bg-blue-600/10 text-blue-700 hover:bg-blue-600 hover:text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 border-2 border-dashed border-blue-200 text-sm uppercase tracking-widest"
+                                onClick={onPrint}
+                                className="h-10 bg-white text-slate-700 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-wider"
                             >
-                                <PlusCircle size={18} />
-                                New Booking
+                                <Printer size={14} /> Reprint
                             </button>
-
-                            {onPrint && (
-                                <button
-                                    onClick={onPrint}
-                                    className="w-full py-4 bg-slate-100 text-slate-800 font-black rounded-2xl transition-all flex items-center justify-center gap-2 border-2 border-slate-200 hover:bg-slate-200 active:scale-[0.98] text-sm uppercase tracking-widest mt-2"
-                                >
-                                    <Printer size={18} />
-                                    Re-print Builty
-                                </button>
-                            )}
                         </div>
-                    )}
-                </div>
+                        <button
+                            onClick={onReset}
+                            className="w-full h-10 bg-blue-50 text-blue-600 font-bold rounded-lg border border-blue-100 hover:bg-blue-100 transition-all flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-wider"
+                        >
+                            <PlusCircle size={14} /> NEW PARCEL
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -50,10 +50,15 @@ export const { handlers, signIn, signOut, auth }: any = NextAuth({
 
                     clearTimeout(timeoutId);
 
-                    const data = await res.json();
+                    let data;
+                    try {
+                        data = await res.json();
+                    } catch (e) {
+                        console.error("Failed to parse JSON response from auth endpoint");
+                    }
 
                     if (!res.ok) {
-                        console.error("🚀 AUTH SERVICE: Login failed with status:", res.status);
+                        console.error("🚀 AUTH SERVICE: Login failed:", res.status, data);
                         return null; // Returning null informs NextAuth that credentials are invalid
                     }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Bell, Menu, ChevronDown, User, LogOut, Settings, Building2 } from "lucide-react";
+import { Search, Bell, Menu, ChevronDown, User, LogOut, Settings, Building2, History, Calculator } from "lucide-react";
 import { useBranchStore } from "@/frontend/lib/store";
 import { useBranches } from "@/frontend/hooks/useBranches";
 import { authService } from "@/frontend/services/authService";
@@ -12,7 +12,7 @@ import { useDebounce } from "../../hooks/useDebounce";
 import { Booking } from "@/shared/types";
 
 export function Header() {
-    const { currentUser, searchQuery, setSearchQuery, setCurrentUser, toggleMobileMenu } = useBranchStore();
+    const { currentUser, searchQuery, setSearchQuery, setCurrentUser, toggleMobileMenu, currentLR } = useBranchStore();
     const router = useRouter();
 
     // Local state for header clock
@@ -151,6 +151,33 @@ export function Header() {
             </div>
 
             <div className="flex items-center gap-4">
+                {/* Booking Console Tools (Show if currentLR is active) */}
+                {currentLR && (
+                    <div className="hidden lg:flex items-center gap-4 mr-2">
+                        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-100">
+                            <button className="h-8 px-3 flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-blue-600 hover:bg-white inset-custom-shadow rounded-md transition-all uppercase tracking-wider">
+                                <History size={14} /> History
+                            </button>
+                            <div className="w-px h-4 bg-slate-200"></div>
+                            <button className="h-8 px-3 flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-blue-600 hover:bg-white inset-custom-shadow rounded-md transition-all uppercase tracking-wider">
+                                <Calculator size={14} /> Rates
+                            </button>
+                        </div>
+
+                        <div className="flex items-center gap-3 pl-3 pr-1 py-1 bg-slate-900 rounded-lg shadow-lg shadow-slate-200 border border-slate-800">
+                            <div className="flex flex-col items-end">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-0.5">Next LR</span>
+                                <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest leading-none">Auto-Gen</span>
+                            </div>
+                            <div className="h-8 px-3 bg-white/10 rounded-md flex items-center justify-center border border-white/10 backdrop-blur-sm">
+                                <span className="font-mono text-lg font-black text-white tracking-wider">{currentLR}</span>
+                            </div>
+                        </div>
+
+                        <div className="h-8 w-px bg-slate-200 mx-2" />
+                    </div>
+                )}
+
                 {/* Branch Indicator */}
                 <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-100">
                     <Building2 className="w-4 h-4 text-slate-400" />

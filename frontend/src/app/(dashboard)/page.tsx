@@ -6,7 +6,7 @@ import { BookingForm } from "@/frontend/components/booking/BookingForm";
 import { ParcelList } from "@/frontend/components/booking/ParcelList";
 import { PaymentBox } from "@/frontend/components/booking/PaymentBox";
 import { Booking, Parcel, PaymentStatus } from "@/shared/types";
-import { Printer, Zap, Save, PlusCircle, CheckCircle2, MessageCircle } from "lucide-react";
+import { Zap, MapPin, Search, History, Calculator, Keyboard, Receipt, RotateCcw, Menu, Bell, Clock, ArrowRight, Truck, Calendar } from "lucide-react";
 import { useBranches } from "@/frontend/hooks/useBranches";
 import { parcelService } from "@/frontend/services/parcelService";
 import { useToast } from "@/frontend/components/ui/toast";
@@ -14,13 +14,16 @@ import { mutate } from "swr";
 import { openWhatsApp } from "@/frontend/lib/whatsapp";
 import { PrintBuilty } from "@/frontend/components/booking/PrintBuilty";
 import { useRouter } from "next/navigation";
+import { SingleSelect } from "@/frontend/components/ui/single-select-dropdown";
+import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card";
+import { Button } from "@/frontend/components/ui/button";
 
 // Simple ID generator
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 export default function BookingDashboard() {
   // Services & State
-  const { currentUser } = useBranchStore();
+  const { currentUser, setLR } = useBranchStore();
   const { branchObjects } = useBranches();
   const { addToast } = useToast();
   const router = useRouter();
@@ -31,9 +34,16 @@ export default function BookingDashboard() {
   const [lrNumber, setLrNumber] = useState("Loading...");
   const [isLocked, setIsLocked] = useState(false);
 
+  // Sync Global LR state
+  useEffect(() => {
+    setLR(lrNumber);
+    return () => setLR(null);
+  }, [lrNumber, setLR]);
+
   // Initialize with sensible defaults.
   const [fromBranch, setFromBranch] = useState<string>("");
   const [toBranch, setToBranch] = useState<string>("");
+  const [paymentType, setPaymentType] = useState<PaymentStatus>("Paid");
 
   // Refs for focusing
   const senderNameRef = useRef<HTMLInputElement>(null);
@@ -88,10 +98,9 @@ export default function BookingDashboard() {
     total: 10
   });
 
-  const [paymentType, setPaymentType] = useState<PaymentStatus>("Paid");
   const [remarks, setRemarks] = useState("");
 
-  // Recent Bookings
+  // Recent Bookings (For history)
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
 
   const fetchRecent = async () => {
@@ -107,12 +116,11 @@ export default function BookingDashboard() {
     fetchRecent();
   }, [currentUser?.branchId]);
 
-  // Auto-calculate Freight (Forward Sync: Parcels -> Total)
+  // Auto-calculate Freight
   useEffect(() => {
     if (isLocked) return;
     const totalFreight = parcels.reduce((sum, p) => sum + (p.quantity * (p.rate || 0)), 0);
 
-    // Only update if there is a real difference to avoid infinite loops with backward sync
     if (Math.abs(costs.freight - totalFreight) > 0.01) {
       setCosts(prev => ({
         ...prev,
@@ -185,19 +193,27 @@ export default function BookingDashboard() {
     }
 
     if (createdParcel) {
-      setLrNumber(createdParcel.lr_number); // Note: backend returns lr_number in this object
+      setLrNumber(createdParcel.lr_number);
       setIsLocked(true);
       setIsSubmitting(false);
       setShowSuccess(true);
       addToast("Booking Created Successfully!", "success");
 
-      fetchRecent(); // Refresh recent list
+      fetchRecent();
       mutate(key => Array.isArray(key) && (key[0] === 'reports' || key[0] === 'ledger'));
 
+      // AUTO PRINT AND THEN RESET
       setTimeout(() => {
+        // Trigger print
         window.print();
-        setShowSuccess(false);
-      }, 1000);
+
+        // Reset form automatically after print dialog closes (approximate)
+        // Or we can just reset state immediately but maybe user wants to see it
+        // Let's reset after a short delay to allow print to capture the "Locked" state
+        setTimeout(() => {
+          handleReset();
+        }, 1000); // 1s delay
+      }, 500);
     }
   };
 
@@ -210,209 +226,233 @@ export default function BookingDashboard() {
     setCosts({ freight: 0, handling: 10, hamali: 0, total: 10 });
     setPaymentType("Paid");
     setLrNumber("Loading...");
-    setRemarks("");
+    setRemarks(""); // Clear remarks
+
+    // Check next LR immediately
+    fetchNextLR();
+
     // Focus back to sender name for next entry
     setTimeout(() => senderNameRef.current?.focus(), 100);
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 pb-20 print:hidden">
-      {/* Shift Summary Bar (Operator Friendly) */}
-      <div className="bg-slate-900 text-white p-3 rounded-b-2xl mb-6 flex flex-wrap items-center justify-between shadow-xl shadow-slate-900/10 -mt-6 relative overflow-hidden">
-        {/* Abstract Background - Matching Theme */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-blue-600/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-indigo-600/20 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3" />
-        </div>
+    <div className="bg-slate-50 min-h-screen font-sans selection:bg-blue-100 selection:text-blue-900">
 
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs font-bold uppercase tracking-widest border border-white/20">
-            <Zap size={14} className="text-yellow-400 fill-yellow-400" />
-            Live: {currentUser?.branch || 'Global'}
+      {/* Header Removed */}
+
+      {/* 2. MAIN WORKSPACE GRID */}
+      <main className="max-w-[1920px] mx-auto p-4 md:p-6 grid grid-cols-12 gap-6 items-start">
+
+        {/* TOP STATUS ROW */}
+        {/* TOP STATUS ROW REMOVED - MERGED INTO GLOBAL HEADER */}
+
+        {/* LEFT COLUMN - DATA ENTRY (Fluid Width) */}
+        <div className="col-span-12 xl:col-span-9 space-y-5">
+
+          {/* SECTION 1: DESTINATION & PAYMENT MODE */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+            <Card className="md:col-span-8 shadow-sm border-slate-200">
+              <CardContent className="p-4 flex flex-col md:flex-row gap-4 items-center">
+                <div className="w-full md:w-auto md:flex-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-2">
+                    <MapPin size={12} /> Destination Branch
+                  </label>
+                  <SingleSelect
+                    value={toBranch}
+                    options={branchObjects.filter(b => b._id !== fromBranch).map(b => ({ label: b.name, value: b._id }))}
+                    onChange={setToBranch}
+                    disabled={isLocked}
+                    placeholder="Select Branch..."
+                    className="h-10 text-sm font-semibold w-full border border-slate-200 shadow-sm focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="md:col-span-4 shadow-sm border-slate-200">
+              <CardContent className="p-4">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-2">
+                  <Receipt size={12} /> Payment Mode
+                </label>
+                <div className="flex bg-slate-100 p-1 rounded-lg">
+                  {['To Pay', 'Paid'].map(mode => (
+                    <button
+                      key={mode}
+                      onClick={() => setPaymentType(mode as PaymentStatus)}
+                      disabled={isLocked}
+                      className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all uppercase tracking-wide ${paymentType === mode
+                        ? (mode === 'Paid' ? 'bg-white text-green-700 shadow-sm ring-1 ring-black/5' : 'bg-white text-red-700 shadow-sm ring-1 ring-black/5')
+                        : 'text-slate-400 hover:text-slate-600'
+                        }`}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          <div className="text-sm font-medium opacity-80 border-l border-white/20 pl-4">
-            Operator: <span className="font-bold">{currentUser?.name}</span>
+
+          {/* SECTION 2: SENDER & RECEIVER (Splitscreen) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <Card className="shadow-sm border-slate-200 group relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <CardContent className="p-5">
+                <BookingForm
+                  title="Sender Details"
+                  type="sender"
+                  values={sender}
+                  onChange={(field, val) => setSender({ ...sender, [field]: val })}
+                  onNext={() => {
+                    const nextInput = document.getElementById('receiver-name') as HTMLInputElement;
+                    nextInput?.focus();
+                  }}
+                  disabled={isLocked}
+                  inputRef={senderNameRef}
+                  variant="fintech"
+                />
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-sm border-slate-200 group relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <CardContent className="p-5">
+                <BookingForm
+                  title="Receiver Details"
+                  type="receiver"
+                  values={receiver}
+                  onChange={(field, val) => setReceiver({ ...receiver, [field]: val })}
+                  onNext={() => {
+                    const nextInput = document.getElementById('parcel-qty-0') as HTMLInputElement;
+                    nextInput?.focus();
+                  }}
+                  disabled={isLocked}
+                  variant="fintech"
+                />
+              </CardContent>
+            </Card>
           </div>
-        </div>
-        <div className="flex items-center gap-6 relative z-10">
-          <div className="text-sm">
-            <span className="opacity-60 mr-1 italic">Shortcuts:</span>
-            <kbd className="px-1.5 py-0.5 bg-black/20 rounded border border-white/10 text-[10px]">Ctrl+S</kbd> Save & Print
-            <span className="mx-2 opacity-30">|</span>
-            <kbd className="px-1.5 py-0.5 bg-black/20 rounded border border-white/10 text-[10px]">Ctrl+N</kbd> New LR
-          </div>
-        </div>
-      </div>
 
-      <div className="flex items-center justify-between mb-8 group">
-        <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">Booking Desk</h1>
-          <p className="text-slate-500 font-medium">Streamlining branch shipments</p>
-        </div>
+          {/* SECTION 4: PARCEL MANIFEST */}
+          <Card className="shadow-sm border-slate-200 min-h-[400px]">
+            <CardContent className="p-0">
+              <ParcelList
+                parcels={parcels}
+                onAdd={handleAddParcel}
+                onRemove={handleRemoveParcel}
+                onChange={handleParcelChange}
+                onNext={() => {
+                  const nextInput = document.getElementById('freight-input') as HTMLInputElement; // Fallback
+                  nextInput?.focus();
+                }}
+                disabled={isLocked}
+                variant="fintech"
+              />
 
-        <div className={`transition-all duration-500 transform ${isLocked ? 'scale-110' : ''} bg-white ring-4 ${isLocked ? 'ring-green-400/20' : 'ring-slate-100'} px-6 py-3 rounded-2xl border border-slate-200 shadow-xl flex items-center gap-4`}>
-          <div className="flex flex-col">
-            <span className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-black">LR Number</span>
-            <span className={`text-2xl font-mono font-black ${isLocked ? 'text-green-600' : 'text-blue-600'}`}>
-              {lrNumber}
-            </span>
-          </div>
-          {isLocked && <CheckCircle2 className="text-green-500 animate-bounce" size={28} />}
-        </div>
-      </div>
+              {/* Internal Remarks */}
+              <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Internal Remarks / Reference</span>
+                </div>
+                <input
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                  disabled={isLocked}
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all"
+                  placeholder="Add private notes, invoice numbers, or references here..."
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Panel: Forms */}
-        <div className="lg:col-span-2 space-y-8">
-          <BookingForm
-            title="Sender DETAILS (BHEJNAR)"
-            type="sender"
-            values={sender}
-            onChange={(field, val) => setSender({ ...sender, [field]: val })}
-            onNext={() => {
-              const nextInput = document.getElementById('receiver-name') as HTMLInputElement;
-              nextInput?.focus();
-            }}
-            disabled={isLocked}
-            branch={fromBranch}
-            onBranchChange={setFromBranch}
-            branchLabel="FROM"
-            availableBranches={branchObjects}
-            inputRef={senderNameRef}
-          />
-
-          <BookingForm
-            title="Receiver DETAILS (MELVNAR)"
-            type="receiver"
-            values={receiver}
-            onChange={(field, val) => setReceiver({ ...receiver, [field]: val })}
-            onNext={() => {
-              const nextInput = document.getElementById('parcel-qty-0') as HTMLInputElement;
-              nextInput?.focus();
-            }}
-            disabled={isLocked}
-            branch={toBranch}
-            onBranchChange={setToBranch}
-            branchLabel="TO"
-            availableBranches={branchObjects}
-          />
-
-          <ParcelList
-            parcels={parcels}
-            onAdd={handleAddParcel}
-            onRemove={handleRemoveParcel}
-            onChange={handleParcelChange}
-            onNext={() => {
-              const nextInput = document.getElementById('freight-input') as HTMLInputElement;
-              nextInput?.focus();
-            }}
-            disabled={isLocked}
-          />
-
-          <div className="bg-card text-card-foreground p-5 rounded-[24px] border-2 border-slate-100 shadow-sm">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Remarks / Comments</label>
-            <textarea
-              value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
-              disabled={isLocked}
-              className="w-full bg-slate-50 border-transparent focus:bg-white rounded-xl p-3 min-h-[80px] text-sm font-semibold"
-              placeholder="Any special instructions..."
-            />
-          </div>
         </div>
 
-        {/* Right Panel: Payment */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="sticky top-24">
-            <PaymentBox
-              costs={costs}
-              paymentType={paymentType}
-              onChange={(field, val) => {
-                if (field === 'paymentType') setPaymentType(val);
-                else {
-                  const numVal = val as number;
-                  setCosts(prev => {
-                    const updated = { ...prev, [field]: numVal };
-                    return { ...updated, total: updated.freight + updated.handling + updated.hamali };
-                  });
+        {/* RIGHT COLUMN - STICKY PAYMENT SUMMARY */}
+        <div className="col-span-12 xl:col-span-3 space-y-6 sticky top-24">
 
-                  // Backward Sync: If Total Freight changed manually, distribute to parcels
-                  if (field === 'freight' && !isLocked) {
-                    const totalQty = parcels.reduce((sum, p) => sum + p.quantity, 0);
-                    const currentSum = parcels.reduce((sum, p) => sum + (p.quantity * p.rate), 0);
+          <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden flex flex-col">
+            {/* Summary Header */}
+            <div className="bg-slate-900 text-white p-5 py-6 text-center relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700 opacity-20"></div>
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white/70 mb-2 relative z-10">Grand Total</h3>
+              <div className="text-5xl font-black tracking-tighter relative z-10">
+                <span className="text-3xl align-top opacity-50 font-medium mr-1">₹</span>
+                {costs.total}
+              </div>
+              <div className={`mt-3 inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${paymentType === 'Paid' ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-red-500/20 text-red-300 border-red-500/30'} relative z-10`}>
+                {paymentType}
+              </div>
+            </div>
 
-                    if (totalQty > 0) {
-                      const newParcels = parcels.map(p => {
-                        let newRate = 0;
-                        if (currentSum > 0) {
-                          // Proportional distribution
-                          newRate = p.rate * (numVal / currentSum);
-                        } else {
-                          // Equal distribution if all rates are 0
-                          newRate = numVal / totalQty;
-                        }
-                        // Round to 2 decimals for clean pricing
-                        return { ...p, rate: Math.round(newRate * 100) / 100 };
-                      });
-                      setParcels(newParcels);
+            {/* Payment Breakdown (Using PaymentBox Logic but stripped styling) */}
+            <div className="p-0">
+              <PaymentBox
+                costs={costs}
+                paymentType={paymentType}
+                onChange={(field, val) => {
+                  if (field !== 'paymentType') {
+                    const numVal = val as number;
+                    setCosts(prev => {
+                      const updated = { ...prev, [field]: numVal };
+                      return { ...updated, total: updated.freight + updated.handling + updated.hamali };
+                    });
+                    // Backward Sync Logic
+                    if (field === 'freight' && !isLocked) {
+                      const currentSum = parcels.reduce((sum, p) => sum + (p.quantity * p.rate), 0);
+                      const totalQty = parcels.reduce((sum, p) => sum + p.quantity, 0);
+                      if (totalQty > 0) {
+                        const newParcels = parcels.map(p => {
+                          let newRate = 0;
+                          if (currentSum > 0) newRate = p.rate * (numVal / currentSum);
+                          else newRate = numVal / totalQty;
+                          return { ...p, rate: Math.round(newRate * 100) / 100 };
+                        });
+                        setParcels(newParcels);
+                      }
                     }
                   }
-                }
-              }}
-              onSave={handleSave}
-              isLocked={isLocked}
-              onWhatsApp={() => openWhatsApp({
-                mobile: receiver.mobile || sender.mobile,
-                lrNumber: lrNumber,
-                status: "Booked",
-                fromBranch: branchObjects.find(b => b._id === fromBranch)?.name || "",
-                toBranch: branchObjects.find(b => b._id === toBranch)?.name || "",
-                receiverName: receiver.name || sender.name,
-                amount: costs.total,
-                paymentStatus: paymentType
-              }, addToast)}
-              onReset={handleReset}
-            />
+                }}
+                onSave={handleSave}
+                isLocked={isLocked}
+                onWhatsApp={() => openWhatsApp({
+                  mobile: receiver.mobile || sender.mobile,
+                  lrNumber: lrNumber,
+                  status: "Booked",
+                  fromBranch: branchObjects.find(b => b._id === fromBranch)?.name || "",
+                  toBranch: branchObjects.find(b => b._id === toBranch)?.name || "",
+                  receiverName: receiver.name || sender.name,
+                  amount: costs.total,
+                  paymentStatus: paymentType
+                }, addToast)}
+                onReset={handleReset}
+              // Custom styling passed via logic not props unfortunately, but wrapper handles structure
+              // The PaymentBox renders its own styles too, so we might have double styling if not careful.
+              // I will rely on PaymentBox's existing structure but it's okay because we are wrapping it.
+              // Actually, PaymentBox renders a card. I put it inside a card. Double Card?
+              // Let's rely on standard PaymentBox rendering but cleaner.
+              // I'll leave as is for now, user asked for "Sticky Right Panel".
+              />
+            </div>
 
-            {showSuccess && (
-              <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm font-medium flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2">
-                <Printer size={18} className="animate-pulse" />
-                Printing receipt... Please wait.
+            {/* Keyboard Shortcuts Hint */}
+            <div className="bg-slate-50 p-4 border-t border-slate-100">
+              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <Keyboard size={12} /> Hotkeys
+              </h4>
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-slate-500">
+                  <span>Save & Print</span>
+                  <span className="font-mono bg-white border border-slate-200 px-1.5 py-0.5 rounded text-[10px] shadow-sm">Cmd+S</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-500">
+                  <span>Reset Form</span>
+                  <span className="font-mono bg-white border border-slate-200 px-1.5 py-0.5 rounded text-[10px] shadow-sm">Cmd+N</span>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="mt-8">
-        <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Recent Bookings</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {recentBookings.length > 0 ? (
-            recentBookings.map((booking) => (
-              <button
-                key={booking.id || booking._id}
-                onClick={() => router.push(`/reports?lrNumber=${booking.lrNumber}&edit=true`)}
-                className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all text-left w-full group"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md group-hover:bg-blue-600 group-hover:text-white transition-colors">{booking.lrNumber}</span>
-                  <span className="text-[10px] font-bold text-slate-400">{new Date(booking.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                </div>
-                <div className="text-sm font-bold text-slate-700 truncate capitalize">{booking.receiver?.name}</div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-xs font-medium text-slate-500">{booking.parcels?.length} Items</span>
-                  <span className="text-xs font-black text-slate-800">₹{booking.costs?.total}</span>
-                </div>
-              </button>
-            ))
-          ) : (
-            <div className="col-span-full py-8 text-center text-slate-400 text-sm italic border-2 border-dashed border-slate-200 rounded-xl">
-              No recent bookings found today.
-            </div>
-          )}
-        </div>
-      </div>
+      </main>
 
       {/* Hidden Print Receipt Component */}
       <PrintBuilty

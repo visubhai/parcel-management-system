@@ -149,11 +149,9 @@ export default function LoginPage() {
                                 value={formData.branchId}
                                 onChange={(e) => {
                                     const selectedId = e.target.value;
-                                    const selectedBranch = branches.find(b => b._id === selectedId);
                                     setFormData({
                                         ...formData,
-                                        branchId: selectedId,
-                                        username: selectedBranch ? selectedBranch.name : ""
+                                        branchId: selectedId
                                     });
                                 }}
                                 className="w-full pl-12 pr-10 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20 outline-none transition-all text-white placeholder-white/40 appearance-none disabled:opacity-50 text-sm"
