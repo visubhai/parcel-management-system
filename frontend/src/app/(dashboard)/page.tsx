@@ -43,7 +43,6 @@ export default function BookingDashboard() {
   // Initialize with sensible defaults.
   const [fromBranch, setFromBranch] = useState<string>("");
   const [toBranch, setToBranch] = useState<string>("");
-  const [paymentType, setPaymentType] = useState<PaymentStatus>("Paid");
 
   // Refs for focusing
   const senderNameRef = useRef<HTMLInputElement>(null);
