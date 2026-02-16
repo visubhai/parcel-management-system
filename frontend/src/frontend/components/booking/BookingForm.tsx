@@ -9,7 +9,7 @@ import { Label } from "@/frontend/components/ui/label";
 interface ContactFormProps {
     title: string;
     type: "sender" | "receiver";
-    values: { name: string; mobile: string };
+    values: { name: string; mobile: string; email?: string };
     onChange: (field: string, value: string) => void;
     onNext?: () => void;
     disabled?: boolean;

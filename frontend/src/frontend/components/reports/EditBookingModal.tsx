@@ -228,14 +228,9 @@ export function EditBookingModal({ booking, isOpen, onClose, onSave, availableBr
                                             <BookingForm
                                                 title="Sender"
                                                 type="sender"
-                                                values={sender}
+                                                values={{ name: sender.name, mobile: sender.mobile }}
                                                 onChange={(field, val) => setSender({ ...sender, [field]: val })}
-                                                branch={booking.fromBranch}
                                                 disabled={false}
-                                                availableBranches={availableBranches as any}
-                                                onBranchChange={() => { }}
-                                                branchLabel="From"
-                                                variant="minimal"
                                             />
                                         </div>
 
@@ -252,14 +247,9 @@ export function EditBookingModal({ booking, isOpen, onClose, onSave, availableBr
                                             <BookingForm
                                                 title="Receiver"
                                                 type="receiver"
-                                                values={receiver}
+                                                values={{ name: receiver.name, mobile: receiver.mobile }}
                                                 onChange={(field, val) => setReceiver({ ...receiver, [field]: val })}
-                                                branch={booking.toBranch}
                                                 disabled={false}
-                                                availableBranches={availableBranches as any}
-                                                onBranchChange={() => { }}
-                                                branchLabel="To"
-                                                variant="minimal"
                                             />
                                         </div>
                                     </div>
@@ -386,7 +376,7 @@ export function EditBookingModal({ booking, isOpen, onClose, onSave, availableBr
                                     <PaymentBox
                                         costs={costs}
                                         paymentType={paymentType}
-                                        onChange={(field, val) => {
+                                        onChange={(field: string, val: any) => {
                                             if (field === 'paymentType') setPaymentType(val as any);
                                             else {
                                                 setCosts(prev => {

@@ -11,14 +11,29 @@ interface PaymentBoxProps {
         hamali: number;
         total: number;
     };
+    paymentType?: PaymentStatus;
+    onChange?: (field: string, value: any) => void;
     onSave: () => void;
     isLocked: boolean;
     onWhatsApp?: () => void;
     onReset?: () => void;
     saveLabel?: string;
+    onPrint?: () => void;
+    currentStatus?: string;
 }
 
-export function PaymentBox({ costs, onSave, isLocked, onWhatsApp, onReset, saveLabel }: PaymentBoxProps) {
+export function PaymentBox({
+    costs,
+    paymentType,
+    onChange,
+    onSave,
+    isLocked,
+    onWhatsApp,
+    onReset,
+    saveLabel,
+    onPrint,
+    currentStatus
+}: PaymentBoxProps) {
     return (
         <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm transition-all focus-within:border-blue-500/50">
             <div className="flex items-center gap-2 mb-6">
