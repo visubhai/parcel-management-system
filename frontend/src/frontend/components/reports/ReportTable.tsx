@@ -250,7 +250,8 @@ export function ReportTable({
                                                             status: row.status,
                                                             fromBranch: row.fromBranch,
                                                             toBranch: row.toBranch,
-                                                            receiverName: row.receiver.name || row.sender.name,
+                                                            senderName: row.sender.name || "-",
+                                                            receiverName: row.receiver.name || "-",
                                                             amount: row.costs.total,
                                                             paymentStatus: row.paymentType
                                                         }, addToast)}

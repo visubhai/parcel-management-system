@@ -168,7 +168,8 @@ export function InboundTable() {
                                                     status: parcel.status,
                                                     fromBranch: parcel.fromBranch,
                                                     toBranch: parcel.toBranch,
-                                                    receiverName: parcel.receiverName || parcel.senderName,
+                                                    senderName: parcel.senderName || "-",
+                                                    receiverName: parcel.receiverName || "-",
                                                     amount: parcel.totalAmount,
                                                     paymentStatus: parcel.paymentStatus
                                                 }, addToast)}
