@@ -1,9 +1,7 @@
 "use client";
 
-import { Plus, Trash2, Package, Cuboid, List, Layers, ShoppingBag, ArrowDown } from "lucide-react";
-import { ItemType, Parcel } from "@/shared/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card";
-import { Button } from "@/frontend/components/ui/button";
+import { Package } from "lucide-react";
+import { Parcel } from "@/shared/types";
 import { Input } from "@/frontend/components/ui/input";
 import { Label } from "@/frontend/components/ui/label";
 import { SingleSelect } from "@/frontend/components/ui/single-select-dropdown";
@@ -15,7 +13,8 @@ interface ParcelListProps {
     onChange: (id: string, field: keyof Parcel, value: any) => void;
     onNext?: () => void;
     disabled?: boolean;
-    variant?: 'default' | 'enterprise' | 'modern' | 'fintech';
+    remarks?: string;
+    onRemarksChange?: (val: string) => void;
 }
 
 const ITEM_CATEGORIES = [
@@ -29,27 +28,26 @@ const ITEM_CATEGORIES = [
 
 const ITEM_CATEGORY_OPTIONS = ITEM_CATEGORIES.map(cat => ({ label: cat, value: cat }));
 
-export function ParcelList({ parcels, onAdd, onRemove, onChange, onNext, disabled, variant = 'default' }: ParcelListProps) {
-    const handleKeyDown = (e: React.KeyboardEvent, field: keyof Parcel, index: number) => {
+export function ParcelList({
+    parcels,
+    onChange,
+    onNext,
+    disabled,
+    remarks,
+    onRemarksChange
+}: ParcelListProps) {
+    const parcel = parcels[0] || { quantity: 1, itemType: "OTHER", rate: 0 };
+    const parcelId = parcel.id || (parcel as any)._id || 'default';
+
+    const handleKeyDown = (e: React.KeyboardEvent, field: string) => {
         if (e.key === "Enter") {
             e.preventDefault();
-            const row = e.currentTarget.closest('.grid') || e.currentTarget.closest('.modern-row') || e.currentTarget.closest('.fintech-row');
-            if (!row) return;
-
             if (field === "quantity") {
-                const itemSelectBtn = document.getElementById(`parcel-type-${index}`);
-                itemSelectBtn?.focus();
-            } else if (field === "itemType") {
-                const rateInput = row.querySelector('input[type="number"]:not([min="1"])') as HTMLInputElement;
-                rateInput?.focus();
+                document.getElementById(`parcel-rate-0`)?.focus();
             } else if (field === "rate") {
-                if (index === parcels.length - 1) {
-                    onNext?.();
-                } else {
-                    const nextRow = row.nextElementSibling;
-                    const nextQty = nextRow?.querySelector('input[type="number"][min="1"]') as HTMLInputElement;
-                    nextQty?.focus();
-                }
+                document.getElementById(`remarks-input`)?.focus();
+            } else if (field === "remarks") {
+                onNext?.();
             }
         }
     };
@@ -354,110 +352,79 @@ export function ParcelList({ parcels, onAdd, onRemove, onChange, onNext, disable
     }
 
     return (
-        <Card className="hover:shadow-xl transition-all border-slate-100 shadow-sm rounded-[24px]">
-            <CardHeader className="flex flex-row items-center justify-between py-5 bg-slate-50/50 px-6 border-b border-slate-100 rounded-t-[24px]">
-                <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                    <Package className="w-4 h-4 text-blue-500" /> Parcel Details
-                </CardTitle>
-                <Button
-                    onClick={onAdd}
-                    disabled={disabled}
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 font-black text-[10px] tracking-widest border-2 border-blue-100 hover:border-blue-500 hover:bg-blue-50 transition-all rounded-xl h-9"
-                >
-                    <Plus className="w-3.5 h-3.5" /> ADD ROW
-                </Button>
-            </CardHeader>
+        <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm transition-all focus-within:border-blue-500/50">
+            <div className="flex items-center gap-2 mb-4">
+                <Package className="w-4 h-4 text-blue-600" />
+                <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-widest leading-none">
+                    PARCEL INFO
+                </h3>
+            </div>
 
-            <CardContent className="p-6 space-y-4">
-                {parcels.map((parcel, index) => (
-                    <div key={parcel.id || (parcel as any)._id || index} className="grid grid-cols-12 gap-x-4 gap-y-4 md:gap-5 items-end bg-slate-50/50 p-4 rounded-2xl border border-transparent hover:border-blue-200 hover:bg-white transition-all group">
-                        {/* Quantity */}
-                        <div className="col-span-3 md:col-span-2 space-y-2 text-center">
-                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Qty</Label>
-                            <Input
-                                type="number"
-                                min="1"
-                                id={`parcel-qty-${index}`}
-                                data-focus="parcel-qty"
-                                value={parcel.quantity}
-                                disabled={disabled}
-                                onFocus={(e) => e.target.select()}
-                                onKeyDown={(e) => handleKeyDown(e, "quantity", index)}
-                                onChange={(e) => onChange(parcel.id, "quantity", parseInt(e.target.value) || 0)}
-                                className="font-black text-center h-12 bg-white border-transparent shadow-sm rounded-xl focus:ring-4 focus:ring-blue-500/5 transition-all text-lg"
-                                autoComplete="off"
-                            />
-                        </div>
+            <div className="space-y-4">
+                {/* Item Description */}
+                <div className="space-y-1">
+                    <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ITEM DESCRIPTION</Label>
+                    <SingleSelect
+                        id="parcel-type-0"
+                        value={parcel.itemType}
+                        options={ITEM_CATEGORY_OPTIONS}
+                        onChange={(val) => {
+                            onChange(parcelId, "itemType", val);
+                            setTimeout(() => document.getElementById('parcel-qty-0')?.focus(), 10);
+                        }}
+                        disabled={disabled}
+                        placeholder="Select Item..."
+                        className="h-10 border-gray-200 bg-white"
+                    />
+                </div>
 
-                        {/* Item Type */}
-                        <div className="col-span-9 md:col-span-5 space-y-2">
-                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Item Category</Label>
-                            <SingleSelect
-                                id={`parcel-type-${index}`}
-                                value={parcel.itemType}
-                                options={ITEM_CATEGORY_OPTIONS}
-                                onChange={(val) => {
-                                    onChange(parcel.id, "itemType", val);
-                                    setTimeout(() => {
-                                        const rateInput = document.getElementById(`parcel-rate-${index}`) as HTMLInputElement;
-                                        rateInput?.focus();
-                                        rateInput?.select();
-                                    }, 10);
-                                }}
-                                disabled={disabled}
-                                placeholder="Select Item"
-                                className="h-12 border-transparent bg-white shadow-sm font-black text-lg"
-                            />
-                        </div>
-
-                        {/* Rate */}
-                        <div className="col-span-9 md:col-span-3 space-y-2 group/rate">
-                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 group-focus-within/rate:text-blue-500">Rate (₹)</Label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    id={`parcel-rate-${index}`}
-                                    data-focus="parcel-rate"
-                                    value={parcel.rate}
-                                    disabled={disabled}
-                                    onFocus={(e) => e.target.select()}
-                                    onKeyDown={(e) => handleKeyDown(e, "rate", index)}
-                                    onChange={(e) => onChange(parcel.id, "rate", parseFloat(e.target.value) || 0)}
-                                    className="pl-7 font-mono font-black text-right h-12 bg-white border-transparent shadow-sm rounded-xl focus:ring-4 focus:ring-blue-500/5 transition-all text-lg"
-                                    autoComplete="off"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Remove Button */}
-                        <div className="col-span-3 md:col-span-2 flex justify-end pb-1 pr-1">
-                            {parcels.length > 1 && (
-                                <Button
-                                    onClick={() => onRemove(parcel.id)}
-                                    disabled={disabled}
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-10 w-10 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                                    title="Remove Row"
-                                >
-                                    <Trash2 className="w-5 h-5" />
-                                </Button>
-                            )}
-                        </div>
+                <div className="grid grid-cols-2 gap-4">
+                    {/* Quantity */}
+                    <div className="space-y-1">
+                        <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">QUANTITY</Label>
+                        <Input
+                            type="number"
+                            id="parcel-qty-0"
+                            value={parcel.quantity}
+                            disabled={disabled}
+                            onChange={(e) => onChange(parcelId, "quantity", parseInt(e.target.value) || 0)}
+                            onKeyDown={(e) => handleKeyDown(e, "quantity")}
+                            className="h-9 text-sm font-medium border-gray-200 focus:border-blue-500 rounded-md shadow-none px-3"
+                            placeholder="Qty"
+                        />
                     </div>
-                ))}
 
-                {parcels.length > 0 && (
-                    <div className="pt-2 px-2 flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">
-                        <span>Total Items: {parcels.length}</span>
-                        <span className="animate-pulse">Tip: Press ENTER to Navigate Fields</span>
+                    {/* Rate */}
+                    <div className="space-y-1">
+                        <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">RATE (₹)</Label>
+                        <Input
+                            type="number"
+                            id="parcel-rate-0"
+                            value={parcel.rate}
+                            disabled={disabled}
+                            onChange={(e) => onChange(parcelId, "rate", parseFloat(e.target.value) || 0)}
+                            onKeyDown={(e) => handleKeyDown(e, "rate")}
+                            className="h-9 text-sm font-medium border-gray-200 focus:border-blue-500 rounded-md shadow-none px-3"
+                            placeholder="0.00"
+                        />
                     </div>
-                )}
-            </CardContent>
-        </Card>
+                </div>
+
+                {/* Remarks */}
+                <div className="space-y-1">
+                    <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">REMARKS / NOTES</Label>
+                    <Input
+                        type="text"
+                        id="remarks-input"
+                        value={remarks}
+                        disabled={disabled}
+                        onChange={(e) => onRemarksChange?.(e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, "remarks")}
+                        className="h-9 text-sm font-medium border-gray-200 focus:border-blue-500 rounded-md shadow-none px-3"
+                        placeholder="Optional remarks..."
+                    />
+                </div>
+            </div>
+        </div>
     );
 }

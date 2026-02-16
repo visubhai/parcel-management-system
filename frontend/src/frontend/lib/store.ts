@@ -11,10 +11,12 @@ interface BranchState {
     // 2. UI State
     searchQuery: string;
     isMobileMenuOpen: boolean;
+    bookingLrNumber: string;
 
     // 3. Actions (Delegated to Services where possible)
     setCurrentUser: (user: User | null) => void;
     setSearchQuery: (query: string) => void;
+    setBookingLrNumber: (lr: string) => void;
     toggleMobileMenu: () => void;
     closeMobileMenu: () => void;
     logout: () => Promise<void>;
@@ -31,9 +33,11 @@ export const useBranchStore = create<BranchState>((set, get) => ({
     isAuthenticated: false,
     searchQuery: "",
     isMobileMenuOpen: false,
+    bookingLrNumber: "",
 
     setCurrentUser: (user) => set({ currentUser: user, isAuthenticated: !!user, isLoading: false }),
     setSearchQuery: (query) => set({ searchQuery: query }),
+    setBookingLrNumber: (lr) => set({ bookingLrNumber: lr }),
     toggleMobileMenu: () => set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
     closeMobileMenu: () => set({ isMobileMenuOpen: false }),
 

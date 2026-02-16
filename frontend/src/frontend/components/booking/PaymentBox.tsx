@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Save, Printer, Lock, MessageCircle, PlusCircle, X, Receipt } from "lucide-react";
+import { Printer, PlusCircle } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { PaymentStatus } from "@/shared/types";
 
@@ -12,174 +11,97 @@ interface PaymentBoxProps {
         hamali: number;
         total: number;
     };
-    paymentType: PaymentStatus;
-    onChange: (field: string, value: any) => void;
     onSave: () => void;
     isLocked: boolean;
     onWhatsApp?: () => void;
     onReset?: () => void;
     saveLabel?: string;
-    onPrint?: () => void;
-    currentStatus?: string;
 }
 
-export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked, onWhatsApp, onReset, saveLabel, onPrint, currentStatus }: PaymentBoxProps) {
-    const freightRef = useRef<HTMLInputElement>(null);
-    const saveButtonRef = useRef<HTMLButtonElement>(null);
-
-    // Auto-calculate total
-    useEffect(() => {
-        const total = (costs.freight || 0) + (costs.handling || 0) + (costs.hamali || 0);
-        if (total !== costs.total) {
-            onChange("total", total);
-        }
-    }, [costs.freight, costs.handling, costs.hamali, costs.total, onChange]);
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (isLocked) return;
-
-        if (e.key === "Enter") {
-            if (e.currentTarget === freightRef.current) {
-                e.preventDefault();
-                saveButtonRef.current?.focus();
-            }
-        }
-    };
-
-    // Helper to format status for display
-    const formatStatus = (s: string) => s.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-
+export function PaymentBox({ costs, onSave, isLocked, onWhatsApp, onReset, saveLabel }: PaymentBoxProps) {
     return (
-        <div className={cn(
-            "rounded-xl border shadow-sm sticky top-6 transition-all overflow-hidden flex flex-col h-full",
-            isLocked ? "border-emerald-100 bg-emerald-50/20" : "bg-white border-slate-200 shadow-slate-100"
-        )}>
-            {/* Header */}
-            <div className="bg-slate-50/80 px-5 py-3 border-b border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Receipt size={16} className="text-slate-400" />
-                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">
-                        Payment Summary
-                    </h3>
-                </div>
-
-                <span className={cn(
-                    "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border",
-                    paymentType === 'Paid'
-                        ? "bg-green-100 text-green-700 border-green-200"
-                        : "bg-red-100 text-red-700 border-red-200"
-                )}>
-                    {paymentType}
-                </span>
+        <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm transition-all focus-within:border-blue-500/50">
+            <div className="flex items-center gap-2 mb-6">
+                <Printer className="w-4 h-4 text-blue-600" />
+                <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-widest leading-none">
+                    PAYMENT SUMMARY
+                </h3>
             </div>
 
-            <div className="p-5 space-y-4 flex-1 flex flex-col justify-center">
-                {/* Line Items */}
+            <div className="space-y-4">
+                {/* Individual Charges */}
                 <div className="space-y-3">
-                    <div className="flex items-center justify-between group">
-                        <span className="text-sm font-bold text-slate-500">Freight Charges</span>
-                        <div className="flex-1 border-b-2 border-dotted border-slate-200 mx-3 relative top-1 opacity-50" />
-                        <div className="relative w-24 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                                <span className="text-slate-400 text-xs font-bold">₹</span>
-                                <input
-                                    type="number"
-                                    ref={freightRef}
-                                    value={costs.freight}
-                                    disabled={isLocked}
-                                    onFocus={(e) => e.target.select()}
-                                    onKeyDown={handleKeyDown}
-                                    onChange={(e) => onChange("freight", parseFloat(e.target.value) || 0)}
-                                    className="w-16 text-right bg-transparent border-b border-transparent focus:border-blue-500 outline-none font-bold text-slate-800 text-sm py-0.5 transition-all focus:bg-blue-50/50 p-0"
-                                />
-                            </div>
-                        </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-xs font-medium text-gray-600">Freight Charges</span>
+                        <span className="text-xs font-bold text-gray-800">₹ {costs.freight}</span>
                     </div>
-
-                    <div className="flex items-center justify-between group">
-                        <span className="text-sm font-bold text-slate-500">LR / Admin Charge</span>
-                        <div className="flex-1 border-b-2 border-dotted border-slate-200 mx-3 relative top-1 opacity-50" />
-                        <div className="relative w-24 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                                <span className="text-slate-400 text-xs font-bold">₹</span>
-                                <span className="w-16 text-right font-bold text-slate-500 text-sm py-0.5">
-                                    {costs.handling}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center justify-between group">
-                        <span className="text-sm font-bold text-slate-500">Hamali / Labor</span>
-                        <div className="flex-1 border-b-2 border-dotted border-slate-200 mx-3 relative top-1 opacity-50" />
-                        <div className="relative w-24 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                                <span className="text-slate-400 text-xs font-bold">₹</span>
-                                <input
-                                    type="number"
-                                    value={costs.hamali}
-                                    disabled={isLocked}
-                                    onKeyDown={handleKeyDown}
-                                    onChange={(e) => onChange("hamali", parseFloat(e.target.value) || 0)}
-                                    className="w-16 text-right bg-transparent border-b border-transparent focus:border-blue-500 outline-none font-bold text-slate-800 text-sm py-0.5 transition-all focus:bg-blue-50/50 p-0"
-                                />
-                            </div>
-                        </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-xs font-medium text-gray-600">LR Charge</span>
+                        <span className="text-xs font-bold text-gray-800">₹ {costs.handling}</span>
                     </div>
                 </div>
 
-                {/* Total */}
-                <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 flex items-center justify-between mt-4">
-                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Grand Total</span>
-                    <span className="text-2xl font-black text-blue-600 tracking-tighter">
-                        ₹{costs.total.toFixed(0)}
-                    </span>
-                </div>
-            </div>
+                {/* Dotted Separator */}
+                <div className="border-t border-dotted border-gray-300 my-2" />
 
-            {/* Actions */}
-            <div className="p-4 bg-slate-50/50 border-t border-slate-100">
-                {!isLocked ? (
-                    <button
-                        ref={saveButtonRef}
-                        onClick={onSave}
-                        disabled={(!saveLabel && isLocked) || costs.total <= 0}
-                        className="w-full h-12 flex items-center justify-center gap-2 rounded-xl font-black text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-600/20 text-xs uppercase tracking-widest"
-                    >
-                        {saveLabel ? (
-                            <>
-                                <Printer size={16} /> {saveLabel}
-                            </>
-                        ) : (
-                            <>
-                                <Save size={16} /> CONFIRM & PRINT
-                            </>
-                        )}
-                    </button>
-                ) : (
-                    <div className="space-y-2">
-                        <div className="grid grid-cols-2 gap-2">
-                            <button
-                                onClick={onWhatsApp}
-                                className="h-10 bg-[#25D366] text-white font-bold rounded-lg hover:bg-[#128C7E] transition-all flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-wider shadow-md shadow-green-500/20"
-                            >
-                                <MessageCircle size={14} /> WhatsApp
-                            </button>
-                            <button
-                                onClick={onPrint}
-                                className="h-10 bg-white text-slate-700 font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-wider"
-                            >
-                                <Printer size={14} /> Reprint
-                            </button>
-                        </div>
+                {/* Grand Total - Refined Number Section only */}
+                <div className="flex flex-col items-end gap-2 pt-2">
+                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Total Payable Amount</span>
+                    <div className="bg-slate-900 px-6 py-3 rounded-2xl shadow-xl border border-slate-800 flex items-baseline gap-2">
+                        <span className="text-xl font-bold text-blue-400">₹</span>
+                        <span className="text-5xl font-black text-white tracking-tighter leading-none">
+                            {costs.total}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Action Button */}
+                <div className="pt-4 space-y-3">
+                    {!isLocked ? (
                         <button
-                            onClick={onReset}
-                            className="w-full h-10 bg-blue-50 text-blue-600 font-bold rounded-lg border border-blue-100 hover:bg-blue-100 transition-all flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-wider"
+                            id="save-booking-button"
+                            onClick={onSave}
+                            disabled={isLocked}
+                            className="w-full h-11 bg-[#2563EB] hover:bg-blue-600 text-white font-bold rounded-md flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 text-xs uppercase tracking-widest"
                         >
-                            <PlusCircle size={14} /> NEW PARCEL
+                            <Printer size={16} />
+                            {saveLabel || "PRINT & SAVE"}
                         </button>
-                    </div>
-                )}
+                    ) : (
+                        <>
+                            <button
+                                id="whatsapp-button"
+                                onClick={onWhatsApp}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'ArrowDown') {
+                                        e.preventDefault();
+                                        document.getElementById('new-entry-button')?.focus();
+                                    }
+                                }}
+                                className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-bold rounded-md flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 text-xs uppercase tracking-widest"
+                            >
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                                </svg>
+                                WHATSAPP MESSAGE
+                            </button>
+                            <button
+                                id="new-entry-button"
+                                onClick={onReset}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'ArrowUp') {
+                                        e.preventDefault();
+                                        document.getElementById('whatsapp-button')?.focus();
+                                    }
+                                }}
+                                className="w-full h-11 bg-white border-2 border-green-600 text-green-600 font-bold rounded-md flex items-center justify-center gap-2 transition-all active:scale-95 text-xs uppercase tracking-widest"
+                            >
+                                <PlusCircle size={16} />
+                                BOOKED - NEW ENTRY?
+                            </button>
+                        </>
+                    )}
+                </div>
             </div>
         </div>
     );
