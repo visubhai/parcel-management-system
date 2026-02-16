@@ -1,6 +1,7 @@
 "use client";
 
-import { Package } from "lucide-react";
+import { Package, Plus, Trash2, Layers, ShoppingBag } from "lucide-react";
+import { Button } from "@/frontend/components/ui/button";
 import { Parcel } from "@/shared/types";
 import { Input } from "@/frontend/components/ui/input";
 import { Label } from "@/frontend/components/ui/label";
@@ -15,6 +16,7 @@ interface ParcelListProps {
     disabled?: boolean;
     remarks?: string;
     onRemarksChange?: (val: string) => void;
+    variant?: 'default' | 'enterprise' | 'fintech' | 'modern';
 }
 
 const ITEM_CATEGORIES = [
@@ -30,16 +32,19 @@ const ITEM_CATEGORY_OPTIONS = ITEM_CATEGORIES.map(cat => ({ label: cat, value: c
 
 export function ParcelList({
     parcels,
+    onAdd,
+    onRemove,
     onChange,
     onNext,
     disabled,
     remarks,
-    onRemarksChange
+    onRemarksChange,
+    variant = 'default'
 }: ParcelListProps) {
     const parcel = parcels[0] || { quantity: 1, itemType: "OTHER", rate: 0 };
     const parcelId = parcel.id || (parcel as any)._id || 'default';
 
-    const handleKeyDown = (e: React.KeyboardEvent, field: string) => {
+    const handleKeyDown = (e: React.KeyboardEvent, field: string, index: number = 0) => {
         if (e.key === "Enter") {
             e.preventDefault();
             if (field === "quantity") {
