@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Save, Printer, Lock, MessageCircle, PlusCircle, X } from "lucide-react";
+import { Printer, PlusCircle } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { PaymentStatus } from "@/shared/types";
 
@@ -12,193 +11,95 @@ interface PaymentBoxProps {
         hamali: number;
         total: number;
     };
-    paymentType: PaymentStatus;
-    onChange: (field: string, value: any) => void;
     onSave: () => void;
     isLocked: boolean;
     onWhatsApp?: () => void;
     onReset?: () => void;
     saveLabel?: string;
-    onPrint?: () => void;
-    currentStatus?: string;
 }
 
-export function PaymentBox({ costs, paymentType, onChange, onSave, isLocked, onWhatsApp, onReset, saveLabel, onPrint, currentStatus }: PaymentBoxProps) {
-    const freightRef = useRef<HTMLInputElement>(null);
-    const saveButtonRef = useRef<HTMLButtonElement>(null);
-
-    // Auto-calculate total
-    useEffect(() => {
-        const total = (costs.freight || 0) + (costs.handling || 0) + (costs.hamali || 0);
-        if (total !== costs.total) {
-            onChange("total", total);
-        }
-    }, [costs.freight, costs.handling, costs.hamali, costs.total, onChange]);
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (isLocked) return;
-
-        if (e.key === "Enter") {
-            if (e.currentTarget === freightRef.current) {
-                e.preventDefault();
-                saveButtonRef.current?.focus();
-            }
-        }
-
-        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-            // Optional: Toggle payment type on arrows if focused on the section
-            const newType = paymentType === "Paid" ? "To Pay" : "Paid";
-            onChange("paymentType", newType);
-        }
-    };
-
-    // Helper to format status for display
-    const formatStatus = (s: string) => s.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-
+export function PaymentBox({ costs, onSave, isLocked, onWhatsApp, onReset, saveLabel }: PaymentBoxProps) {
     return (
-        <div className={cn(
-            "p-6 rounded-[32px] border-2 shadow-xl shadow-slate-200/50 sticky top-6 backdrop-blur-md transition-all",
-            isLocked ? "border-emerald-100 bg-emerald-50/50" : "bg-white border-slate-100 shadow-slate-100/50"
-        )}>
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                    Payment Gateway
+        <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm transition-all focus-within:border-blue-500/50">
+            <div className="flex items-center gap-2 mb-6">
+                <Printer className="w-4 h-4 text-blue-600" />
+                <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-widest leading-none">
+                    PAYMENT SUMMARY
                 </h3>
-                {isLocked && (
-                    <span className={cn(
-                        "flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide",
-                        currentStatus?.toUpperCase() === 'CANCELLED' ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-700"
-                    )}>
-                        {currentStatus?.toUpperCase() === 'CANCELLED' ? <X className="w-3 h-3" /> : <Lock className="w-3.5 h-3.5" />}
-                        {formatStatus(currentStatus || "Booked")}
-                    </span>
-                )}
             </div>
 
-            <div className="space-y-5">
-                {/* Inputs */}
-                {[
-                    { label: "Freight Charge", field: "freight", ref: freightRef },
-                    { label: "Builty Charge", field: "handling" },
-                    { label: "Hamali", field: "hamali" }
-                ].map((item) => (
-                    <div key={item.field}>
-                        <label className="flex items-center justify-between text-[10px] font-black text-slate-400 mb-1.5 uppercase tracking-wide ml-1">
-                            {item.label}
-                        </label>
-                        <div className="relative group/input">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 font-bold">₹</span>
-                            <input
-                                type="number"
-                                id="freight-input"
-                                ref={item.ref as any}
-                                value={costs[item.field as keyof typeof costs]}
-                                disabled={isLocked || item.field === "handling" || item.field === "hamali"}
-                                onFocus={(e) => e.target.select()}
-                                onKeyDown={handleKeyDown}
-                                onChange={(e) => onChange(item.field, parseFloat(e.target.value) || 0)}
-                                className={cn(
-                                    "w-full pl-8 pr-4 py-3 rounded-xl border border-transparent text-right font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/5 disabled:bg-slate-50 disabled:text-slate-400 transition-all bg-slate-50/50 focus:bg-white text-lg",
-                                    (isLocked || item.field === "handling" || item.field === "hamali") && "opacity-60"
-                                )}
-                            />
-                        </div>
+            <div className="space-y-4">
+                {/* Individual Charges */}
+                <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                        <span className="text-xs font-medium text-gray-600">Freight Charges</span>
+                        <span className="text-xs font-bold text-gray-800">₹ {costs.freight}</span>
                     </div>
-                ))}
-
-                <div className="pt-6 border-t border-slate-100">
-                    <div className="flex items-end justify-between mb-6">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Final Amount</span>
-                        <div className="text-right">
-                            <span className="text-4xl font-black text-slate-900 tracking-tighter">
-                                <span className="text-2xl text-slate-300 font-medium align-top mr-1">₹</span>
-                                {costs.total.toFixed(0)}
-                                <span className="text-lg text-slate-400 font-bold">.{costs.total.toFixed(2).split('.')[1]}</span>
-                            </span>
-                        </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-xs font-medium text-gray-600">LR Charge</span>
+                        <span className="text-xs font-bold text-gray-800">₹ {costs.handling}</span>
                     </div>
+                </div>
 
-                    <div className="grid grid-cols-2 gap-3 mb-6">
+                {/* Dotted Separator */}
+                <div className="border-t border-dotted border-gray-300 my-2" />
+
+                {/* Grand Total - Refined Number Section only */}
+                <div className="flex flex-col items-end gap-2 pt-2">
+                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Total Payable Amount</span>
+                    <div className="bg-slate-900 px-6 py-3 rounded-2xl shadow-xl border border-slate-800 flex items-baseline gap-2">
+                        <span className="text-xl font-bold text-blue-400">₹</span>
+                        <span className="text-5xl font-black text-white tracking-tighter leading-none">
+                            {costs.total}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Action Button */}
+                <div className="pt-4 space-y-3">
+                    {!isLocked ? (
                         <button
-                            type="button"
-                            onClick={() => onChange("paymentType", "Paid")}
-                            onKeyDown={handleKeyDown}
+                            id="save-booking-button"
+                            onClick={onSave}
                             disabled={isLocked}
-                            className={cn(
-                                "py-3 text-xs font-black rounded-xl transition-all border-2 tracking-widest uppercase",
-                                paymentType === "Paid"
-                                    ? "bg-green-500 border-green-500 text-white shadow-lg shadow-green-200"
-                                    : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
-                            )}
+                            className="w-full h-11 bg-[#2563EB] hover:bg-blue-600 text-white font-bold rounded-md flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 text-xs uppercase tracking-widest"
                         >
-                            PAID
+                            <Printer size={16} />
+                            {saveLabel || "PRINT & SAVE"}
                         </button>
-                        <button
-                            type="button"
-                            onClick={() => onChange("paymentType", "To Pay")}
-                            onKeyDown={handleKeyDown}
-                            disabled={isLocked}
-                            className={cn(
-                                "py-3 text-xs font-black rounded-xl transition-all border-2 tracking-widest uppercase",
-                                paymentType === "To Pay"
-                                    ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-200"
-                                    : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
-                            )}
-                        >
-                            TO PAY
-                        </button>
-                    </div>
-
-                    <button
-                        ref={saveButtonRef}
-                        onClick={onSave}
-                        disabled={(!saveLabel && isLocked) || costs.total <= 0}
-                        className={cn(
-                            "w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-white transition-all shadow-xl text-sm uppercase tracking-widest h-14",
-                            (!saveLabel && isLocked)
-                                ? "bg-slate-800 cursor-not-allowed shadow-none"
-                                : "bg-slate-900 hover:bg-black active:scale-[0.98]"
-                        )}
-                    >
-                        {(!saveLabel && isLocked) ? (
-                            <>
-                                <Printer size={18} /> Print LR
-                            </>
-                        ) : (
-                            <>
-                                <Save size={18} /> {saveLabel || "Confirm LR (Enter)"}
-                            </>
-                        )}
-                    </button>
-
-                    {isLocked && (
-                        <div className="space-y-3 mt-4">
+                    ) : (
+                        <>
                             <button
+                                id="whatsapp-button"
                                 onClick={onWhatsApp}
-                                className="w-full py-4 bg-emerald-600 text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 active:scale-[0.98] text-sm uppercase tracking-widest"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'ArrowDown') {
+                                        e.preventDefault();
+                                        document.getElementById('new-entry-button')?.focus();
+                                    }
+                                }}
+                                className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-bold rounded-md flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 text-xs uppercase tracking-widest"
                             >
-                                <MessageCircle size={18} />
-                                Notify on WhatsApp
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                                </svg>
+                                WHATSAPP MESSAGE
                             </button>
-
                             <button
+                                id="new-entry-button"
                                 onClick={onReset}
-                                className="w-full py-4 bg-blue-600/10 text-blue-700 hover:bg-blue-600 hover:text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 border-2 border-dashed border-blue-200 text-sm uppercase tracking-widest"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'ArrowUp') {
+                                        e.preventDefault();
+                                        document.getElementById('whatsapp-button')?.focus();
+                                    }
+                                }}
+                                className="w-full h-11 bg-white border-2 border-green-600 text-green-600 font-bold rounded-md flex items-center justify-center gap-2 transition-all active:scale-95 text-xs uppercase tracking-widest"
                             >
-                                <PlusCircle size={18} />
-                                New Booking
+                                <PlusCircle size={16} />
+                                BOOKED - NEW ENTRY?
                             </button>
-
-                            {onPrint && (
-                                <button
-                                    onClick={onPrint}
-                                    className="w-full py-4 bg-slate-100 text-slate-800 font-black rounded-2xl transition-all flex items-center justify-center gap-2 border-2 border-slate-200 hover:bg-slate-200 active:scale-[0.98] text-sm uppercase tracking-widest mt-2"
-                                >
-                                    <Printer size={18} />
-                                    Re-print Builty
-                                </button>
-                            )}
-                        </div>
+                        </>
                     )}
                 </div>
             </div>

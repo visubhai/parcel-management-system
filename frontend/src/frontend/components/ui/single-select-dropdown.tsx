@@ -109,7 +109,7 @@ export function SingleSelect({
                 onClick={() => !disabled && setOpen(!open)}
                 onKeyDown={handleTriggerKeyDown}
                 className={cn(
-                    "flex min-h-[48px] w-full items-center justify-between rounded-xl border border-transparent bg-white px-3 py-2 text-sm shadow-sm hover:border-blue-200 focus:outline-none focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-50 transition-all font-bold text-slate-700",
+                    "flex min-h-[44px] w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm hover:border-blue-400 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300 font-bold text-slate-700",
                     className
                 )}
                 disabled={disabled}
@@ -117,17 +117,17 @@ export function SingleSelect({
                 <span className={cn("truncate", !selectedOption && "text-slate-400 font-medium")}>
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-slate-400" />
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-40 text-slate-500 transition-transform duration-300" style={{ transform: open ? 'rotate(180deg)' : 'none' }} />
             </button>
 
             {open && (
-                <div className="absolute z-50 mt-2 w-full min-w-[200px] rounded-2xl border border-slate-100 bg-white shadow-2xl animate-in fade-in zoom-in-95 overflow-hidden ring-1 ring-slate-200">
+                <div className="absolute z-50 mt-2 w-full min-w-[240px] rounded-2xl border border-slate-200 bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] animate-in fade-in zoom-in-95 overflow-hidden ring-1 ring-slate-200/50 backdrop-blur-xl">
                     {searchable && (
-                        <div className="flex items-center border-b border-slate-50 px-3 bg-slate-50/50">
-                            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50 text-slate-500" />
+                        <div className="flex items-center border-b border-slate-100 px-4 bg-slate-50/80 sticky top-0 z-10">
+                            <Search className="mr-2 h-4 w-4 shrink-0 opacity-40 text-slate-500" />
                             <input
-                                className="flex h-11 w-full bg-transparent py-3 text-sm outline-none placeholder:text-slate-400 font-medium disabled:cursor-not-allowed disabled:opacity-50 text-slate-700"
-                                placeholder="Search category..."
+                                className="flex h-12 w-full bg-transparent py-3 text-sm outline-none placeholder:text-slate-400 font-medium text-slate-700"
+                                placeholder="Search..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 onKeyDown={handleInputKeyDown}
@@ -135,9 +135,9 @@ export function SingleSelect({
                             />
                         </div>
                     )}
-                    <div className="max-h-[300px] overflow-y-auto p-1 custom-scrollbar scroll-smooth">
+                    <div className="max-h-[320px] overflow-y-auto p-1.5 custom-scrollbar scroll-smooth">
                         {filteredOptions.length === 0 && (
-                            <div className="py-8 text-center text-sm text-slate-400 font-medium">No results found.</div>
+                            <div className="py-10 text-center text-sm text-slate-400 font-medium">No matches found.</div>
                         )}
 
                         {filteredOptions.map((option, index) => (
@@ -146,15 +146,15 @@ export function SingleSelect({
                                 key={option.value}
                                 onClick={() => handleSelect(option.value)}
                                 className={cn(
-                                    "relative flex cursor-pointer select-none items-center rounded-xl px-3 py-2.5 text-sm font-bold outline-none transition-all duration-200",
+                                    "relative flex cursor-pointer select-none items-center rounded-xl px-3.5 py-3 text-sm font-bold outline-none transition-all duration-200 mb-0.5 last:mb-0",
                                     value === option.value
-                                        ? "bg-blue-50 text-blue-700"
-                                        : index === activeIndex ? "bg-slate-50 text-slate-900" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
+                                        : index === activeIndex ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:pl-4"
                                 )}
                             >
                                 <span className="flex-1 truncate">{option.label}</span>
                                 {value === option.value && (
-                                    <Check className="ml-2 h-4 w-4 text-blue-600" />
+                                    <Check className="ml-2 h-4 w-4 text-white" />
                                 )}
                             </div>
                         ))}

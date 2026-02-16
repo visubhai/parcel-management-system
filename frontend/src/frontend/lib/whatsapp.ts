@@ -9,6 +9,7 @@ export interface WhatsAppMessageData {
     status: string;
     fromBranch: string;
     toBranch: string;
+    senderName: string;
     receiverName: string;
     amount?: number;
     paymentStatus?: string;
@@ -17,7 +18,7 @@ export interface WhatsAppMessageData {
 import { fetchApi } from "@/frontend/services/base";
 
 export function generateWhatsAppMessage(data: WhatsAppMessageData): string {
-    const { lrNumber, status, fromBranch, toBranch, receiverName, amount, paymentStatus } = data;
+    const { lrNumber, status, fromBranch, toBranch, senderName, receiverName, amount, paymentStatus } = data;
 
     const dateStr = new Date().toLocaleDateString('en-IN', {
         day: '2-digit',
@@ -25,16 +26,20 @@ export function generateWhatsAppMessage(data: WhatsAppMessageData): string {
         year: 'numeric'
     });
 
-    return `📦 *PARCEL NOTIFICATION*\n` +
+    return `🚚 *BOOKING SUCCESSFUL*\n` +
         `*SAVAN LOGISTICS*\n\n` +
-        `Hello *${receiverName}*,\n\n` +
-        `Your parcel status has been updated.\n\n` +
-        `📄 *LR No:* ${lrNumber}\n` +
-        `📍 *Status:* ${status}\n` +
-        `🚚 *Route:* ${fromBranch} ➡️ ${toBranch}\n` +
-        (amount ? `💰 *Amount:* ₹${amount.toFixed(2)} (${paymentStatus})\n` : "") +
+        `Dear *${senderName}*,\n` +
+        `Your parcel is processed and ready for transit.\n\n` +
+        `📄 *LR Number:* ${lrNumber}\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `📍 *Origin:* ${fromBranch}\n` +
+        `🏁 *Destination:* ${toBranch}\n` +
+        `👤 *Receiver:* ${receiverName}\n` +
+        `💰 *Total:* ₹${amount?.toFixed(2)} (${paymentStatus})\n` +
+        `━━━━━━━━━━━━━━━\n\n` +
+        `✅ *Status:* ${status}\n` +
         `📅 *Date:* ${dateStr}\n\n` +
-        `_Thank you for shipping with us!_`;
+        `_Thank you for choosing Savan Logistics. Track your parcel using the LR number above._`;
 }
 
 export async function openWhatsApp(data: WhatsAppMessageData, addToast?: (msg: string, type: 'success' | 'error' | 'info') => void) {
