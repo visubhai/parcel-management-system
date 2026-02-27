@@ -49,7 +49,7 @@ export function BookingForm({
     };
 
     return (
-        <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm transition-all focus-within:border-blue-500/50">
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all focus-within:border-blue-500/50">
             <div className="flex items-center gap-2 mb-4">
                 <User className="w-4 h-4 text-blue-600" />
                 <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-widest leading-none">

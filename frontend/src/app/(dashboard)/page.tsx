@@ -249,11 +249,11 @@ export default function BookingDashboard() {
     <div className="min-h-screen bg-[#F1F5F9] font-sans print:hidden">
 
       {/* Title Bar below Header */}
-      <div className="bg-slate-900 border-b border-slate-800 py-3 mb-6 shadow-md relative overflow-hidden">
+      <div className="bg-slate-900 border-b border-slate-800 py-4 mb-6 shadow-md relative overflow-hidden -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-4 md:px-6">
         {/* Subtle Glow */}
         <div className="absolute top-0 left-0 w-full h-full bg-blue-600/5 blur-3xl pointer-events-none" />
 
-        <div className="max-w-full mx-auto px-6 flex items-center justify-between relative z-10">
+        <div className="max-w-full mx-auto flex items-center justify-between relative z-10">
           <h1 className="text-lg font-bold text-white">
             New Parcel <span className="text-blue-400">Booking</span>
           </h1>
@@ -266,12 +266,12 @@ export default function BookingDashboard() {
 
       {/* Main Grid Workspace - Exact 2-Column Look */}
       <main className="max-w-full mx-auto px-6 pb-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
           {/* LEFT COLUMN */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             {/* SELECT DESTINATION CARD */}
-            <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all focus-within:border-blue-500/50">
               <div className="flex items-center gap-2 mb-4">
                 <MapPin className="w-4 h-4 text-blue-600" />
                 <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest leading-none">SELECT DESTINATION</label>
@@ -319,9 +319,9 @@ export default function BookingDashboard() {
           </div>
 
           {/* RIGHT COLUMN */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             {/* PAYMENT TYPE CARD */}
-            <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all focus-within:border-blue-500/50">
               <div className="flex items-center gap-2 mb-4">
                 <Zap className="w-4 h-4 text-blue-600" />
                 <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest">PAYMENT TYPE</label>
