@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Search, Bell, Menu, ChevronDown, User, LogOut, Settings, Building2, History, Calculator } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Search, Menu, ChevronDown, LogOut, Building2, History, Calculator } from "lucide-react";
 import { useBranchStore } from "@/frontend/lib/store";
 import { useBranches } from "@/frontend/hooks/useBranches";
 import { authService } from "@/frontend/services/authService";
@@ -22,7 +22,21 @@ export function Header() {
     const [isSearching, setIsSearching] = useState(false);
     const [showSearchResults, setShowSearchResults] = useState(false);
 
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
     const debouncedSearch = useDebounce(searchQuery, 300);
+
+    // Click outside handler for dropdown
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     useEffect(() => {
         const timer = setInterval(() => setTime(new Date()), 1000);
@@ -51,22 +65,29 @@ export function Header() {
     }, [debouncedSearch]);
 
     const handleLogout = async () => {
-        // Clear session gate cookie
-        document.cookie = "login-gate-passed=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; sameSite=lax";
+        try {
+            setIsLoggingOut(true);
+            // Clear session gate cookie
+            document.cookie = "login-gate-passed=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; sameSite=lax";
 
-        await authService.logout();
-        setCurrentUser(null);
-        router.refresh();
-        router.push("/login");
+            await authService.logout();
+            setCurrentUser(null);
+            router.refresh();
+            router.push("/login");
+        } catch (error) {
+            console.error("Logout failed:", error);
+        } finally {
+            setIsLoggingOut(false);
+        }
     };
 
     // Branch logic (Simplified: Show current user's branch)
     const displayBranch = currentUser?.branch || "All Branches";
 
     return (
-        <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 sticky top-0 z-30 print:hidden relative overflow-hidden shadow-sm">
+        <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 sticky top-0 z-30 print:hidden relative shadow-sm">
             {/* Abstract Background Patterns - Matches Sidebar and Login Page */}
-            <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-blue-600/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute top-0 left-1/4 w-[250px] h-[250px] bg-indigo-600/5 rounded-full blur-3xl -translate-y-1/2" />
             </div>
@@ -174,12 +195,8 @@ export function Header() {
                         <p className="text-[10px] text-slate-400 font-medium">{time.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</p>
                     </div>
 
-                    <button className="relative p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">
-                        <Bell className="w-5 h-5" />
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-slate-900" />
-                    </button>
 
-                    <div className="relative">
+                    <div className="relative" ref={dropdownRef}>
                         <button
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                             className="flex items-center gap-3 hover:bg-slate-800 p-1 pr-3 rounded-full border border-transparent hover:border-slate-700 transition-all"
@@ -201,22 +218,17 @@ export function Header() {
                                     <p className="text-xs text-slate-400 truncate">{currentUser?.email || `${currentUser?.username || currentUser?.name?.toLowerCase().replace(/\s+/g, '')}@savan.com`}</p>
                                 </div>
                                 <div className="p-1">
-                                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg transition-colors">
-                                        <User className="w-4 h-4" />
-                                        Profile
-                                    </button>
-                                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg transition-colors">
-                                        <Settings className="w-4 h-4" />
-                                        Settings
-                                    </button>
-                                </div>
-                                <div className="p-1 border-t border-slate-700">
                                     <button
                                         onClick={handleLogout}
-                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 rounded-lg transition-colors font-medium"
+                                        disabled={isLoggingOut}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <LogOut className="w-4 h-4" />
-                                        Sign Out
+                                        {isLoggingOut ? (
+                                            <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                                        ) : (
+                                            <LogOut className="w-4 h-4" />
+                                        )}
+                                        {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
                                     </button>
                                 </div>
                             </div>

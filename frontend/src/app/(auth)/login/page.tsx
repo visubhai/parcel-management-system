@@ -116,12 +116,9 @@ export default function LoginPage() {
                     <div className="absolute inset-0 border border-green-500/20 rounded-[32px] pointer-events-none group-hover:border-green-500/40 transition-colors duration-500" />
 
                     {/* Branding */}
-                    <div className="text-center mb-10">
-                        <div className="inline-flex items-center gap-2 mb-2">
-                            <h1 className="text-5xl font-black tracking-tighter italic">
-                                <span className="text-white">SA</span>
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-lime-300">VAN</span>
-                            </h1>
+                    <div className="text-center mb-10 flex flex-col items-center">
+                        <div className="w-24 h-24 rounded-full bg-white shadow-xl shadow-orange-500/20 overflow-hidden border-2 border-white/10 mb-4 p-1">
+                            <img src="/images/savan-logo.png" alt="Savan Travels" className="w-full h-full object-cover rounded-full" />
                         </div>
                         <h2 className="text-2xl font-bold text-white mb-2">Secure Logistics Portal</h2>
                         <p className="text-green-100/60 text-sm">Manage your shipments efficiently</p>
@@ -245,7 +242,7 @@ export default function LoginPage() {
                 {/* Footer Copyright */}
                 <div className="mt-8 text-center">
                     <p className="text-white/30 text-[10px] uppercase tracking-[0.2em]">
-                        &copy; {new Date().getFullYear()} SAVAN LOGISTICS SYSTEM • ALL RIGHTS RESERVED
+                        &copy; {new Date().getFullYear()} SAVAN TRAVELS • ALL RIGHTS RESERVED
                     </p>
                 </div>
             </div>

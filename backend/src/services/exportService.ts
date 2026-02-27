@@ -1,14 +1,7 @@
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import ExcelJS from 'exceljs';
 import { Response } from 'express';
-
-// Extend jsPDF to include autoTable
-declare module 'jspdf' {
-    interface jsPDF {
-        autoTable: (options: any) => jsPDF;
-    }
-}
 
 export const exportService = {
     async generatePDF(res: Response, data: any[], metadata: { branchName: string, reportType: string, dateRange: string, generatedBy: string }) {
@@ -17,7 +10,7 @@ export const exportService = {
 
         // Header
         doc.setFontSize(18);
-        doc.text('SAVAN LOGISTICS', 105, 15, { align: 'center' });
+        doc.text('SAVAN TRAVELS', 105, 15, { align: 'center' });
         doc.setFontSize(12);
         doc.text(`Report: ${metadata.reportType}`, 105, 22, { align: 'center' });
 
@@ -44,7 +37,7 @@ export const exportService = {
             tableRows.push(rowData);
         });
 
-        doc.autoTable({
+        autoTable(doc, {
             head: [tableColumn],
             body: tableRows,
             startY: 55,
@@ -71,7 +64,7 @@ export const exportService = {
 
         // Title & Metadata
         worksheet.mergeCells('A1:F1');
-        worksheet.getCell('A1').value = 'SAVAN LOGISTICS - ' + metadata.reportType;
+        worksheet.getCell('A1').value = 'SAVAN TRAVELS - ' + metadata.reportType;
         worksheet.getCell('A1').style = headerStyle;
 
         worksheet.addRow(['Branch:', metadata.branchName]);

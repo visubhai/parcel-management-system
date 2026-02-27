@@ -72,15 +72,7 @@ export default function ReportsPage() {
     const isHirabagh = currentUser?.branch === 'hirabagh';
     const isBapunagar = currentUser?.branch === 'bapunagar';
 
-    // Auto-select branch for restricted users if "All" is selected but they are restricted to a subset
-    useEffect(() => {
-        if (currentUser?.role !== 'SUPER_ADMIN' && !isHirabagh && !isBapunagar && availableBranches.length > 0) {
-            const currentFrom = filters.fromBranch;
-            if (currentFrom === "All" || !availableBranches.includes(currentFrom)) {
-                setFilters(prev => ({ ...prev, fromBranch: availableBranches[0] }));
-            }
-        }
-    }, [currentUser, isHirabagh, isBapunagar, availableBranches, filters.fromBranch, setFilters]);
+
 
     // UI flags
     const isBranchRestricted = currentUser?.role !== 'SUPER_ADMIN' && !isHirabagh && !isBapunagar;

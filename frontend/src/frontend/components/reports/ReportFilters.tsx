@@ -40,47 +40,48 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
         return val.split(',');
     };
 
+    // Computed Allowed Branches Logic
+    // Same as backend logic
+    let allowedBranches: string[] = [];
+    if (userBranch === 'hirabagh') {
+        allowedBranches = branches;
+    } else if (userBranch === 'bapunagar') {
+        const groupBranches = ['bapunagar', 'amdavad-ctm', 'paldi', 'setelite'];
+        // Keep actual names matching the case strictly
+        allowedBranches = branches.filter(b => groupBranches.includes(b.toLowerCase()));
+    } else if (userBranch) {
+        allowedBranches = [userBranch];
+    }
+
     const branchOptions: Option[] = branches.map(b => ({ label: b, value: b }));
 
     const handleMultiChange = (key: 'fromBranch' | 'toBranch', selected: string[]) => {
         setFilters(prev => {
             const newVal = selected.length > 0 ? selected.join(',') : 'All';
 
-            // STRICT BRANCH LOCKING LOGIC for Branch Users
-            if (isBranchRestricted && userBranch) {
-                // Feature: Default to "My Branch -> All" when everything is cleared
-                if (selected.length === 0) {
-                    if (key === 'fromBranch') {
-                        // User cleared "From" -> Reset to standard Outgoing
-                        return { ...prev, fromBranch: userBranch, toBranch: 'All' };
-                    }
-                    if (key === 'toBranch') {
-                        const currentFrom = prev.fromBranch;
-                        const fromArr = toArray(currentFrom);
-                        const isFromForeign = fromArr.length !== 1 || fromArr[0] !== userBranch;
-
-                        if (isFromForeign) {
-                            return { ...prev, toBranch: userBranch };
-                        }
-                        return { ...prev, toBranch: 'All' };
-                    }
-                }
-
-                const newFilters = { ...prev, [key]: newVal };
+            if (isBranchRestricted && userBranch && allowedBranches.length > 0) {
                 const currentFrom = key === 'fromBranch' ? newVal : prev.fromBranch;
                 const currentTo = key === 'toBranch' ? newVal : prev.toBranch;
 
                 const fromArr = toArray(currentFrom);
-                const isFromForeign = fromArr.length !== 1 || fromArr[0] !== userBranch;
-
                 const toArr = toArray(currentTo);
-                const isToForeign = toArr.length !== 1 || toArr[0] !== userBranch;
 
-                if (key === 'fromBranch' && isFromForeign) {
-                    newFilters.toBranch = userBranch;
+                // Is the From branch entirely foreign? (None of the selected branches are in the allowed group)
+                // "All" is not foreign because it includes all branches.
+                const isFromForeign = currentFrom !== 'All' && fromArr.every((b: string) => !allowedBranches.includes(b));
+                // Same for To branch
+                const isToForeign = currentTo !== 'All' && toArr.every((b: string) => !allowedBranches.includes(b));
+
+                const newFilters = { ...prev, [key]: newVal };
+
+                // Enforce Rule: (Sender IN allowedBranches) OR (Receiver IN allowedBranches)
+                if (key === 'fromBranch' && isFromForeign && isToForeign) {
+                    // Force the Destination to be the user's primary scope because Origin is completely foreign
+                    newFilters.toBranch = allowedBranches.join(',');
                 }
-                if (key === 'toBranch' && isToForeign) {
-                    newFilters.fromBranch = userBranch;
+                if (key === 'toBranch' && isToForeign && isFromForeign) {
+                    // Force the Origin to be the primary scope because Destination is completely foreign
+                    newFilters.fromBranch = allowedBranches.join(',');
                 }
                 return newFilters;
             }
@@ -93,13 +94,18 @@ export function ReportFilters({ filters, setFilters, branches, isBranchRestricte
         setFilters(prev => {
             const newFilters = { ...prev, [key]: value };
 
-            // STRICT BRANCH LOCKING LOGIC for Branch Users
-            if (isBranchRestricted && userBranch) {
-                if (key === 'fromBranch' && value !== userBranch) {
-                    newFilters.toBranch = userBranch;
+            if (isBranchRestricted && userBranch && allowedBranches.length > 0) {
+                const currentFrom = key === 'fromBranch' ? value : prev.fromBranch;
+                const currentTo = key === 'toBranch' ? value : prev.toBranch;
+
+                const isFromForeign = currentFrom !== 'All' && !allowedBranches.includes(currentFrom);
+                const isToForeign = currentTo !== 'All' && !allowedBranches.includes(currentTo);
+
+                if (key === 'fromBranch' && isFromForeign && isToForeign) {
+                    newFilters.toBranch = allowedBranches[0];
                 }
-                if (key === 'toBranch' && value !== userBranch) {
-                    newFilters.fromBranch = userBranch;
+                if (key === 'toBranch' && isToForeign && isFromForeign) {
+                    newFilters.fromBranch = allowedBranches[0];
                 }
             }
             return newFilters;

@@ -58,17 +58,17 @@ export function Sidebar() {
 
                 <div className="relative z-10 h-full flex flex-col">
 
-                    <div className="h-20 flex items-center px-6 border-b border-white/5 bg-transparent shrink-0 overflow-hidden">
+                    <div className="h-24 flex items-center px-6 border-b border-white/5 bg-transparent shrink-0 overflow-hidden">
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
-                                {/* Simple Logo Icon */}
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-white"><path d="M10 17h4V5H10v12h0zM3 17h4V8H3v9h0zM17 17h4v-5h-4v5h0z" /></svg>
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-white shadow-lg overflow-hidden border border-white/20 p-0.5">
+                                <img src="/images/savan-logo.png" alt="Savan Travels Logo" className="w-full h-full object-cover rounded-full" />
                             </div>
                             <h1 className={cn(
-                                "text-lg font-bold tracking-tight text-white transition-opacity duration-300 whitespace-nowrap",
+                                "text-xl font-bold tracking-tight text-white transition-opacity duration-300 whitespace-nowrap flex flex-col items-start leading-tight",
                                 isHovered ? "opacity-100" : "lg:opacity-0 lg:w-0 opacity-100"
                             )}>
-                                SAVAN <span className="text-blue-400">Logistics</span>
+                                SAVAN
+                                <span className="text-[#f25c05] text-sm uppercase tracking-wider">Travels</span>
                             </h1>
                         </div>
                     </div>

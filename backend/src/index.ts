@@ -11,6 +11,9 @@ import superAdminRoutes from './super-admin/super-admin.routes';
 
 import { requestLogger } from './services/loggerService';
 import { errorHandler } from './middleware/errorHandler';
+import helmet from 'helmet';
+import compression from 'compression';
+import mongoSanitize from 'express-mongo-sanitize';
 
 
 
@@ -23,6 +26,9 @@ const PORT = process.env.PORT || 3001;
 app.set('trust proxy', 1);
 
 // Middleware
+app.use(helmet());
+app.use(compression());
+app.use(mongoSanitize());
 app.use(cors({
     origin: (origin, callback) => {
         const allowedOrigins = [

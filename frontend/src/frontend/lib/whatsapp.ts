@@ -27,7 +27,7 @@ export function generateWhatsAppMessage(data: WhatsAppMessageData): string {
     });
 
     return `🚚 *BOOKING SUCCESSFUL*\n` +
-        `*SAVAN LOGISTICS*\n\n` +
+        `*SAVAN TRAVELS*\n\n` +
         `Dear *${senderName}*,\n` +
         `Your parcel is processed and ready for transit.\n\n` +
         `📄 *LR Number:* ${lrNumber}\n` +
@@ -39,7 +39,7 @@ export function generateWhatsAppMessage(data: WhatsAppMessageData): string {
         `━━━━━━━━━━━━━━━\n\n` +
         `✅ *Status:* ${status}\n` +
         `📅 *Date:* ${dateStr}\n\n` +
-        `_Thank you for choosing Savan Logistics. Track your parcel using the LR number above._`;
+        `_Thank you for choosing Savan Travels. Track your parcel using the LR number above._`;
 }
 
 export async function openWhatsApp(data: WhatsAppMessageData, addToast?: (msg: string, type: 'success' | 'error' | 'info') => void) {
