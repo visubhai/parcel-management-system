@@ -45,6 +45,9 @@ const UserSchema = new mongoose.Schema({
         type: String,
         enum: ["DAILY_REPORT", "DELIVERY_REPORT", "LEDGER_REPORT", "SUMMARY_REPORT", "BOOKING_REPORT"]
     }],
+    passwordChangedAt: {
+        type: Date
+    }
 }, { timestamps: true });
 
 // Prevent recompilation of model in development

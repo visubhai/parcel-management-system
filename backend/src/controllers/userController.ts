@@ -55,7 +55,10 @@ export const resetPassword = catchAsync(async (req: AuthRequest, res: Response) 
 
     const user = await User.findByIdAndUpdate(
         id,
-        { password: hashedPassword },
+        {
+            password: hashedPassword,
+            passwordChangedAt: new Date()
+        },
         { new: true }
     ).select('-password');
 
@@ -93,8 +96,8 @@ export const createUser = catchAsync(async (req: AuthRequest, res: Response) => 
         username,
         password: hashedPassword,
         role,
-        branchId,
-        branch: branchId, // Keep synced
+        branchId: branchId || undefined,
+        branch: branchId || undefined, // Keep synced
         allowedBranches: allowedBranches || [],
         allowedReports: allowedReports || [],
         isActive: isActive !== undefined ? isActive : true
@@ -130,8 +133,8 @@ export const updateUser = catchAsync(async (req: AuthRequest, res: Response) => 
         email,
         username,
         role,
-        branchId,
-        branch: branchId,
+        branchId: branchId || undefined,
+        branch: branchId || undefined,
         allowedBranches,
         allowedReports,
         isActive
@@ -140,6 +143,7 @@ export const updateUser = catchAsync(async (req: AuthRequest, res: Response) => 
     if (password) {
         const salt = await bcrypt.genSalt(10);
         updates.password = await bcrypt.hash(password, salt);
+        updates.passwordChangedAt = new Date();
     }
 
     const updatedUser = await User.findByIdAndUpdate(

@@ -18,6 +18,8 @@ export function BranchManager() {
         state: "",
         address: "",
         phone: "",
+        username: "",
+        password: "",
         isActive: true
     });
 
@@ -30,6 +32,8 @@ export function BranchManager() {
                 state: branch.state || "",
                 address: branch.address || "",
                 phone: branch.phone || "",
+                username: "", // don't populate for editing
+                password: "",
                 isActive: branch.isActive ?? true
             });
         } else {
@@ -40,6 +44,8 @@ export function BranchManager() {
                 state: "",
                 address: "",
                 phone: "",
+                username: "",
+                password: "",
                 isActive: true
             });
         }
@@ -51,10 +57,14 @@ export function BranchManager() {
         setIsSubmitting(true);
         try {
             let res;
+            const payload = { ...formData };
             if (editingBranch) {
-                res = await adminService.updateBranch(editingBranch._id, formData);
+                // Don't send empty passwords/usernames when updating a branch
+                if (!payload.password) delete (payload as any).password;
+                if (!payload.username) delete (payload as any).username;
+                res = await adminService.updateBranch(editingBranch._id, payload);
             } else {
-                res = await adminService.createBranch(formData);
+                res = await adminService.createBranch(payload);
             }
 
             if (res.error) {
@@ -143,48 +153,80 @@ export function BranchManager() {
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
+                            {/* Branch Details Section */}
+                            <div className="space-y-4">
+                                <h4 className="text-sm border-b pb-2 font-bold text-slate-800">Branch Details</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-500 uppercase">Branch Name</label>
+                                        <input
+                                            required
+                                            value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-500 uppercase">Branch Code</label>
+                                        <input
+                                            required
+                                            value={formData.branchCode} onChange={e => setFormData({ ...formData, branchCode: e.target.value.toUpperCase() })}
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                                        />
+                                    </div>
+                                </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs font-bold text-slate-500 uppercase">Branch Name</label>
+                                    <label className="text-xs font-bold text-slate-500 uppercase">State</label>
                                     <input
                                         required
-                                        value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value })}
                                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs font-bold text-slate-500 uppercase">Branch Code</label>
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Phone</label>
                                     <input
-                                        required
-                                        value={formData.branchCode} onChange={e => setFormData({ ...formData, branchCode: e.target.value.toUpperCase() })}
+                                        value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })}
                                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
                                     />
                                 </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Address</label>
+                                    <textarea
+                                        value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })}
+                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm h-20"
+                                    />
+                                </div>
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-bold text-slate-500 uppercase">State</label>
-                                <input
-                                    required
-                                    value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value })}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                                />
+
+                            {/* Admin Credentials Section */}
+                            <div className="space-y-4">
+                                <h4 className="text-sm border-b pb-2 font-bold text-slate-800">
+                                    Admin User Credentials
+                                    <span className="block text-xs font-normal text-slate-500 mt-1">If left blank, secure defaults will be generated.</span>
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-500 uppercase">Username</label>
+                                        <input
+                                            value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })}
+                                            placeholder={formData.branchCode ? formData.branchCode.toLowerCase() : "Auto-generated"}
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-500 uppercase">Password</label>
+                                        <input
+                                            type="password"
+                                            value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                            placeholder={editingBranch ? "Leave blank to keep current" : "Auto-generated"}
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-bold text-slate-500 uppercase">Phone</label>
-                                <input
-                                    value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-bold text-slate-500 uppercase">Address</label>
-                                <textarea
-                                    value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm h-20"
-                                />
-                            </div>
-                            <div className="flex items-center gap-2">
+
+                            <div className="flex items-center gap-2 pt-2">
                                 <input
                                     type="checkbox"
                                     id="branchActive"

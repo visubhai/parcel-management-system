@@ -21,13 +21,21 @@ export const logAudit = async ({
     req
 }: AuditParams) => {
     try {
+        let briefContext = '';
+        if (action === 'DELETE_BOOKING' && oldValue) {
+            briefContext = `Deleted booking trackingId: ${oldValue.trackingId || oldValue._id}`;
+        } else if (newValue && newValue.count !== undefined) {
+            briefContext = `Count updated to ${newValue.count}`;
+        } else if (action === 'UPDATE' && newValue) {
+            briefContext = `Updated fields manually`;
+        }
+
         await AuditLog.create({
             userId,
             action,
             entityType,
             entityId,
-            oldValue,
-            newValue,
+            briefContext: briefContext.substring(0, 190),
             ipAddress: req?.ip,
             userAgent: req?.headers['user-agent']
         });

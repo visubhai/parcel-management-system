@@ -21,6 +21,14 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
             return res.status(401).json({ error: 'User not found' });
         }
 
+        if (user.passwordChangedAt) {
+            // decoded.iat is in seconds, passwordChangedAt is in ms
+            const iatTimestamp = decoded.iat * 1000;
+            if (iatTimestamp < user.passwordChangedAt.getTime()) {
+                return res.status(401).json({ error: 'Session invalidated due to password change.' });
+            }
+        }
+
         req.user = user;
         next();
     } catch (error) {

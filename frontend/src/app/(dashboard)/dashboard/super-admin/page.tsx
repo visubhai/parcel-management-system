@@ -87,7 +87,7 @@ export default function SuperAdminDashboard() {
                                 onClick={handleCreate}
                                 className="bg-slate-900 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-all"
                             >
-                                <Plus className="w-5 h-5" /> New Admin
+                                <Plus className="w-5 h-5" /> Add Sub-Admin
                             </button>
                         </div>
                         <AdminList onEdit={handleEdit} />

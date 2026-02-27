@@ -13,7 +13,7 @@ export const login = catchAsync(async (req: Request, res: Response) => {
             { email: username },
             { username: username },
         ]
-    }).select('+password +role +branch').populate('branch');
+    }).select('+password +role +branch +branchId').populate('branch').populate('branchId');
 
     if (!user) {
         throw new AppError('Invalid credentials or user not found', 401);
@@ -24,8 +24,10 @@ export const login = catchAsync(async (req: Request, res: Response) => {
         throw new AppError('Your account has been deactivated. Please contact the administrator.', 403);
     }
 
+    const activeBranch: any = user.branch || user.branchId;
+
     // For branch users, check if their branch is active
-    if (user.role === 'BRANCH' && user.branch && !user.branch.isActive) {
+    if (user.role === 'BRANCH' && activeBranch && !activeBranch.isActive) {
         throw new AppError('Your branch is currently inactive. Please contact the administrator.', 403);
     }
 
@@ -37,15 +39,15 @@ export const login = catchAsync(async (req: Request, res: Response) => {
 
     // Branch Validation
     if (branchId) {
-        const userBranchId = user.branch?._id || user.branchId;
-        if (userBranchId && userBranchId.toString() !== branchId) {
-            throw new AppError(`Access denied. You belong to ${user.branch?.name || 'another branch'}`, 403);
+        const userBranchIdStr = activeBranch?._id?.toString() || user.branchId?.toString();
+        if (userBranchIdStr && userBranchIdStr !== branchId) {
+            throw new AppError(`Access denied. You belong to ${activeBranch?.name || 'another branch'}`, 403);
         }
     }
 
     // Generate JWT
     const token = jwt.sign(
-        { id: user._id, role: user.role, branchId: user.branch?._id },
+        { id: user._id, role: user.role, branchId: activeBranch?._id },
         process.env.JWT_SECRET || 'secret',
         { expiresIn: '1d' }
     );
@@ -58,8 +60,8 @@ export const login = catchAsync(async (req: Request, res: Response) => {
             name: user.name,
             email: user.email,
             role: user.role,
-            branchId: user.branch?._id?.toString() || null,
-            branchName: user.branch?.name || 'Global',
+            branchId: activeBranch?._id?.toString() || null,
+            branchName: activeBranch?.name || 'Global',
         }
     });
 });

@@ -12,7 +12,7 @@ interface PermissionEditorProps {
     onClose: () => void;
 }
 
-const REPORT_TYPES: ReportType[] = ["BOOKING_REPORT", "DELIVERY_REPORT", "LEDGER_REPORT", "SUMMARY_REPORT", "BOOKING_REPORT"];
+const REPORT_TYPES: ReportType[] = ["BOOKING_REPORT", "DELIVERY_REPORT", "LEDGER_REPORT", "SUMMARY_REPORT", "DAILY_REPORT"];
 
 export function PermissionEditor({ user, isOpen, onClose }: PermissionEditorProps) {
     const { branches } = useBranches();
@@ -53,7 +53,11 @@ export function PermissionEditor({ user, isOpen, onClose }: PermissionEditorProp
         try {
             let res;
             if (user?.id) {
-                res = await adminService.updateUser(user.id, formData);
+                const payload = { ...formData };
+                if (!payload.password) {
+                    delete (payload as any).password;
+                }
+                res = await adminService.updateUser(user.id, payload);
             } else {
                 if (!formData.password) {
                     addToast("Password is required for new users", "error");
@@ -177,8 +181,8 @@ export function PermissionEditor({ user, isOpen, onClose }: PermissionEditorProp
                             className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20"
                         >
                             <option value="">Select Primary Branch</option>
-                            {branches.map((b: any) => (
-                                <option key={b._id} value={b._id}>{b.name}</option>
+                            {branches.map((b: any, index: number) => (
+                                <option key={b._id || b.id || b.name || index} value={b._id || b.id}>{b.name}</option>
                             ))}
                         </select>
                     </div>
@@ -192,9 +196,9 @@ export function PermissionEditor({ user, isOpen, onClose }: PermissionEditorProp
                             </span>
                         </label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {branches.map((b: any) => (
+                            {branches.map((b: any, index: number) => (
                                 <label
-                                    key={b._id}
+                                    key={`allowed-${b._id || b.id || b.name || index}`}
                                     className={`
                                         flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all
                                         ${formData.allowedBranches.includes(b.name)

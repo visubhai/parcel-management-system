@@ -12,7 +12,7 @@ export const toggleUserStatusSchema = z.object({
 export const getUsersSchema = z.object({
     query: z.object({
         role: z.enum(['SUPER_ADMIN', 'BRANCH']).optional(),
-        branchId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid branch ID").optional(),
+        branchId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid branch ID").optional().or(z.literal('')),
     }).optional()
 });
 
@@ -32,7 +32,7 @@ export const createUserSchema = z.object({
         username: z.string().min(3, "Username must be at least 3 characters"),
         password: z.string().min(6, "Password must be at least 6 characters"),
         role: z.enum(['SUPER_ADMIN', 'BRANCH']),
-        branchId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid branch ID").optional(),
+        branchId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid branch ID").optional().or(z.literal('')),
         allowedBranches: z.array(z.string()).optional(),
         allowedReports: z.array(z.string()).optional(),
         isActive: z.boolean().optional()
@@ -49,7 +49,7 @@ export const updateUserSchema = z.object({
         username: z.string().optional(),
         password: z.string().min(6).optional(),
         role: z.enum(['SUPER_ADMIN', 'BRANCH']).optional(),
-        branchId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid branch ID").optional(),
+        branchId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid branch ID").optional().or(z.literal('')),
         allowedBranches: z.array(z.string()).optional(),
         allowedReports: z.array(z.string()).optional(),
         isActive: z.boolean().optional()
