@@ -31,111 +31,124 @@ export const PrintBuilty = ({ booking, branches }: PrintBuiltyProps) => {
     const toBranchName = toBranchDetails?.name || (typeof booking.toBranch === 'string' ? booking.toBranch : "Unknown Branch");
 
     return (
-        <div className="hidden print:flex fixed inset-0 bg-white z-[9999] overflow-hidden text-black font-sans leading-tight items-start justify-start">
-            {/* Printable Area Container: 21cm width x 7cm height */}
+        <div className="hidden print:flex fixed inset-0 bg-white z-[9999] overflow-hidden text-black font-sans box-border items-start justify-start">
+            {/* Spacer for pre-printed header - only if needed, usually for thermal rolls we shouldn't have top margins unless there's a specific pre-print pad */}
+            {/* If the user uses a strictly blank 21x7 sticker, we don't need top padding. I will add a 0.5cm top padding for safe bleed. */}
+
             <div
-                className="relative flex flex-col justify-between"
+                className="relative flex flex-col"
                 style={{
                     fontFamily: "Arial, sans-serif",
                     width: "21cm",
                     height: "7cm",
-                    padding: "0.5cm" // Small padding to keep text off the absolute physical edge
+                    padding: "0.2cm 0.5cm", // Adjust padding for optimal bleed
+                    boxSizing: "border-box"
                 }}
             >
-                {/* Top Row: LR and Date */}
-                <div className="flex justify-between items-end mb-2 border-b-2 border-black pb-1 shrink-0">
-                    <div className="flex flex-col">
-                        <span className="text-[9px] uppercase font-bold text-gray-500 leading-none mb-0.5">L.R. Number</span>
-                        <span className="text-xl font-black tracking-widest leading-none">{booking.lrNumber}</span>
-                    </div>
-                    <div className="flex flex-col items-center mx-auto">
-                        <span className="text-[11px] font-bold uppercase border border-black px-2 py-0.5 rounded-sm line-clamp-1">{booking.paymentType}</span>
-                    </div>
-                    <div className="flex flex-col text-right">
-                        <span className="text-[9px] uppercase font-bold text-gray-500 leading-none mb-0.5">Booking Date</span>
-                        <span className="text-[11px] font-bold leading-none">
-                            {new Date(booking.date).toLocaleString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                    </div>
-                </div>
+                {/* GLOBAL BORDER WRAPPER FOR PROFESSIONAL LOOK */}
+                <div className="border-[2px] border-black border-solid w-full h-full flex flex-col bg-white">
 
-                {/* Main Content Area - Split Left (Routing) and Right (Parcels/Financials) */}
-                <div className="flex gap-2 h-full min-h-0 overflow-hidden text-[10px]">
-
-                    {/* Left Column: Routing & Parties */}
-                    <div className="w-[45%] flex flex-col justify-between gap-1 overflow-hidden">
-
-                        {/* From / To Branch Row */}
-                        <div className="flex border border-black rounded-sm overflow-hidden shrink-0">
-                            <div className="w-1/2 p-1 border-r border-black font-mono">
-                                <p className="font-bold uppercase opacity-60 text-[8px] leading-none mb-0.5">From Branch</p>
-                                <p className="font-bold text-[10px] leading-tight truncate">{fromBranchName?.replace("Branch", "").trim() || 'Head Office'}</p>
-                                {fromBranchDetails?.phone && <p className="text-[8px] mt-0.5 font-bold truncate">✆ {fromBranchDetails.phone}</p>}
-                            </div>
-                            <div className="w-1/2 p-1 font-mono">
-                                <p className="font-bold uppercase opacity-60 text-[8px] leading-none mb-0.5">To Branch</p>
-                                <p className="font-bold text-[10px] leading-tight truncate">{toBranchName?.replace("Branch", "").trim()}</p>
-                                {toBranchDetails?.phone && <p className="text-[8px] mt-0.5 font-bold truncate">✆ {toBranchDetails.phone}</p>}
-                            </div>
+                    {/* ROW 1: HEADER (LR, DATE, PAYMENT) */}
+                    <div className="flex border-b-[2px] border-black border-solid items-center h-[20%] shrink-0 px-2 bg-gray-50/50">
+                        <div className="w-[35%] flex flex-col justify-center">
+                            <span className="text-[10px] font-black uppercase leading-tight">L.R. Number</span>
+                            <span className="text-2xl font-black tracking-widest leading-none mt-0.5">{booking.lrNumber}</span>
                         </div>
-
-                        {/* Sender / Receiver Row */}
-                        <div className="flex border border-black rounded-sm overflow-hidden h-full min-h-0">
-                            {/* Sender */}
-                            <div className="w-1/2 p-1 border-r border-black flex flex-col">
-                                <span className="text-[8px] font-bold uppercase opacity-60 leading-none">Sender</span>
-                                <span className="text-[9px] font-mono font-bold leading-tight truncate mt-0.5">{booking.sender.mobile}</span>
-                                <p className="font-bold text-[10px] uppercase truncate mt-0.5 line-clamp-2 leading-tight flex-1" style={{ whiteSpace: 'normal', display: '-webkit-box', WebkitBoxOrient: 'vertical' }}>
-                                    {booking.sender.name}
-                                </p>
-                            </div>
-                            {/* Receiver */}
-                            <div className="w-1/2 p-1 flex flex-col">
-                                <span className="text-[8px] font-bold uppercase opacity-60 leading-none">Receiver</span>
-                                <span className="text-[9px] font-mono font-bold leading-tight truncate mt-0.5">{booking.receiver.mobile}</span>
-                                <p className="font-bold text-[10px] uppercase truncate mt-0.5 line-clamp-2 leading-tight flex-1" style={{ whiteSpace: 'normal', display: '-webkit-box', WebkitBoxOrient: 'vertical' }}>
-                                    {booking.receiver.name}
-                                </p>
-                            </div>
+                        <div className="w-[30%] flex justify-center items-center">
+                            <span className="text-[14px] font-black uppercase border-[2px] border-black border-solid px-4 py-0.5 rounded-sm tracking-widest bg-white">
+                                {booking.paymentType}
+                            </span>
+                        </div>
+                        <div className="w-[35%] flex flex-col justify-center items-end text-right">
+                            <span className="text-[10px] font-black uppercase leading-tight">Booking Date</span>
+                            <span className="text-[13px] font-bold leading-none mt-0.5">
+                                {new Date(booking.date).toLocaleString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                            </span>
                         </div>
                     </div>
 
-                    {/* Right Column: Parcels & Finances */}
-                    <div className="w-[55%] flex gap-1 h-full min-h-0">
+                    {/* ROW 2: PARTIES & ROUTING */}
+                    <div className="flex border-b-[2px] border-black border-solid h-[45%] shrink-0">
 
-                        {/* Parcel Table */}
-                        <div className="w-[60%] border border-black rounded-sm overflow-hidden flex flex-col">
-                            <div className="flex bg-gray-100 border-b border-black text-[8px] font-bold uppercase py-0.5 shrink-0">
-                                <div className="w-8 text-center border-r border-black">Qty</div>
-                                <div className="flex-1 px-1">Item Details</div>
+                        {/* CONSIGNOR (SENDER) */}
+                        <div className="w-[33.33%] border-r-[2px] border-black border-solid p-1.5 flex flex-col relative overflow-hidden">
+                            <span className="text-[9px] font-black uppercase bg-black text-white px-1.5 py-0.5 inline-block w-max rounded-sm mb-1 leading-none">CONSIGNOR (SENDER)</span>
+                            <span className="text-[13px] font-black uppercase truncate leading-tight mt-0.5">{booking.sender.name}</span>
+                            <span className="text-[12px] font-bold font-mono tracking-tight mt-auto">✆ +91 {booking.sender.mobile}</span>
+                        </div>
+
+                        {/* CONSIGNEE (RECEIVER) */}
+                        <div className="w-[33.33%] border-r-[2px] border-black border-solid p-1.5 flex flex-col relative overflow-hidden">
+                            <span className="text-[9px] font-black uppercase bg-black text-white px-1.5 py-0.5 inline-block w-max rounded-sm mb-1 leading-none">CONSIGNEE (RECEIVER)</span>
+                            <span className="text-[13px] font-black uppercase truncate leading-tight mt-0.5">{booking.receiver.name}</span>
+                            <span className="text-[12px] font-bold font-mono tracking-tight mt-auto">✆ +91 {booking.receiver.mobile}</span>
+                        </div>
+
+                        {/* ROUTING (FROM -> TO) */}
+                        <div className="w-[33.33%] flex flex-col overflow-hidden">
+                            <div className="h-1/2 border-b border-black border-dotted px-1.5 py-1 flex flex-col justify-center bg-gray-50/30">
+                                <div className="flex items-center gap-1">
+                                    <span className="text-[9px] font-black uppercase opacity-70 w-8">FROM:</span>
+                                    <span className="text-[12px] font-black uppercase truncate">{fromBranchName?.replace("Branch", "").trim() || 'Head Office'}</span>
+                                </div>
+                                <div className="pl-9 text-[9px] leading-tight text-gray-700 font-medium">
+                                    {fromBranchDetails?.address && <span className="line-clamp-1">{fromBranchDetails.address}</span>}
+                                    {fromBranchDetails?.phone && <span>Ph: {fromBranchDetails.phone}</span>}
+                                </div>
                             </div>
-                            <div className="flex-1 overflow-hidden flex flex-col">
+                            <div className="h-1/2 px-1.5 py-1 flex flex-col justify-center">
+                                <div className="flex items-center gap-1">
+                                    <span className="text-[9px] font-black uppercase opacity-70 w-8">TO:</span>
+                                    <span className="text-[12px] font-black uppercase truncate">{toBranchName?.replace("Branch", "").trim()}</span>
+                                </div>
+                                <div className="pl-9 text-[9px] leading-tight text-gray-700 font-medium">
+                                    {toBranchDetails?.address && <span className="line-clamp-1">{toBranchDetails.address}</span>}
+                                    {toBranchDetails?.phone && <span>Ph: {toBranchDetails.phone}</span>}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    {/* ROW 3: ITEMS AND FINANCIALS */}
+                    <div className="flex flex-1 min-h-0 bg-white">
+
+                        {/* PARCELS */}
+                        <div className="w-[66.66%] border-r-[2px] border-black border-solid flex flex-col relative">
+                            <div className="flex border-b-[2px] border-black border-solid text-[9px] font-black bg-gray-100">
+                                <div className="w-12 text-center border-r-[2px] border-black border-solid py-0.5">QTY</div>
+                                <div className="flex-1 px-2 py-0.5">DESCRIPTION (ITEM DETAILS)</div>
+                            </div>
+                            <div className="flex-1 overflow-hidden px-1 py-0.5">
                                 {booking.parcels.slice(0, 3).map((p, i) => (
-                                    <div key={i} className="flex text-[9px] border-b border-gray-200 last:border-0 min-h-[14px] items-center">
-                                        <div className="w-8 text-center border-r border-gray-200 font-bold shrink-0">{p.quantity}</div>
-                                        <div className="flex-1 px-1 truncate font-mono tracking-tight">{p.itemType}</div>
+                                    <div key={i} className="flex text-[11px] items-center mb-0.5">
+                                        <div className="w-11 text-center font-black pr-1">{p.quantity}</div>
+                                        <div className="flex-1 px-2 truncate font-bold font-mono tracking-tighter uppercase">{p.itemType}</div>
                                     </div>
                                 ))}
-                                {booking.remarks && (
-                                    <div className="text-[8px] italic p-1 border-t border-black mt-auto bg-gray-50 truncate shrink-0">
-                                        Note: {booking.remarks}
-                                    </div>
+                                {booking.parcels.length > 3 && (
+                                    <div className="text-[10px] font-bold italic text-gray-600 px-2">+ {booking.parcels.length - 3} more items...</div>
                                 )}
+                            </div>
+                            {booking.remarks && (
+                                <div className="text-[10px] border-t border-black border-dashed p-1 truncate flex items-center shrink-0 font-bold bg-white z-10">
+                                    <span className="mr-1 underline">Remarks:</span> {booking.remarks}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* FINANCIALS */}
+                        <div className="w-[33.33%] flex flex-col text-[11px] font-bold p-1 shrink-0 relative">
+                            <div className="flex justify-between items-center bg-gray-50 px-1"><span className="opacity-70">Freight</span> <span className="font-mono">{(booking.costs.freight || 0).toFixed(2)}</span></div>
+                            <div className="flex justify-between items-center px-1"><span className="opacity-70">Handling</span> <span className="font-mono">{(booking.costs.handling || 0).toFixed(2)}</span></div>
+                            <div className="flex justify-between items-center bg-gray-50 px-1"><span className="opacity-70">Hamali</span> <span className="font-mono">{(booking.costs.hamali || 0).toFixed(2)}</span></div>
+
+                            <div className="absolute bottom-0 left-0 right-0 border-t-[2px] border-black border-solid p-1 flex justify-between items-end bg-gray-100">
+                                <span className="text-[10px] font-black uppercase mb-[1px]">Total ₹</span>
+                                <span className="text-[18px] font-black leading-none">{(booking.costs.total || 0).toFixed(2)}</span>
                             </div>
                         </div>
 
-                        {/* Payment Summary */}
-                        <div className="w-[40%] border border-black rounded-sm p-1 flex flex-col justify-between shrink-0">
-                            <div className="space-y-0 text-[9px]">
-                                <div className="flex justify-between items-center"><span className="opacity-70 text-[8px] uppercase font-bold">Freight</span> <span className="font-mono font-bold">{booking.costs.freight}</span></div>
-                                <div className="flex justify-between items-center"><span className="opacity-70 text-[8px] uppercase font-bold">Handling</span> <span className="font-mono font-bold">{booking.costs.handling}</span></div>
-                                <div className="flex justify-between items-center"><span className="opacity-70 text-[8px] uppercase font-bold">Hamali</span> <span className="font-mono font-bold">{booking.costs.hamali}</span></div>
-                            </div>
-                            <div className="border-t-2 border-black pt-0.5 mt-0.5 flex flex-col justify-between items-end">
-                                <span className="text-[8px] font-bold uppercase leading-none opacity-80 w-full text-left">Total</span>
-                                <span className="text-lg font-black text-black leading-none mt-0.5">₹{booking.costs.total}</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
