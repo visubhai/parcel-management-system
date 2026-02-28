@@ -75,38 +75,38 @@ export const PrintBuilty = ({ booking, branches }: PrintBuiltyProps) => {
                     <div className="flex border-b-[2px] border-black border-solid h-[45%] shrink-0">
 
                         {/* CONSIGNOR (SENDER) */}
-                        <div className="w-[33.33%] border-r-[2px] border-black border-solid p-1.5 flex flex-col relative overflow-hidden">
+                        <div className="w-[25%] border-r-[2px] border-black border-solid p-1.5 flex flex-col relative overflow-hidden">
                             <span className="text-[9px] font-black uppercase bg-black text-white px-1.5 py-0.5 inline-block w-max rounded-sm mb-1 leading-none">CONSIGNOR (SENDER)</span>
-                            <span className="text-[13px] font-black uppercase truncate leading-tight mt-0.5">{booking.sender.name}</span>
-                            <span className="text-[12px] font-bold font-mono tracking-tight mt-auto">✆ +91 {booking.sender.mobile}</span>
+                            <span className="text-[12px] font-black uppercase truncate leading-tight mt-0.5">{booking.sender.name}</span>
+                            <span className="text-[11px] font-bold font-mono tracking-tight mt-auto">✆ +91 {booking.sender.mobile}</span>
                         </div>
 
                         {/* CONSIGNEE (RECEIVER) */}
-                        <div className="w-[33.33%] border-r-[2px] border-black border-solid p-1.5 flex flex-col relative overflow-hidden">
+                        <div className="w-[25%] border-r-[2px] border-black border-solid p-1.5 flex flex-col relative overflow-hidden">
                             <span className="text-[9px] font-black uppercase bg-black text-white px-1.5 py-0.5 inline-block w-max rounded-sm mb-1 leading-none">CONSIGNEE (RECEIVER)</span>
-                            <span className="text-[13px] font-black uppercase truncate leading-tight mt-0.5">{booking.receiver.name}</span>
-                            <span className="text-[12px] font-bold font-mono tracking-tight mt-auto">✆ +91 {booking.receiver.mobile}</span>
+                            <span className="text-[12px] font-black uppercase truncate leading-tight mt-0.5">{booking.receiver.name}</span>
+                            <span className="text-[11px] font-bold font-mono tracking-tight mt-auto">✆ +91 {booking.receiver.mobile}</span>
                         </div>
 
                         {/* ROUTING (FROM -> TO) */}
-                        <div className="w-[33.33%] flex flex-col overflow-hidden leading-snug">
-                            <div className="min-h-[50%] border-b border-black border-dotted px-1 py-0.5 flex flex-col bg-gray-50/30 flex-1">
+                        <div className="w-[50%] flex flex-col overflow-hidden leading-snug">
+                            <div className="min-h-[50%] border-b border-black border-dotted px-1.5 py-1 flex flex-col justify-center bg-gray-50/30 flex-1">
                                 <div className="flex items-start gap-1">
-                                    <span className="text-[8px] font-black uppercase opacity-70 shrink-0 mt-[1px]">FROM:</span>
-                                    <div className="flex flex-col flex-1">
-                                        <span className="text-[11px] font-black uppercase truncate leading-none">{fromBranchName?.replace("Branch", "").trim() || 'Head Office'}</span>
-                                        {fromBranchDetails?.address && <span className="text-[8px] font-medium text-gray-800 whitespace-normal overflow-wrap-break-word break-words leading-[1.1] mt-0.5">{fromBranchDetails.address}</span>}
-                                        {fromBranchDetails?.phone && <span className="font-bold text-black text-[9px] mt-0.5 whitespace-nowrap">✆ {fromBranchDetails.phone}</span>}
+                                    <span className="text-[9px] font-black uppercase opacity-70 shrink-0 mt-[1px]">FROM:</span>
+                                    <div className="flex flex-col flex-1 pl-1">
+                                        <span className="text-[12px] font-black uppercase truncate leading-none mb-0.5">{fromBranchName?.replace("Branch", "").trim() || 'Head Office'}</span>
+                                        {fromBranchDetails?.address && <span className="text-[10px] font-medium text-gray-800 whitespace-normal overflow-wrap-break-word break-words leading-[1.2]">{fromBranchDetails.address}</span>}
+                                        {fromBranchDetails?.phone && <span className="font-bold text-black text-[10px] mt-0.5 whitespace-nowrap">✆ {fromBranchDetails.phone}</span>}
                                     </div>
                                 </div>
                             </div>
-                            <div className="min-h-[50%] px-1 py-0.5 flex flex-col flex-1">
+                            <div className="min-h-[50%] px-1.5 py-1 flex flex-col justify-center flex-1">
                                 <div className="flex items-start gap-1">
-                                    <span className="text-[8px] font-black uppercase opacity-70 shrink-0 mt-[1px]">TO:</span>
-                                    <div className="flex flex-col flex-1">
-                                        <span className="text-[11px] font-black uppercase truncate leading-none">{toBranchName?.replace("Branch", "").trim()}</span>
-                                        {toBranchDetails?.address && <span className="text-[8px] font-medium text-gray-800 whitespace-normal overflow-wrap-break-word break-words leading-[1.1] mt-0.5">{toBranchDetails.address}</span>}
-                                        {toBranchDetails?.phone && <span className="font-bold text-black text-[9px] mt-0.5 whitespace-nowrap">✆ {toBranchDetails.phone}</span>}
+                                    <span className="text-[9px] font-black uppercase opacity-70 shrink-0 mt-[1px]">TO:</span>
+                                    <div className="flex flex-col flex-1 pl-1">
+                                        <span className="text-[12px] font-black uppercase truncate leading-none mb-0.5">{toBranchName?.replace("Branch", "").trim()}</span>
+                                        {toBranchDetails?.address && <span className="text-[10px] font-medium text-gray-800 whitespace-normal overflow-wrap-break-word break-words leading-[1.2]">{toBranchDetails.address}</span>}
+                                        {toBranchDetails?.phone && <span className="font-bold text-black text-[10px] mt-0.5 whitespace-nowrap">✆ {toBranchDetails.phone}</span>}
                                     </div>
                                 </div>
                             </div>
