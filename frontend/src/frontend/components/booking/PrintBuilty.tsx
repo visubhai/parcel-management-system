@@ -91,9 +91,9 @@ export const PrintBuilty = ({ booking, branches }: PrintBuiltyProps) => {
                                     <span className="text-[9px] font-black uppercase opacity-70 w-8">FROM:</span>
                                     <span className="text-[12px] font-black uppercase truncate">{fromBranchName?.replace("Branch", "").trim() || 'Head Office'}</span>
                                 </div>
-                                <div className="pl-9 text-[9px] leading-tight text-gray-700 font-medium">
+                                <div className="pl-9 text-[9px] leading-tight text-gray-700 font-medium flex flex-col">
                                     {fromBranchDetails?.address && <span className="line-clamp-1">{fromBranchDetails.address}</span>}
-                                    {fromBranchDetails?.phone && <span>Ph: {fromBranchDetails.phone}</span>}
+                                    {fromBranchDetails?.phone && <span className="font-bold text-black text-[10px] mt-0.5">✆ {fromBranchDetails.phone}</span>}
                                 </div>
                             </div>
                             <div className="h-1/2 px-1.5 py-1 flex flex-col justify-center">
@@ -101,9 +101,9 @@ export const PrintBuilty = ({ booking, branches }: PrintBuiltyProps) => {
                                     <span className="text-[9px] font-black uppercase opacity-70 w-8">TO:</span>
                                     <span className="text-[12px] font-black uppercase truncate">{toBranchName?.replace("Branch", "").trim()}</span>
                                 </div>
-                                <div className="pl-9 text-[9px] leading-tight text-gray-700 font-medium">
+                                <div className="pl-9 text-[9px] leading-tight text-gray-700 font-medium flex flex-col">
                                     {toBranchDetails?.address && <span className="line-clamp-1">{toBranchDetails.address}</span>}
-                                    {toBranchDetails?.phone && <span>Ph: {toBranchDetails.phone}</span>}
+                                    {toBranchDetails?.phone && <span className="font-bold text-black text-[10px] mt-0.5">✆ {toBranchDetails.phone}</span>}
                                 </div>
                             </div>
                         </div>
