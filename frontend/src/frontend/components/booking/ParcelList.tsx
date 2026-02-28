@@ -41,8 +41,6 @@ export function ParcelList({
     onRemarksChange,
     variant = 'default'
 }: ParcelListProps) {
-    const parcel = parcels[0] || { quantity: 1, itemType: "OTHER", rate: 0 };
-    const parcelId = parcel.id || (parcel as any)._id || 'default';
 
     const handleKeyDown = (e: React.KeyboardEvent, field: string, index: number = 0) => {
         if (e.key === "Enter") {
@@ -358,65 +356,95 @@ export function ParcelList({
 
     return (
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all focus-within:border-blue-500/50">
-            <div className="flex items-center gap-2 mb-4">
-                <Package className="w-4 h-4 text-blue-600" />
-                <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-widest leading-none">
-                    PARCEL INFO
-                </h3>
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4 text-blue-600" />
+                    <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-widest leading-none">
+                        PARCEL INFO
+                    </h3>
+                </div>
+                <Button
+                    onClick={onAdd}
+                    disabled={disabled}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                >
+                    <Plus className="w-3 h-3 mr-1" /> ADD PARCEL
+                </Button>
             </div>
 
-            <div className="space-y-4">
-                {/* Item Description */}
-                <div className="space-y-1">
-                    <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ITEM DESCRIPTION</Label>
-                    <SingleSelect
-                        id="parcel-type-0"
-                        value={parcel.itemType}
-                        options={ITEM_CATEGORY_OPTIONS}
-                        onChange={(val) => {
-                            onChange(parcelId, "itemType", val);
-                            setTimeout(() => document.getElementById('parcel-qty-0')?.focus(), 10);
-                        }}
-                        disabled={disabled}
-                        placeholder="Select Item..."
-                        className="h-10 border-gray-200 bg-white"
-                    />
-                </div>
+            <div className="space-y-6">
+                {parcels.map((parcel, index) => {
+                    const parcelId = parcel.id || (parcel as any)._id || `default-${index}`;
+                    return (
+                        <div key={parcelId} className="space-y-4 relative pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                            {parcels.length > 1 && (
+                                <button
+                                    onClick={() => onRemove(parcelId)}
+                                    disabled={disabled}
+                                    className="absolute -right-2 -top-2 p-1.5 text-gray-400 hover:text-red-500 bg-white rounded-full transition-all"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            )}
 
-                <div className="grid grid-cols-2 gap-4">
-                    {/* Quantity */}
-                    <div className="space-y-1">
-                        <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">QUANTITY</Label>
-                        <Input
-                            type="number"
-                            id="parcel-qty-0"
-                            value={parcel.quantity}
-                            disabled={disabled}
-                            onChange={(e) => onChange(parcelId, "quantity", parseInt(e.target.value) || 0)}
-                            onKeyDown={(e) => handleKeyDown(e, "quantity")}
-                            className="h-9 text-sm font-medium border-gray-200 focus:border-blue-500 rounded-md shadow-none px-3"
-                            placeholder="Qty"
-                        />
-                    </div>
+                            {/* Item Description */}
+                            <div className="space-y-1">
+                                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ITEM DESCRIPTION</Label>
+                                <SingleSelect
+                                    id={`parcel-type-${index}`}
+                                    value={parcel.itemType}
+                                    options={ITEM_CATEGORY_OPTIONS}
+                                    onChange={(val) => {
+                                        onChange(parcelId, "itemType", val);
+                                        setTimeout(() => document.getElementById(`parcel-qty-${index}`)?.focus(), 10);
+                                    }}
+                                    disabled={disabled}
+                                    placeholder="Select Item..."
+                                    className="h-10 border-gray-200 bg-white"
+                                />
+                            </div>
 
-                    {/* Rate */}
-                    <div className="space-y-1">
-                        <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">RATE (₹)</Label>
-                        <Input
-                            type="number"
-                            id="parcel-rate-0"
-                            value={parcel.rate}
-                            disabled={disabled}
-                            onChange={(e) => onChange(parcelId, "rate", parseFloat(e.target.value) || 0)}
-                            onKeyDown={(e) => handleKeyDown(e, "rate")}
-                            className="h-9 text-sm font-medium border-gray-200 focus:border-blue-500 rounded-md shadow-none px-3"
-                            placeholder="0.00"
-                        />
-                    </div>
-                </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Quantity */}
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">QUANTITY</Label>
+                                    <Input
+                                        type="number"
+                                        min="1"
+                                        id={`parcel-qty-${index}`}
+                                        value={parcel.quantity}
+                                        disabled={disabled}
+                                        onChange={(e) => onChange(parcelId, "quantity", parseInt(e.target.value) || 0)}
+                                        onKeyDown={(e) => handleKeyDown(e, "quantity", index)}
+                                        className="h-9 text-sm font-medium border-gray-200 focus:border-blue-500 rounded-md shadow-none px-3"
+                                        placeholder="Qty"
+                                    />
+                                </div>
+
+                                {/* Rate */}
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">RATE (₹)</Label>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        id={`parcel-rate-${index}`}
+                                        value={parcel.rate}
+                                        disabled={disabled}
+                                        onChange={(e) => onChange(parcelId, "rate", parseFloat(e.target.value) || 0)}
+                                        onKeyDown={(e) => handleKeyDown(e, "rate", index)}
+                                        className="h-9 text-sm font-medium border-gray-200 focus:border-blue-500 rounded-md shadow-none px-3"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
 
                 {/* Remarks */}
-                <div className="space-y-1">
+                <div className="space-y-1 pt-2">
                     <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">REMARKS / NOTES</Label>
                     <Input
                         type="text"
