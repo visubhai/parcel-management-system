@@ -82,6 +82,7 @@ export function useReports() {
                     paymentType: p.paymentType,
                     status: p.status,
                     deliveredRemark: p.deliveredRemark,
+                    cancellationRemark: p.cancellationRemark,
                     collectedBy: p.collectedBy,
                     collectedByMobile: p.collectedByMobile,
                     deliveredAt: p.deliveredAt

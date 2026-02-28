@@ -68,11 +68,11 @@ export const parcelService = {
         }
     },
 
-    async updateParcelStatus(parcelId: string, status: ParcelStatus, deliveredRemark?: string, collectedBy?: string, collectedByMobile?: string): Promise<ServiceResponse<null>> {
+    async updateParcelStatus(parcelId: string, status: ParcelStatus, deliveredRemark?: string, collectedBy?: string, collectedByMobile?: string, cancellationRemark?: string): Promise<ServiceResponse<null>> {
         try {
             const res = await fetchApi(`/bookings/${parcelId}/status`, {
                 method: 'PATCH',
-                body: JSON.stringify({ status, deliveredRemark, collectedBy, collectedByMobile }),
+                body: JSON.stringify({ status, deliveredRemark, collectedBy, collectedByMobile, cancellationRemark }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(parseError(data));

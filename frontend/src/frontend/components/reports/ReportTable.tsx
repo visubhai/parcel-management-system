@@ -80,8 +80,8 @@ export function ReportTable({
 
     const handleConfirmCancel = async (remark: string) => {
         if (bookingToCancel) {
-            // updateParcelStatus(id, status, deliveredRemark/cancellationRemark, ...)
-            const { error } = await parcelService.updateParcelStatus(bookingToCancel, 'CANCELLED', remark);
+            // updateParcelStatus(id, status, deliveredRemark, collectedBy, collectedByMobile, cancellationRemark)
+            const { error } = await parcelService.updateParcelStatus(bookingToCancel, 'CANCELLED', undefined, undefined, undefined, remark);
 
             if (error) {
                 addToast(`Failed to cancel booking: ${error.message}`, "error");
