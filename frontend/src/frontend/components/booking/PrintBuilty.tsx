@@ -89,25 +89,25 @@ export const PrintBuilty = ({ booking, branches }: PrintBuiltyProps) => {
                         </div>
 
                         {/* ROUTING (FROM -> TO) */}
-                        <div className="w-[33.33%] flex flex-col overflow-hidden">
-                            <div className="h-1/2 border-b border-black border-dotted px-1.5 py-1 flex flex-col justify-center bg-gray-50/30">
-                                <div className="flex items-center gap-1">
-                                    <span className="text-[9px] font-black uppercase opacity-70 w-8">FROM:</span>
-                                    <span className="text-[12px] font-black uppercase truncate">{fromBranchName?.replace("Branch", "").trim() || 'Head Office'}</span>
-                                </div>
-                                <div className="pl-9 text-[9px] leading-tight text-gray-700 font-medium flex flex-col">
-                                    {fromBranchDetails?.address && <span className="line-clamp-1">{fromBranchDetails.address}</span>}
-                                    {fromBranchDetails?.phone && <span className="font-bold text-black text-[10px] mt-0.5">✆ {fromBranchDetails.phone}</span>}
+                        <div className="w-[33.33%] flex flex-col overflow-hidden leading-snug">
+                            <div className="min-h-[50%] border-b border-black border-dotted px-1 py-0.5 flex flex-col bg-gray-50/30 flex-1">
+                                <div className="flex items-start gap-1">
+                                    <span className="text-[8px] font-black uppercase opacity-70 shrink-0 mt-[1px]">FROM:</span>
+                                    <div className="flex flex-col flex-1">
+                                        <span className="text-[11px] font-black uppercase truncate leading-none">{fromBranchName?.replace("Branch", "").trim() || 'Head Office'}</span>
+                                        {fromBranchDetails?.address && <span className="text-[8px] font-medium text-gray-800 whitespace-normal overflow-wrap-break-word break-words leading-[1.1] mt-0.5">{fromBranchDetails.address}</span>}
+                                        {fromBranchDetails?.phone && <span className="font-bold text-black text-[9px] mt-0.5 whitespace-nowrap">✆ {fromBranchDetails.phone}</span>}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="h-1/2 px-1.5 py-1 flex flex-col justify-center">
-                                <div className="flex items-center gap-1">
-                                    <span className="text-[9px] font-black uppercase opacity-70 w-8">TO:</span>
-                                    <span className="text-[12px] font-black uppercase truncate">{toBranchName?.replace("Branch", "").trim()}</span>
-                                </div>
-                                <div className="pl-9 text-[9px] leading-tight text-gray-700 font-medium flex flex-col">
-                                    {toBranchDetails?.address && <span className="line-clamp-1">{toBranchDetails.address}</span>}
-                                    {toBranchDetails?.phone && <span className="font-bold text-black text-[10px] mt-0.5">✆ {toBranchDetails.phone}</span>}
+                            <div className="min-h-[50%] px-1 py-0.5 flex flex-col flex-1">
+                                <div className="flex items-start gap-1">
+                                    <span className="text-[8px] font-black uppercase opacity-70 shrink-0 mt-[1px]">TO:</span>
+                                    <div className="flex flex-col flex-1">
+                                        <span className="text-[11px] font-black uppercase truncate leading-none">{toBranchName?.replace("Branch", "").trim()}</span>
+                                        {toBranchDetails?.address && <span className="text-[8px] font-medium text-gray-800 whitespace-normal overflow-wrap-break-word break-words leading-[1.1] mt-0.5">{toBranchDetails.address}</span>}
+                                        {toBranchDetails?.phone && <span className="font-bold text-black text-[9px] mt-0.5 whitespace-nowrap">✆ {toBranchDetails.phone}</span>}
+                                    </div>
                                 </div>
                             </div>
                         </div>
