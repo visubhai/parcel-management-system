@@ -97,15 +97,13 @@ export const PrintBuilty = ({ booking, branches }: PrintBuiltyProps) => {
                     <div className="w-[60%] border border-black rounded-lg overflow-hidden flex flex-col">
                         <div className="flex bg-gray-100 border-b border-black text-[10px] font-bold uppercase py-1">
                             <div className="w-12 text-center border-r border-black">Qty</div>
-                            <div className="flex-1 px-2 border-r border-black">Description</div>
-                            <div className="w-16 text-center">Weight</div>
+                            <div className="flex-1 px-2">Description</div>
                         </div>
                         <div className="flex-1 overflow-visible">
                             {booking.parcels.slice(0, 3).map((p, i) => (
                                 <div key={i} className="flex text-xs py-1 border-b border-gray-200 last:border-0">
                                     <div className="w-12 text-center border-r border-gray-200 font-bold">{p.quantity}</div>
-                                    <div className="flex-1 px-2 border-r border-gray-200 truncate">{p.itemType}</div>
-                                    <div className="w-16 text-center">{p.weight || '-'}</div>
+                                    <div className="flex-1 px-2 truncate">{p.itemType}</div>
                                 </div>
                             ))}
                             {booking.remarks && (
