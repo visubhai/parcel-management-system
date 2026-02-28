@@ -198,6 +198,21 @@ export default function BookingDashboard() {
       fetchRecent();
       mutate(key => Array.isArray(key) && (key[0] === 'reports' || key[0] === 'ledger'));
 
+      // AUTO SEND WHATSAPP
+      const fromBranchName = branchObjects.find(b => b._id === fromBranch)?.name || "";
+      const toBranchName = branchObjects.find(b => b._id === toBranch)?.name || "";
+      openWhatsApp({
+        mobile: sender.mobile,
+        lrNumber: createdParcel.lr_number,
+        status: "Booked & Outbound",
+        fromBranch: fromBranchName,
+        toBranch: toBranchName,
+        senderName: sender.name,
+        receiverName: receiver.name,
+        amount: costs.total,
+        paymentStatus: paymentType
+      }, addToast);
+
       // AUTO PRINT AND THEN RESET
       setTimeout(() => {
         // Trigger print
