@@ -6,6 +6,7 @@ import { ChevronDown, ChevronUp, ChevronsUpDown, ArrowLeft, ArrowRight, Ban, Mes
 import { cn } from "@/frontend/lib/utils";
 import { ConfirmationModal } from "@/frontend/components/common/ConfirmationModal";
 import { EditBookingModal } from "./EditBookingModal";
+import { CancelBookingModal } from "./CancelBookingModal";
 import { useBranches } from "@/frontend/hooks/useBranches";
 import { useToast } from "@/frontend/components/ui/toast";
 import { useState, useEffect } from "react";
@@ -77,9 +78,10 @@ export function ReportTable({
         setEditModalOpen(true);
     };
 
-    const handleConfirmCancel = async () => {
+    const handleConfirmCancel = async (remark: string) => {
         if (bookingToCancel) {
-            const { error } = await parcelService.updateParcelStatus(bookingToCancel, 'CANCELLED');
+            // updateParcelStatus(id, status, deliveredRemark/cancellationRemark, ...)
+            const { error } = await parcelService.updateParcelStatus(bookingToCancel, 'CANCELLED', remark);
 
             if (error) {
                 addToast(`Failed to cancel booking: ${error.message}`, "error");
@@ -89,6 +91,7 @@ export function ReportTable({
             mutate();
             setBookingToCancel(null);
             setCancelModalOpen(false);
+            addToast("Booking cancelled successfully", "success");
         }
     };
 
@@ -210,8 +213,12 @@ export function ReportTable({
                                         <td className="px-6 py-4 text-sm text-slate-500">{row.toBranch}</td>
                                         <td className="px-6 py-4 text-sm text-slate-600 font-medium truncate max-w-[150px]" title={row.sender.name}>{row.sender.name}</td>
                                         <td className="px-6 py-4 text-sm text-slate-600 truncate max-w-[150px]" title={row.receiver.name}>{row.receiver.name}</td>
-                                        <td className="px-6 py-4 text-sm text-slate-500 italic truncate max-w-[150px]" title={row.remarks || ""}>
-                                            {row.remarks || "-"}
+                                        <td className="px-6 py-4 text-sm text-slate-500 italic truncate max-w-[150px]" title={isCancelled && row.cancellationRemark ? row.cancellationRemark : (row.remarks || "")}>
+                                            {isCancelled && row.cancellationRemark ? (
+                                                <span className="text-red-600 font-medium">Cancel: {row.cancellationRemark}</span>
+                                            ) : (
+                                                row.remarks || "-"
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-700 text-right font-mono">
                                             {row.parcels.reduce((s, p) => s + p.quantity, 0)}
@@ -344,16 +351,12 @@ export function ReportTable({
                     </div>
                 </div>
             </div>
-            {/* Cancel Confirmation Modal */}
-            <ConfirmationModal
+            {/* Cancel Booking Modal */}
+            <CancelBookingModal
                 isOpen={cancelModalOpen}
                 onClose={() => setCancelModalOpen(false)}
                 onConfirm={handleConfirmCancel}
-                title="Cancel Booking"
-                message="Are you sure for final cancelling parcel?"
-                confirmText="Yes, Cancel"
-                cancelText="No, Keep It"
-                isDanger={true}
+                lrNumber={data.find(b => b.id === bookingToCancel)?.lrNumber}
             />
             {/* Delete Confirmation Modal */}
             <ConfirmationModal

@@ -39,6 +39,7 @@ export interface Booking {
     paymentType: PaymentStatus;
     remarks?: string;
     deliveredRemark?: string;
+    cancellationRemark?: string;
     collectedBy?: string;
     collectedByMobile?: string;
     deliveredAt?: string;

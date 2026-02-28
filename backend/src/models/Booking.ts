@@ -31,6 +31,7 @@ export interface IBooking extends Document {
     paymentType: 'Paid' | 'To Pay';
     remarks?: string;
     deliveredRemark?: string;
+    cancellationRemark?: string;
     collectedBy?: string;
     collectedByMobile?: string;
     deliveredAt?: Date;
@@ -77,6 +78,7 @@ const BookingSchema = new Schema<IBooking>({
     paymentType: { type: String, enum: ['Paid', 'To Pay'], required: true },
     remarks: { type: String, required: false },
     deliveredRemark: { type: String, required: false },
+    cancellationRemark: { type: String, required: false },
     collectedBy: { type: String, required: false },
     collectedByMobile: { type: String, required: false, match: /^\d{10}$/ },
     deliveredAt: { type: Date },

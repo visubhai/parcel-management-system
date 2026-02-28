@@ -215,7 +215,7 @@ export const createBooking = catchAsync(async (req: AuthRequest, res: Response) 
 
 export const updateStatus = catchAsync(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
-    const { status, deliveredRemark, collectedBy, collectedByMobile } = req.body;
+    const { status, deliveredRemark, collectedBy, collectedByMobile, cancellationRemark } = req.body;
     // Debug: Ensure collectedBy fields are present in body
     const user = req.user;
 
@@ -231,6 +231,13 @@ export const updateStatus = catchAsync(async (req: AuthRequest, res: Response) =
         if (collectedByMobile) updateData.collectedByMobile = collectedByMobile;
         updateData.deliveredAt = new Date();
         updateData.deliveredBy = user._id;
+    }
+
+    if (status === 'CANCELLED') {
+        if (!cancellationRemark) {
+            throw new AppError("A cancellation remark is required to cancel a parcel.", 400);
+        }
+        updateData.cancellationRemark = cancellationRemark;
     }
 
     const booking = await Booking.findByIdAndUpdate(
