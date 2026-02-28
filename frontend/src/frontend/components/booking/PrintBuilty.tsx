@@ -42,6 +42,7 @@ export const PrintBuilty = ({ booking, branches }: PrintBuiltyProps) => {
             <div
                 className="relative flex flex-col"
                 style={{
+                    marginTop: "1.5cm",
                     fontFamily: "Arial, sans-serif",
                     width: "21cm",
                     height: "7cm",
