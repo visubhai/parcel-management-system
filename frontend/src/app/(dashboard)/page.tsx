@@ -246,160 +246,162 @@ export default function BookingDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F1F5F9] font-sans print:hidden">
+    <>
+      <div className="min-h-screen bg-[#F1F5F9] font-sans print:hidden">
 
-      {/* Title Bar below Header */}
-      <div className="bg-slate-900 border-b border-slate-800 py-4 mb-6 shadow-md relative overflow-hidden -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-4 md:px-6">
-        {/* Subtle Glow */}
-        <div className="absolute top-0 left-0 w-full h-full bg-blue-600/5 blur-3xl pointer-events-none" />
+        {/* Title Bar below Header */}
+        <div className="bg-slate-900 border-b border-slate-800 py-4 mb-6 shadow-md relative overflow-hidden -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-4 md:px-6">
+          {/* Subtle Glow */}
+          <div className="absolute top-0 left-0 w-full h-full bg-blue-600/5 blur-3xl pointer-events-none" />
 
-        <div className="max-w-full mx-auto flex items-center justify-between relative z-10">
-          <h1 className="text-lg font-bold text-white">
-            New Parcel <span className="text-blue-400">Booking</span>
-          </h1>
-          <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg shadow-inner">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
-            <span className="text-[10px] font-extrabold text-slate-300 uppercase tracking-wider">SYSTEM ACTIVE</span>
+          <div className="max-w-full mx-auto flex items-center justify-between relative z-10">
+            <h1 className="text-lg font-bold text-white">
+              New Parcel <span className="text-blue-400">Booking</span>
+            </h1>
+            <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg shadow-inner">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+              <span className="text-[10px] font-extrabold text-slate-300 uppercase tracking-wider">SYSTEM ACTIVE</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Grid Workspace - Exact 2-Column Look */}
-      <main className="max-w-full mx-auto px-6 pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* Main Grid Workspace - Exact 2-Column Look */}
+        <main className="max-w-full mx-auto px-6 pb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
-          {/* LEFT COLUMN */}
-          <div className="space-y-6">
-            {/* SELECT DESTINATION CARD */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all focus-within:border-blue-500/50">
-              <div className="flex items-center gap-2 mb-4">
-                <MapPin className="w-4 h-4 text-blue-600" />
-                <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest leading-none">SELECT DESTINATION</label>
+            {/* LEFT COLUMN */}
+            <div className="space-y-6">
+              {/* SELECT DESTINATION CARD */}
+              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all focus-within:border-blue-500/50">
+                <div className="flex items-center gap-2 mb-4">
+                  <MapPin className="w-4 h-4 text-blue-600" />
+                  <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest leading-none">SELECT DESTINATION</label>
+                </div>
+                <SingleSelect
+                  id="destination-select"
+                  value={toBranch}
+                  disabled={isLocked}
+                  placeholder="Select Destination Branch..."
+                  options={branchObjects
+                    .filter(b => b._id !== fromBranch)
+                    .map(b => ({ label: b.name, value: b._id }))
+                  }
+                  onChange={(val) => {
+                    setToBranch(val);
+                    // Focus move to payment type for quick keyboard selection
+                    setTimeout(() => document.getElementById('payment-topay')?.focus(), 100);
+                  }}
+                  className="border-gray-200"
+                />
               </div>
-              <SingleSelect
-                id="destination-select"
-                value={toBranch}
+
+              {/* SENDER DETAILS CARD */}
+              <BookingForm
+                title="SENDER DETAILS"
+                type="sender"
+                values={sender}
+                onChange={(field, val) => setSender({ ...sender, [field]: val })}
+                onNext={() => document.getElementById('receiver-name')?.focus()}
                 disabled={isLocked}
-                placeholder="Select Destination Branch..."
-                options={branchObjects
-                  .filter(b => b._id !== fromBranch)
-                  .map(b => ({ label: b.name, value: b._id }))
-                }
-                onChange={(val) => {
-                  setToBranch(val);
-                  // Focus move to payment type for quick keyboard selection
-                  setTimeout(() => document.getElementById('payment-topay')?.focus(), 100);
-                }}
-                className="border-gray-200"
+                inputRef={senderNameRef}
+              />
+
+              {/* PARCEL INFO CARD - Compact Look */}
+              <ParcelList
+                parcels={parcels}
+                onAdd={handleAddParcel}
+                onRemove={handleRemoveParcel}
+                onChange={handleParcelChange}
+                onNext={() => document.getElementById('save-booking-button')?.focus()}
+                disabled={isLocked}
+                remarks={remarks}
+                onRemarksChange={setRemarks}
               />
             </div>
 
-            {/* SENDER DETAILS CARD */}
-            <BookingForm
-              title="SENDER DETAILS"
-              type="sender"
-              values={sender}
-              onChange={(field, val) => setSender({ ...sender, [field]: val })}
-              onNext={() => document.getElementById('receiver-name')?.focus()}
-              disabled={isLocked}
-              inputRef={senderNameRef}
-            />
-
-            {/* PARCEL INFO CARD - Compact Look */}
-            <ParcelList
-              parcels={parcels}
-              onAdd={handleAddParcel}
-              onRemove={handleRemoveParcel}
-              onChange={handleParcelChange}
-              onNext={() => document.getElementById('save-booking-button')?.focus()}
-              disabled={isLocked}
-              remarks={remarks}
-              onRemarksChange={setRemarks}
-            />
-          </div>
-
-          {/* RIGHT COLUMN */}
-          <div className="space-y-6">
-            {/* PAYMENT TYPE CARD */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all focus-within:border-blue-500/50">
-              <div className="flex items-center gap-2 mb-4">
-                <Zap className="w-4 h-4 text-blue-600" />
-                <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest">PAYMENT TYPE</label>
+            {/* RIGHT COLUMN */}
+            <div className="space-y-6">
+              {/* PAYMENT TYPE CARD */}
+              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all focus-within:border-blue-500/50">
+                <div className="flex items-center gap-2 mb-4">
+                  <Zap className="w-4 h-4 text-blue-600" />
+                  <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest">PAYMENT TYPE</label>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    id="payment-topay"
+                    onClick={() => setPaymentType("To Pay")}
+                    disabled={isLocked}
+                    className={cn(
+                      "h-10 text-sm font-bold rounded-md transition-all border",
+                      paymentType === "To Pay"
+                        ? "border-red-600 text-red-600 bg-red-50 shadow-sm"
+                        : "border-gray-200 text-gray-400 bg-white hover:border-gray-300"
+                    )}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        setPaymentType("Paid");
+                        document.getElementById('payment-paid')?.focus();
+                      }
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        senderNameRef.current?.focus();
+                      }
+                    }}
+                  >
+                    To Pay
+                  </button>
+                  <button
+                    id="payment-paid"
+                    onClick={() => setPaymentType("Paid")}
+                    disabled={isLocked}
+                    className={cn(
+                      "h-10 text-sm font-bold rounded-md transition-all border",
+                      paymentType === "Paid"
+                        ? "border-green-600 text-green-600 bg-green-50 shadow-sm"
+                        : "border-gray-200 text-gray-400 bg-white hover:border-gray-300"
+                    )}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        setPaymentType("To Pay");
+                        document.getElementById('payment-topay')?.focus();
+                      }
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        senderNameRef.current?.focus();
+                      }
+                    }}
+                  >
+                    Paid
+                  </button>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  id="payment-topay"
-                  onClick={() => setPaymentType("To Pay")}
-                  disabled={isLocked}
-                  className={cn(
-                    "h-10 text-sm font-bold rounded-md transition-all border",
-                    paymentType === "To Pay"
-                      ? "border-red-600 text-red-600 bg-red-50 shadow-sm"
-                      : "border-gray-200 text-gray-400 bg-white hover:border-gray-300"
-                  )}
-                  onKeyDown={(e) => {
-                    if (e.key === 'ArrowRight') {
-                      e.preventDefault();
-                      setPaymentType("Paid");
-                      document.getElementById('payment-paid')?.focus();
-                    }
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      senderNameRef.current?.focus();
-                    }
-                  }}
-                >
-                  To Pay
-                </button>
-                <button
-                  id="payment-paid"
-                  onClick={() => setPaymentType("Paid")}
-                  disabled={isLocked}
-                  className={cn(
-                    "h-10 text-sm font-bold rounded-md transition-all border",
-                    paymentType === "Paid"
-                      ? "border-green-600 text-green-600 bg-green-50 shadow-sm"
-                      : "border-gray-200 text-gray-400 bg-white hover:border-gray-300"
-                  )}
-                  onKeyDown={(e) => {
-                    if (e.key === 'ArrowLeft') {
-                      e.preventDefault();
-                      setPaymentType("To Pay");
-                      document.getElementById('payment-topay')?.focus();
-                    }
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      senderNameRef.current?.focus();
-                    }
-                  }}
-                >
-                  Paid
-                </button>
-              </div>
+
+              {/* RECEIVER DETAILS CARD */}
+              <BookingForm
+                title="RECEIVER DETAILS"
+                type="receiver"
+                values={receiver}
+                onChange={(field, val) => setReceiver({ ...receiver, [field]: val })}
+                onNext={() => document.getElementById('parcel-type-0')?.focus()}
+                disabled={isLocked}
+              />
+
+              {/* PAYMENT SUMMARY CARD */}
+              <PaymentBox
+                costs={costs}
+                onSave={handleSave}
+                isLocked={isLocked}
+                onWhatsApp={handleWhatsApp}
+                onReset={handleReset}
+                saveLabel="PRINT & SAVE"
+              />
             </div>
-
-            {/* RECEIVER DETAILS CARD */}
-            <BookingForm
-              title="RECEIVER DETAILS"
-              type="receiver"
-              values={receiver}
-              onChange={(field, val) => setReceiver({ ...receiver, [field]: val })}
-              onNext={() => document.getElementById('parcel-type-0')?.focus()}
-              disabled={isLocked}
-            />
-
-            {/* PAYMENT SUMMARY CARD */}
-            <PaymentBox
-              costs={costs}
-              onSave={handleSave}
-              isLocked={isLocked}
-              onWhatsApp={handleWhatsApp}
-              onReset={handleReset}
-              saveLabel="PRINT & SAVE"
-            />
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
 
       {/* Hidden Print Receipt Component */}
       <PrintBuilty
@@ -419,6 +421,6 @@ export default function BookingDashboard() {
         } as any}
         branches={branchObjects}
       />
-    </div>
+    </>
   );
 }
