@@ -34,13 +34,9 @@ export async function middleware(req: NextRequest) {
     // 2. AUTHENTICATION CHECK
     const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
 
-    // In Vercel PRODUCTION, protocol is https. next-auth adds __Secure- prefix.
-    const isSecure = req.nextUrl.protocol === 'https:' || process.env.NODE_ENV === 'production';
-
     const token = await getToken({
         req,
-        secret,
-        secureCookie: isSecure
+        secret
     });
 
     const isLoginPage = req.nextUrl.pathname.startsWith('/login');
