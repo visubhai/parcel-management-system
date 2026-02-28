@@ -74,23 +74,16 @@ export const PrintBuilty = ({ booking, branches }: PrintBuiltyProps) => {
                     {/* ROW 2: PARTIES & ROUTING */}
                     <div className="flex border-b-[2px] border-black border-solid h-[45%] shrink-0">
 
-                        {/* CONSIGNOR (SENDER) */}
-                        <div className="w-[25%] border-r-[2px] border-black border-solid p-1.5 flex flex-col relative overflow-hidden">
-                            <span className="text-[9px] font-black uppercase bg-black text-white px-1.5 py-0.5 inline-block w-max rounded-sm mb-1 leading-none">CONSIGNOR (SENDER)</span>
-                            <span className="text-[12px] font-black uppercase truncate leading-tight mt-0.5">{booking.sender.name}</span>
-                            <span className="text-[11px] font-bold font-mono tracking-tight mt-auto">✆ +91 {booking.sender.mobile}</span>
-                        </div>
-
-                        {/* CONSIGNEE (RECEIVER) */}
-                        <div className="w-[25%] border-r-[2px] border-black border-solid p-1.5 flex flex-col relative overflow-hidden">
-                            <span className="text-[9px] font-black uppercase bg-black text-white px-1.5 py-0.5 inline-block w-max rounded-sm mb-1 leading-none">CONSIGNEE (RECEIVER)</span>
-                            <span className="text-[12px] font-black uppercase truncate leading-tight mt-0.5">{booking.receiver.name}</span>
-                            <span className="text-[11px] font-bold font-mono tracking-tight mt-auto">✆ +91 {booking.receiver.mobile}</span>
-                        </div>
-
-                        {/* ROUTING (FROM -> TO) */}
-                        <div className="w-[50%] flex flex-col overflow-hidden leading-snug">
-                            <div className="min-h-[50%] border-b border-black border-dotted px-1.5 py-1 flex flex-col justify-center bg-gray-50/30 flex-1">
+                        {/* CONSIGNOR & ORIGIN (SENDER) */}
+                        <div className="w-[50%] border-r-[2px] border-black border-solid flex flex-col relative overflow-hidden">
+                            {/* Sender Details */}
+                            <div className="p-1.5 flex flex-col flex-1 border-b-[1px] border-black border-dotted min-h-[50%]">
+                                <span className="text-[9px] font-black uppercase bg-black text-white px-1.5 py-0.5 inline-block w-max rounded-sm mb-1 leading-none">CONSIGNOR (SENDER)</span>
+                                <span className="text-[12px] font-black uppercase truncate leading-tight mt-0.5">{booking.sender.name}</span>
+                                <span className="text-[11px] font-bold font-mono tracking-tight mt-auto">✆ +91 {booking.sender.mobile}</span>
+                            </div>
+                            {/* Origin Details */}
+                            <div className="p-1.5 flex flex-col flex-1 bg-gray-50/30 min-h-[50%] justify-center">
                                 <div className="flex items-start gap-1">
                                     <span className="text-[9px] font-black uppercase opacity-70 shrink-0 mt-[1px]">FROM:</span>
                                     <div className="flex flex-col flex-1 pl-1">
@@ -100,7 +93,18 @@ export const PrintBuilty = ({ booking, branches }: PrintBuiltyProps) => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="min-h-[50%] px-1.5 py-1 flex flex-col justify-center flex-1">
+                        </div>
+
+                        {/* CONSIGNEE & DESTINATION (RECEIVER) */}
+                        <div className="w-[50%] flex flex-col relative overflow-hidden">
+                            {/* Receiver Details */}
+                            <div className="p-1.5 flex flex-col flex-1 border-b-[1px] border-black border-dotted min-h-[50%]">
+                                <span className="text-[9px] font-black uppercase bg-black text-white px-1.5 py-0.5 inline-block w-max rounded-sm mb-1 leading-none">CONSIGNEE (RECEIVER)</span>
+                                <span className="text-[12px] font-black uppercase truncate leading-tight mt-0.5">{booking.receiver.name}</span>
+                                <span className="text-[11px] font-bold font-mono tracking-tight mt-auto">✆ +91 {booking.receiver.mobile}</span>
+                            </div>
+                            {/* Destination Details */}
+                            <div className="p-1.5 flex flex-col flex-1 min-h-[50%] justify-center">
                                 <div className="flex items-start gap-1">
                                     <span className="text-[9px] font-black uppercase opacity-70 shrink-0 mt-[1px]">TO:</span>
                                     <div className="flex flex-col flex-1 pl-1">
