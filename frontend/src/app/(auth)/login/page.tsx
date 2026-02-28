@@ -75,13 +75,8 @@ export default function LoginPage() {
                 }
                 setSubmitting(false);
             } else {
-                // Successful login - Set session gate cookie
-                const isProd = window.location.protocol === 'https:';
-                const cookieStr = `login-gate-passed=true; path=/; sameSite=lax${isProd ? '; secure' : ''}; max-age=86400`; // 24 hours
-                document.cookie = cookieStr;
-                console.log("🛡️ Login gate cookie set:", cookieStr);
-
-                // Small delay to ensure browser registers the cookie before the hard redirect
+                // Successful login - Redirect to dashboard
+                // We no longer rely on custom client-side cookies; NextAuth handles the HttpOnly session.
                 setTimeout(() => {
                     window.location.href = "/";
                 }, 50);

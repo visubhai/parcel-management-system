@@ -67,8 +67,6 @@ export function Header() {
     const handleLogout = async () => {
         try {
             setIsLoggingOut(true);
-            // Clear session gate cookie
-            document.cookie = "login-gate-passed=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; sameSite=lax";
 
             await authService.logout();
             setCurrentUser(null);

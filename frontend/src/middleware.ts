@@ -40,19 +40,9 @@ export async function middleware(req: NextRequest) {
     });
 
     const isLoginPage = req.nextUrl.pathname.startsWith('/login');
-    const gateCookie = req.cookies.get('login-gate-passed');
-    const hasPassedGate = gateCookie?.value === 'true';
-    const referer = req.headers.get('referer') || 'no-referer';
 
     console.log(`\n🛡️  LOGGING PATH: ${req.nextUrl.pathname}`);
-    console.log(`🛡️  GATE: ${hasPassedGate} | TOKEN: ${!!token}`);
-
-    // STRICT SESSION GATE
-    // If not on login page and haven't passed the session gate -> Redirect to /login
-    if (!isLoginPage && !hasPassedGate) {
-        console.log("🛡️ BLOCKING: Missing Session Gate. Redirecting to /login.");
-        return NextResponse.redirect(new URL('/login', req.url));
-    }
+    console.log(`🛡️  TOKEN: ${!!token}`);
 
     // Standard Auth check: If not login page and no token -> Redirect to /login
     if (!isLoginPage && !token) {
