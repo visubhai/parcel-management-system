@@ -11,13 +11,17 @@ export const PrintBuilty = ({ booking, branches }: PrintBuiltyProps) => {
         if (!branchVal) return null;
         if (typeof branchVal !== 'string' && branchVal.name) return branchVal;
 
-        const id = typeof branchVal === 'string' ? branchVal : (branchVal._id || branchVal.id);
+        const lookupValue = typeof branchVal === 'string' ? branchVal : (branchVal._id || branchVal.id);
 
         const found = branches?.find(b => {
             if (!b) return false;
-            if (typeof b === 'string') return b === id;
-            const bId = b._id || b.id || b.name; // Try multiple keys
-            return bId === id;
+            if (typeof b === 'string') return b === lookupValue;
+
+            // Check all possible identifiers
+            return b._id === lookupValue ||
+                b.id === lookupValue ||
+                b.name === lookupValue ||
+                b.branchCode === lookupValue;
         });
 
         return found && typeof found !== 'string' ? found : null;
