@@ -7,10 +7,9 @@ interface PrintBuiltyProps {
 }
 
 export const PrintBuilty = ({ booking, branches }: PrintBuiltyProps) => {
-    const getBranchName = (branchVal: any) => {
-        if (!branchVal) return "";
-        // If branchVal is already an object with a name
-        if (typeof branchVal !== 'string' && branchVal.name) return branchVal.name;
+    const getBranchDetails = (branchVal: any) => {
+        if (!branchVal) return null;
+        if (typeof branchVal !== 'string' && branchVal.name) return branchVal;
 
         const id = typeof branchVal === 'string' ? branchVal : (branchVal._id || branchVal.id);
 
@@ -21,14 +20,15 @@ export const PrintBuilty = ({ booking, branches }: PrintBuiltyProps) => {
             return bId === id;
         });
 
-        if (found) {
-            return typeof found === 'string' ? found : found.name;
-        }
-        return typeof branchVal === 'string' ? branchVal : "Unknown Branch";
+        return found && typeof found !== 'string' ? found : null;
     };
 
-    const fromBranchName = getBranchName(booking.fromBranch);
-    const toBranchName = getBranchName(booking.toBranch);
+    const fromBranchDetails = getBranchDetails(booking.fromBranch);
+    const toBranchDetails = getBranchDetails(booking.toBranch);
+
+    // Fallbacks just in case
+    const fromBranchName = fromBranchDetails?.name || (typeof booking.fromBranch === 'string' ? booking.fromBranch : "Unknown Branch");
+    const toBranchName = toBranchDetails?.name || (typeof booking.toBranch === 'string' ? booking.toBranch : "Unknown Branch");
 
     return (
         <div className="hidden print:block fixed inset-0 bg-white z-[9999] overflow-hidden text-black font-sans leading-tight">
@@ -60,10 +60,14 @@ export const PrintBuilty = ({ booking, branches }: PrintBuiltyProps) => {
                     <div className="w-1/2 pr-2 border-r border-gray-300">
                         <p className="font-bold uppercase text-gray-500 text-[10px]">From Branch</p>
                         <p className="font-bold text-base">{fromBranchName?.replace("Branch", "").trim() || 'Head Office'}</p>
+                        {fromBranchDetails?.address && <p className="text-[10px] text-gray-600 mt-0.5 truncate leading-tight w-full" style={{ whiteSpace: 'normal', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{fromBranchDetails.address}</p>}
+                        {fromBranchDetails?.phone && <p className="text-[10px] text-gray-800 mt-[2px] font-mono font-bold">✆ +91 {fromBranchDetails.phone}</p>}
                     </div>
                     <div className="w-1/2 pl-2">
                         <p className="font-bold uppercase text-gray-500 text-[10px]">To Branch</p>
                         <p className="font-bold text-base">{toBranchName?.replace("Branch", "").trim()}</p>
+                        {toBranchDetails?.address && <p className="text-[10px] text-gray-600 mt-0.5 truncate leading-tight w-full" style={{ whiteSpace: 'normal', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{toBranchDetails.address}</p>}
+                        {toBranchDetails?.phone && <p className="text-[10px] text-gray-800 mt-[2px] font-mono font-bold">✆ +91 {toBranchDetails.phone}</p>}
                     </div>
                 </div>
 

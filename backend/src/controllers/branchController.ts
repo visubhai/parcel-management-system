@@ -26,7 +26,7 @@ export const getBranches = catchAsync(async (req: AuthRequest, res: Response) =>
     }
 
     const branches = await Branch.find(query)
-        .select("_id name branchCode")
+        .select("_id name branchCode address phone")
         .sort({ name: 1 })
         .lean();
 
