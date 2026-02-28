@@ -77,10 +77,12 @@ export const PrintBuilty = ({ booking, branches }: PrintBuiltyProps) => {
                         {/* CONSIGNOR & ORIGIN (SENDER) */}
                         <div className="w-[50%] border-r-[2px] border-black border-solid flex flex-col relative overflow-hidden">
                             {/* Sender Details */}
-                            <div className="p-1.5 flex flex-col flex-1 border-b-[1px] border-black border-dotted min-h-[50%]">
+                            <div className="p-1.5 flex flex-col flex-1 border-b-[1px] border-black border-dotted min-h-[50%] justify-center">
                                 <span className="text-[9px] font-black uppercase bg-black text-white px-1.5 py-0.5 inline-block w-max rounded-sm mb-1 leading-none">CONSIGNOR (SENDER)</span>
-                                <span className="text-[12px] font-black uppercase truncate leading-tight mt-0.5">{booking.sender.name}</span>
-                                <span className="text-[11px] font-bold font-mono tracking-tight mt-auto">✆ +91 {booking.sender.mobile}</span>
+                                <div className="flex items-center justify-between mt-0.5">
+                                    <span className="text-[12px] font-black uppercase truncate leading-tight flex-1 mr-2">{booking.sender.name}</span>
+                                    <span className="text-[11px] font-bold font-mono tracking-tight shrink-0">✆ +91 {booking.sender.mobile}</span>
+                                </div>
                             </div>
                             {/* Origin Details */}
                             <div className="p-1.5 flex flex-col flex-1 bg-gray-50/30 min-h-[50%] justify-center">
@@ -98,10 +100,12 @@ export const PrintBuilty = ({ booking, branches }: PrintBuiltyProps) => {
                         {/* CONSIGNEE & DESTINATION (RECEIVER) */}
                         <div className="w-[50%] flex flex-col relative overflow-hidden">
                             {/* Receiver Details */}
-                            <div className="p-1.5 flex flex-col flex-1 border-b-[1px] border-black border-dotted min-h-[50%]">
+                            <div className="p-1.5 flex flex-col flex-1 border-b-[1px] border-black border-dotted min-h-[50%] justify-center">
                                 <span className="text-[9px] font-black uppercase bg-black text-white px-1.5 py-0.5 inline-block w-max rounded-sm mb-1 leading-none">CONSIGNEE (RECEIVER)</span>
-                                <span className="text-[12px] font-black uppercase truncate leading-tight mt-0.5">{booking.receiver.name}</span>
-                                <span className="text-[11px] font-bold font-mono tracking-tight mt-auto">✆ +91 {booking.receiver.mobile}</span>
+                                <div className="flex items-center justify-between mt-0.5">
+                                    <span className="text-[12px] font-black uppercase truncate leading-tight flex-1 mr-2">{booking.receiver.name}</span>
+                                    <span className="text-[11px] font-bold font-mono tracking-tight shrink-0">✆ +91 {booking.receiver.mobile}</span>
+                                </div>
                             </div>
                             {/* Destination Details */}
                             <div className="p-1.5 flex flex-col flex-1 min-h-[50%] justify-center">
