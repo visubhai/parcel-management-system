@@ -34,10 +34,16 @@ export async function middleware(req: NextRequest) {
     // 2. AUTHENTICATION CHECK
     const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
 
-    const token = await getToken({
-        req,
-        secret
-    });
+    // 1. Fast-path default inference
+    let token = await getToken({ req, secret });
+
+    // 2. Fallbacks for reverse-proxy mismatch issues (e.g. Vercel Edge vs Node API)
+    if (!token) {
+        token = await getToken({ req, secret, secureCookie: true });
+    }
+    if (!token) {
+        token = await getToken({ req, secret, secureCookie: false });
+    }
 
     const isLoginPage = req.nextUrl.pathname.startsWith('/login');
 
