@@ -37,7 +37,7 @@ export function ReportTable({
 }: ReportTableProps) {
     // const { cancelBooking } = useBranchStore(); // Removed
     const router = useRouter();
-    const { branches } = useBranches();
+    const { branchObjects } = useBranches();
     const { addToast } = useToast();
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
@@ -371,7 +371,7 @@ export function ReportTable({
                 <EditBookingModal
                     booking={selectedBooking}
                     isOpen={editModalOpen}
-                    availableBranches={branches as any}
+                    availableBranches={branchObjects as any}
                     onClose={() => setEditModalOpen(false)}
                     onSave={handleSaveEdit}
                 />
